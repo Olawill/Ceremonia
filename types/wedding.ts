@@ -38,6 +38,8 @@ export interface WeddingConfig {
   rsvpDeadline?: string;
   published: boolean;
   passwordProtected: boolean;
+  password?: string;
+  notificationEmail?: string;
 }
 
 // A safe "demo" config used during development / preview
@@ -112,4 +114,6 @@ export const DEMO_WEDDING_CONFIG: WeddingConfig = {
   rsvpEnabled: true,
   published: true,
   passwordProtected: false,
+  password: undefined,
+  notificationEmail: undefined,
 };

@@ -64,6 +64,7 @@ export default async function WeddingPage({ params }: Props) {
     groom: wedding.groom,
     date: wedding.date,
     tagLine: wedding.tagLine ?? undefined,
+    finaleTagLine: wedding.finaleTagLine ?? undefined,
     venueDetails: (wedding.venueDetails as VenueEvent[]) ?? [
       { label: "Ceremony", value: "TBD", sub: "" },
       { label: "Reception", value: "TBD", sub: "" },
@@ -80,6 +81,8 @@ export default async function WeddingPage({ params }: Props) {
     rsvpDeadline: wedding.rsvpDeadline ?? undefined,
     published: wedding.published ?? false,
     passwordProtected: wedding.passwordProtected ?? false,
+    password: wedding.password ?? undefined,
+    notificationEmail: wedding.notificationEmail ?? undefined,
   };
 
   return <WeddingEngine config={config} />;

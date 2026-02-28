@@ -28,6 +28,7 @@ export const weddings = pgTable("weddings", {
   groom: text("groom").notNull(),
   date: date("date").notNull(),
   tagLine: text("tag_line"),
+  finaleTagLine: text("finale_tag_line"),
   venueDetails: jsonb("venue_details"), // VenueEvent[]
   themeKey: text("theme_key").default("royal"),
   customTheme: jsonb("custom_theme"),

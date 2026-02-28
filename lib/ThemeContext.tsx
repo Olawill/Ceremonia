@@ -1,14 +1,14 @@
 "use client";
 
-import React, {
+import { defaultThemeKey, themes } from "@/themes";
+import type { ThemeKey, WeddingTheme } from "@/types/theme";
+import {
   createContext,
   useContext,
-  useState,
   useEffect,
+  useState,
   type ReactNode,
 } from "react";
-import type { ThemeKey, WeddingTheme } from "@/types/theme";
-import { themes, defaultThemeKey } from "@/themes";
 
 interface ThemeContextValue {
   themeKey: ThemeKey;
@@ -18,12 +18,23 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [themeKey, setThemeKeyState] = useState<ThemeKey>(defaultThemeKey);
+export function ThemeProvider({
+  children,
+  initialThemeKey,
+}: {
+  children: ReactNode;
+  initialThemeKey?: ThemeKey;
+}) {
+  const [themeKey, setThemeKeyState] = useState<ThemeKey>(
+    initialThemeKey ?? defaultThemeKey,
+  );
 
   const setThemeKey = (key: ThemeKey) => {
     setThemeKeyState(key);
-    document.documentElement.setAttribute("data-theme", key === "royal" ? "" : key);
+    document.documentElement.setAttribute(
+      "data-theme",
+      key === "royal" ? "" : key,
+    );
   };
 
   useEffect(() => {

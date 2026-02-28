@@ -5,6 +5,8 @@ import { Cinzel, Cormorant_Garamond } from "next/font/google";
 
 import { ThemeProvider } from "@/lib/ThemeContext";
 
+import { QueryProvider } from "@/components/providers/QueryProvider";
+
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -36,7 +38,9 @@ export default function RootLayout({
     >
       <html lang="en" suppressHydrationWarning>
         <body className={`${cormorant.variable} ${cinzel.variable}`}>
-          <ThemeProvider>{children}</ThemeProvider>
+          <QueryProvider>
+            <ThemeProvider>{children}</ThemeProvider>
+          </QueryProvider>
         </body>
       </html>
     </ClerkProvider>

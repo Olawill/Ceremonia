@@ -1,18 +1,24 @@
 "use client";
 
-import { useTheme } from "@/lib/ThemeContext";
-import { fireConfetti } from "@/lib/confetti";
+import { zodResolver } from "@hookform/resolvers/zod";
 import gsap from "gsap";
 import { useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
-type Attendance = "yes" | "no" | "";
+import { useTheme } from "@/lib/ThemeContext";
+import { fireConfetti } from "@/lib/confetti";
 
-interface FormState {
-  name: string;
-  attendance: Attendance;
-  guests: string;
-  dietary: string;
-}
+const schema = z.object({
+  name: z.string().min(1, "Your name is required"),
+  attendance: z.enum(["yes", "no"], {
+    message: "Please select your attendance",
+  }),
+  guests: z.string().optional(),
+  dietary: z.string().optional(),
+});
+
+type FormValues = z.infer<typeof schema>;
 
 interface RSVPProps {
   weddingId?: string;
@@ -22,20 +28,27 @@ interface RSVPProps {
 export function RSVP({ weddingId = "demo", enabled = true }: RSVPProps) {
   const { theme } = useTheme();
   const [submitted, setSubmitted] = useState(false);
-  const [form, setForm] = useState<FormState>({
-    name: "",
-    attendance: "",
-    guests: "1",
-    dietary: "",
-  });
+  const [submittedName, setSubmittedName] = useState("");
+  const [submittedAttendance, setSubmittedAttendance] = useState("");
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
 
-  // Button is enabled only when name is filled AND attendance is chosen
-  const canSubmit = form.name.trim().length > 0 && form.attendance !== "";
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: { guests: "1" },
+  });
 
-  const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const attendance = watch("attendance");
+
+  const onSubmit = async (data: FormValues) => {
+    // Wire to API in Week 6 — for now just show success
+    setSubmittedName(data.name);
+    setSubmittedAttendance(data.attendance);
     setSubmitted(true);
 
     fireConfetti({
@@ -111,37 +124,53 @@ export function RSVP({ weddingId = "demo", enabled = true }: RSVPProps) {
         </div>
 
         {!submitted ? (
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <input
-              required
-              placeholder="Your Full Name"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              onFocus={() => setFocusedField("name")}
-              onBlur={() => setFocusedField(null)}
-              style={inputBase("name")}
-            />
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex flex-col gap-4"
+          >
+            <div>
+              <input
+                {...register("name")}
+                placeholder="Your Full Name"
+                onFocus={() => setFocusedField("name")}
+                onBlur={() => setFocusedField(null)}
+                style={inputBase("name")}
+              />
+              {errors.name && (
+                <p
+                  className="font-display italic text-sm mt-1"
+                  style={{ color: `${theme.gold}80` }}
+                >
+                  {errors.name.message}
+                </p>
+              )}
+            </div>
 
-            <select
-              required
-              value={form.attendance}
-              onChange={(e) =>
-                setForm({ ...form, attendance: e.target.value as Attendance })
-              }
-              onFocus={() => setFocusedField("att")}
-              onBlur={() => setFocusedField(null)}
-              style={{ ...inputBase("att"), cursor: "pointer" }}
-            >
-              <option value="">Will you attend?</option>
-              <option value="yes">Joyfully Accept</option>
-              <option value="no">Regretfully Decline</option>
-            </select>
+            <div>
+              <select
+                {...register("attendance")}
+                onFocus={() => setFocusedField("att")}
+                onBlur={() => setFocusedField(null)}
+                style={{ ...inputBase("att"), cursor: "pointer" }}
+              >
+                <option value="">Will you attend?</option>
+                <option value="yes">Joyfully Accept</option>
+                <option value="no">Regretfully Decline</option>
+              </select>
+              {errors.attendance && (
+                <p
+                  className="font-display italic text-sm mt-1"
+                  style={{ color: `${theme.gold}80` }}
+                >
+                  {errors.attendance.message}
+                </p>
+              )}
+            </div>
 
-            {form.attendance === "yes" && (
+            {attendance === "yes" && (
               <>
                 <select
-                  value={form.guests}
-                  onChange={(e) => setForm({ ...form, guests: e.target.value })}
+                  {...register("guests")}
                   onFocus={() => setFocusedField("guests")}
                   onBlur={() => setFocusedField(null)}
                   style={{ ...inputBase("guests"), cursor: "pointer" }}
@@ -152,11 +181,8 @@ export function RSVP({ weddingId = "demo", enabled = true }: RSVPProps) {
                 </select>
 
                 <input
+                  {...register("dietary")}
                   placeholder="Dietary Requirements (optional)"
-                  value={form.dietary}
-                  onChange={(e) =>
-                    setForm({ ...form, dietary: e.target.value })
-                  }
                   onFocus={() => setFocusedField("diet")}
                   onBlur={() => setFocusedField(null)}
                   style={inputBase("diet")}
@@ -166,14 +192,15 @@ export function RSVP({ weddingId = "demo", enabled = true }: RSVPProps) {
 
             <button
               type="submit"
-              disabled={!canSubmit}
+              disabled={isSubmitting}
               className="mt-2 py-4 rounded-lg font-label text-[13px] tracking-[0.4em] cursor-pointer
-                        transition-all duration-300"
+                transition-all duration-300"
               style={{
                 border: `1px solid ${theme.gold}`,
                 background: `linear-gradient(135deg, ${theme.curtain}, ${theme.curtainDark})`,
                 color: theme.gold,
                 paddingBlock: "10px",
+                opacity: isSubmitting ? 0.6 : 1,
               }}
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLButtonElement).style.background =
@@ -187,17 +214,8 @@ export function RSVP({ weddingId = "demo", enabled = true }: RSVPProps) {
                 (e.currentTarget as HTMLButtonElement).style.boxShadow = "none";
               }}
             >
-              CONFIRM ATTENDANCE
+              {isSubmitting ? "SENDING…" : "CONFIRM ATTENDANCE"}
             </button>
-
-            {!canSubmit && (
-              <p
-                className="font-label text-[12px] font-semibold tracking-[0.3em] text-center"
-                style={{ color: `${theme.gold}45` }}
-              >
-                PLEASE FILL IN YOUR NAME AND ATTENDANCE
-              </p>
-            )}
           </form>
         ) : (
           <div
@@ -215,7 +233,7 @@ export function RSVP({ weddingId = "demo", enabled = true }: RSVPProps) {
               className="font-display font-light mb-3"
               style={{ fontSize: "clamp(24px,4vw,36px)", color: theme.gold }}
             >
-              {form.attendance === "yes"
+              {submittedAttendance === "yes"
                 ? "We'll See You There!"
                 : "We'll Miss You"}
             </h3>
@@ -223,9 +241,9 @@ export function RSVP({ weddingId = "demo", enabled = true }: RSVPProps) {
               className="font-display italic leading-relaxed"
               style={{ color: `${theme.text}75`, fontSize: 18 }}
             >
-              {form.attendance === "yes"
-                ? `Dear ${form.name}, your presence means the world to us ♡`
-                : `Dear ${form.name}, you'll be in our hearts on the day.`}
+              {submittedAttendance === "yes"
+                ? `Dear ${submittedName}, your presence means the world to us ♡`
+                : `Dear ${submittedName}, you'll be in our hearts on the day.`}
             </p>
           </div>
         )}
