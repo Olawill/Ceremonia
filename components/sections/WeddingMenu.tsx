@@ -1,7 +1,13 @@
 "use client";
 
-import { useTheme } from "@/lib/ThemeContext";
 import { useEffect, useRef, useState } from "react";
+
+import { useTheme } from "@/lib/ThemeContext";
+import { Course } from "@/types/wedding";
+
+interface WeddingMenuProps {
+  courses?: Course[];
+}
 
 const COURSES = [
   {
@@ -968,10 +974,12 @@ function TableSVG({
   );
 }
 
-export function WeddingMenu() {
+export function WeddingMenu({ courses }: WeddingMenuProps) {
   const { theme } = useTheme();
   const ref = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
+
+  const displayCourses = courses ?? COURSES;
 
   useEffect(() => {
     const obs = new IntersectionObserver(
@@ -1066,7 +1074,7 @@ export function WeddingMenu() {
         </div>
 
         <div className="flex flex-col gap-8">
-          {COURSES.map((c, i) => (
+          {displayCourses.map((c, i) => (
             <div
               key={c.course}
               className="transition-all duration-700"

@@ -14,7 +14,12 @@ interface FormState {
   dietary: string;
 }
 
-export function RSVP() {
+interface RSVPProps {
+  weddingId?: string;
+  enabled?: boolean;
+}
+
+export function RSVP({ weddingId = "demo", enabled = true }: RSVPProps) {
   const { theme } = useTheme();
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState<FormState>({

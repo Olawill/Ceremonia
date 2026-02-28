@@ -8,6 +8,12 @@ import { useEffect, useRef } from "react";
 
 gsap.registerPlugin(ScrollTrigger);
 
+interface FinaleProps {
+  bride?: string;
+  groom?: string;
+  finaleTagLine?: string;
+}
+
 function BrideGroomSVG({
   gold,
   curtain,
@@ -527,7 +533,11 @@ function BrideGroomSVG({
   );
 }
 
-export function Finale() {
+export function Finale({
+  bride = "Taiwo",
+  groom = "Tayo",
+  finaleTagLine,
+}: FinaleProps) {
   const { theme } = useTheme();
   const sectionRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -617,7 +627,7 @@ export function Finale() {
             letterSpacing: "0.4em",
           }}
         >
-          {process.env.NEXT_PUBLIC_BRIDE} &amp; {process.env.NEXT_PUBLIC_GROOM}
+          {bride} &amp; {groom}
         </p>
 
         <div style={{ color: theme.gold, fontSize: 28 }}>✦ ◆ ✦</div>
@@ -653,11 +663,15 @@ export function Finale() {
           className="font-display italic leading-relaxed max-w-sm mx-auto font-semibold"
           style={{ color: `${theme.text}55`, fontSize: "clamp(18px,2vw,22px)" }}
         >
-          Together with our families,
-          <br />
-          we joyfully invite you to witness
-          <br />
-          our union in love.
+          {finaleTagLine ?? (
+            <>
+              Together with our families,
+              <br />
+              we joyfully invite you to witness
+              <br />
+              our union in love.
+            </>
+          )}
         </p>
       </div>
     </section>

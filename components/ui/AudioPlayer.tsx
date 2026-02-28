@@ -3,7 +3,15 @@
 import { useTheme } from "@/lib/ThemeContext";
 import { useEffect, useRef, useState } from "react";
 
-export function AudioPlayer({ autoPlay = false }: { autoPlay?: boolean }) {
+interface AudioPlayerProps {
+  autoPlay: boolean;
+  src?: string;
+}
+
+export function AudioPlayer({
+  autoPlay,
+  src = "/audio/royal.mp3",
+}: AudioPlayerProps) {
   const { theme } = useTheme();
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
@@ -47,7 +55,7 @@ export function AudioPlayer({ autoPlay = false }: { autoPlay?: boolean }) {
     <div className="fixed bottom-5 right-5 z-200">
       {/* Hidden audio element – swap src for a real orchestral mp3 */}
       <audio ref={audioRef} loop preload="none">
-        <source src="/audio/royal.mp3" type="audio/mpeg" />
+        <source src={src} type="audio/mpeg" />
       </audio>
 
       <button

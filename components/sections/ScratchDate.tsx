@@ -2,13 +2,18 @@
 
 import { useTheme } from "@/lib/ThemeContext";
 import { fireConfetti } from "@/lib/confetti";
+import { formattedDate } from "@/lib/helper";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-interface Props {
+interface ScratchDateProps {
+  date?: string; // ISO "2026-07-12"
   onRevealed: () => void;
 }
 
-export function ScratchDate({ onRevealed }: Props) {
+export function ScratchDate({
+  date = "2026-07-12",
+  onRevealed,
+}: ScratchDateProps) {
   const { theme } = useTheme();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sectionRef = useRef<HTMLElement>(null);
@@ -208,7 +213,7 @@ export function ScratchDate({ onRevealed }: Props) {
                 textShadow: `0 0 30px ${theme.gold}80`,
               }}
             >
-              12 • July • 2026
+              {formattedDate(date)}
             </p>
             <p
               className="font-label text-[12px] tracking-[0.4em]"

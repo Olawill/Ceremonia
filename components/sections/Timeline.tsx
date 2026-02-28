@@ -35,7 +35,11 @@ const EVENTS: TimelineEvent[] = [
   },
 ];
 
-export function Timeline() {
+interface TimelineProps {
+  events?: TimelineEvent[];
+}
+
+export function Timeline({ events }: TimelineProps) {
   const { theme } = useTheme();
   const sectionRef = useRef<HTMLElement>(null);
 
@@ -106,7 +110,7 @@ export function Timeline() {
           }}
         />
 
-        {EVENTS.map((ev, i) => {
+        {(events ?? EVENTS).map((ev, i) => {
           const isLeft = i % 2 === 0;
           return (
             <div

@@ -1,15 +1,13 @@
 "use client";
 
 import { useTheme } from "@/lib/ThemeContext";
+import { VenueEvent } from "@/types/wedding";
 import { useEffect, useRef, useState } from "react";
 
-interface Detail {
-  label: string;
-  value: string;
-  sub: string;
+interface VenueDetailsProps {
+  details?: VenueEvent[];
 }
-
-const DETAILS: Detail[] = [
+const DEFAULT_DETAILS: VenueEvent[] = [
   { label: "Ceremony", value: "4:00 PM", sub: "Grand Ballroom" },
   { label: "Reception", value: "7:00 PM", sub: "Garden Terrace" },
   { label: "Location", value: "Ashford Estate", sub: "Tuscany, Italy" },
@@ -550,7 +548,7 @@ function CathedralSVG({ gold, curtain }: { gold: string; curtain: string }) {
   );
 }
 
-export function VenueDetails() {
+export function VenueDetails({ details = DEFAULT_DETAILS }: VenueDetailsProps) {
   const { theme } = useTheme();
   const ref = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
@@ -616,7 +614,7 @@ export function VenueDetails() {
       </div>
 
       <div className="flex flex-wrap gap-6 justify-center">
-        {DETAILS.map((d, i) => (
+        {(details ?? DEFAULT_DETAILS).map((d, i) => (
           <div
             key={d.label}
             className="rounded-xl px-10 py-8 text-center transition-all"

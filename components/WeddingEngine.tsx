@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { DrapedCurtain } from "@/components/curtain/DrapedCurtain";
 import { VelvetCurtain } from "@/components/curtain/VelvetCurtain";
+import { DrapeFrame } from "@/components/effects/DrapeFrame";
 import { DustParticles } from "@/components/effects/DustParticles";
 import { Countdown } from "@/components/sections/Countdown";
 import { Finale } from "@/components/sections/Finale";
@@ -17,15 +18,21 @@ import { AudioPlayer } from "@/components/ui/AudioPlayer";
 import { ThemeSelector } from "@/components/ui/ThemeSelector";
 
 import { useTheme } from "@/lib/ThemeContext";
-import { DrapeFrame } from "./effects/DrapeFrame";
+import { DEMO_WEDDING_CONFIG, WeddingConfig } from "@/types/wedding";
 
-export function WeddingEngine() {
+interface WeddingEngineProps {
+  config?: WeddingConfig;
+}
+
+export function WeddingEngine({
+  config = DEMO_WEDDING_CONFIG,
+}: WeddingEngineProps) {
   const { theme } = useTheme();
   const [curtainOpen, setCurtainOpen] = useState(false);
   const [dateRevealed, setDateRevealed] = useState(false);
 
   const [curtainStyle, setCurtainStyle] = useState<"velvet" | "drape">(
-    "velvet",
+    config.curtainStyle ?? "velvet",
   );
 
   const handleCurtainOpen = () => setCurtainOpen(true);
@@ -38,7 +45,10 @@ export function WeddingEngine() {
         curtainStyle={curtainStyle}
         onCurtainChange={setCurtainStyle}
       />
-      <AudioPlayer autoPlay={curtainOpen} />
+      <AudioPlayer
+        autoPlay={curtainOpen}
+        src={config.audioUrl ?? "/audio/royal.mp3"}
+      />
 
       {/* Drape frame – fixed peek-through frame shown on every page when drape style active */}
       {curtainOpen && curtainStyle === "drape" && <DrapeFrame />}
@@ -72,11 +82,17 @@ export function WeddingEngine() {
         >
           {/* Each section wrapper enforces full-viewport snap alignment */}
           {[
-            <ParallaxHero key="hero" />,
+            <ParallaxHero
+              key="hero"
+              bride={config.bride}
+              groom={config.groom}
+              tagLine={config.tagLine}
+            />,
 
             // ScratchDate locks scroll until revealed
             <ScratchDate
               key="scratch"
+              date={config.date}
               onRevealed={() => setDateRevealed(true)}
             />,
 
@@ -84,11 +100,15 @@ export function WeddingEngine() {
             ...(dateRevealed
               ? [
                   <Countdown key="countdown" />,
-                  <Timeline key="timeline" />,
-                  <VenueDetails key="venue" />,
-                  <WeddingMenu key="menu" />,
-                  <RSVP key="rsvp" />,
-                  <Finale key="finale" />,
+                  <Timeline key="timeline" events={config.timeline} />,
+                  <VenueDetails key="venue" details={config.venueDetails} />,
+                  <WeddingMenu key="menu" courses={config.menuCourses} />,
+                  <RSVP
+                    key="rsvp"
+                    weddingId={config.id}
+                    enabled={config.rsvpEnabled}
+                  />,
+                  <Finale key="finale" finaleTagLine={config.finaleTagLine} />,
                 ]
               : []),
           ].map((section, i) => (
@@ -107,25 +127,6 @@ export function WeddingEngine() {
             </div>
           ))}
         </main>
-
-        // <>
-        //   <ParallaxHero />
-
-        //   {/* ScratchDate locks scroll until revealed */}
-        //   <ScratchDate onRevealed={() => setDateRevealed(true)} />
-
-        //   {/* These sections only mount after the date is revealed */}
-        //   {dateRevealed && (
-        //     <>
-        //       <Countdown />
-        //       <Timeline />
-        //       <VenueDetails />
-        //       <WeddingMenu />
-        //       <RSVP />
-        //       <Finale />
-        //     </>
-        //   )}
-        // </>
       )}
     </>
   );

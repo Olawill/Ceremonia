@@ -1,9 +1,20 @@
 "use client";
 
-import { useTheme } from "@/lib/ThemeContext";
 import { useEffect, useState } from "react";
 
-export function ParallaxHero() {
+import { useTheme } from "@/lib/ThemeContext";
+
+interface ParallaxHeroProps {
+  bride?: string;
+  groom?: string;
+  tagLine?: string;
+}
+
+export function ParallaxHero({
+  bride = "Taiwo",
+  groom = "Tayo",
+  tagLine,
+}: ParallaxHeroProps) {
   const { theme } = useTheme();
   const [scrollY, setScrollY] = useState(0);
   const [mounted, setMounted] = useState(false);
@@ -76,23 +87,25 @@ export function ParallaxHero() {
             letterSpacing: "0.04em",
           }}
         >
-          {process.env.NEXT_PUBLIC_BRIDE}
+          {bride}
           <br />
           <span style={{ color: theme.gold, opacity: 0.8 }}>&</span>
           <br />
-          {process.env.NEXT_PUBLIC_GROOM}
+          {groom}
         </h1>
 
-        <p
-          className="font-display italic"
-          style={{
-            fontSize: "clamp(14px,2.5vw,22px)",
-            color: `${theme.text}55`,
-            letterSpacing: "0.08em",
-          }}
-        >
-          {process.env.NEXT_PUBLIC_TAG_LINE} 2026
-        </p>
+        {tagLine && (
+          <p
+            className="font-display italic"
+            style={{
+              fontSize: "clamp(14px,2.5vw,22px)",
+              color: `${theme.text}55`,
+              letterSpacing: "0.08em",
+            }}
+          >
+            {tagLine}
+          </p>
+        )}
 
         <div
           className="w-20 h-px my-1"
