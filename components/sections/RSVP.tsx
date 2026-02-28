@@ -8,6 +8,7 @@ import { z } from "zod";
 
 import { useTheme } from "@/lib/ThemeContext";
 import { fireConfetti } from "@/lib/confetti";
+import { formattedDeadlineDate } from "@/lib/helper";
 
 const schema = z.object({
   name: z.string().min(1, "Your name is required"),
@@ -23,9 +24,14 @@ type FormValues = z.infer<typeof schema>;
 interface RSVPProps {
   weddingId?: string;
   enabled?: boolean;
+  rsvpDeadline?: string;
 }
 
-export function RSVP({ weddingId = "demo", enabled = true }: RSVPProps) {
+export function RSVP({
+  weddingId = "demo",
+  enabled = true,
+  rsvpDeadline,
+}: RSVPProps) {
   const { theme } = useTheme();
   const [submitted, setSubmitted] = useState(false);
   const [submittedName, setSubmittedName] = useState("");
@@ -42,6 +48,10 @@ export function RSVP({ weddingId = "demo", enabled = true }: RSVPProps) {
     resolver: zodResolver(schema),
     defaultValues: { guests: "1" },
   });
+
+  const deadlineLabel = rsvpDeadline
+    ? `Kindly Reply By ${formattedDeadlineDate(rsvpDeadline)}`
+    : "Kindly Reply At Your Earliest Convenience";
 
   const attendance = watch("attendance");
 
@@ -103,7 +113,7 @@ export function RSVP({ weddingId = "demo", enabled = true }: RSVPProps) {
             className="font-label uppercase text-[14px] font-semibold tracking-[0.5em]"
             style={{ color: `${theme.gold}70` }}
           >
-            Kindly Reply By June 1st, 2026
+            {deadlineLabel}
           </p>
           <h2
             className="font-display font-light"

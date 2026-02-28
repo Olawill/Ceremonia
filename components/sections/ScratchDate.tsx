@@ -1,9 +1,10 @@
 "use client";
 
+import { useCallback, useEffect, useRef, useState } from "react";
+
 import { useTheme } from "@/lib/ThemeContext";
 import { fireConfetti } from "@/lib/confetti";
 import { formattedDate } from "@/lib/helper";
-import { useCallback, useEffect, useRef, useState } from "react";
 
 interface ScratchDateProps {
   date?: string; // ISO "2026-07-12"
@@ -176,7 +177,7 @@ export function ScratchDate({
         </h2>
         {!revealed && (
           <p
-            className="font-display italic text-sm"
+            className="font-display italic text-lg font-semibold"
             style={{ color: `${theme.gold}55` }}
           >
             Scratch the golden foil to continue ↓
@@ -213,7 +214,7 @@ export function ScratchDate({
                 textShadow: `0 0 30px ${theme.gold}80`,
               }}
             >
-              {formattedDate(date)}
+              {formattedDate(date, true)}
             </p>
             <p
               className="font-label text-[12px] tracking-[0.4em]"
@@ -237,7 +238,7 @@ export function ScratchDate({
           <div className="mt-3 space-y-1.5">
             <div
               className="h-0.5 rounded-full overflow-hidden"
-              style={{ background: `${theme.gold}20` }}
+              style={{ background: `${theme.gold}20`, marginTop: "8px" }}
             >
               <div
                 className="h-full rounded-full transition-all duration-100"
@@ -248,7 +249,7 @@ export function ScratchDate({
               />
             </div>
             <p
-              className="font-label text-[12px] font-semibold tracking-[0.3em] text-center"
+              className="font-label text-lg font-bold tracking-[0.3em] text-center"
               style={{ color: `${theme.gold}55` }}
             >
               {Math.round(progress)}% REVEALED

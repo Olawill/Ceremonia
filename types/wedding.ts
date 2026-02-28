@@ -42,6 +42,12 @@ export interface WeddingConfig {
   notificationEmail?: string;
 }
 
+export const FALLBACK_LOCATION: VenueEvent = {
+  label: "Location",
+  value: "Ashford Estate",
+  sub: "Tuscany, Italy",
+};
+
 // A safe "demo" config used during development / preview
 export const DEMO_WEDDING_CONFIG: WeddingConfig = {
   id: "demo",

@@ -18,7 +18,12 @@ import { AudioPlayer } from "@/components/ui/AudioPlayer";
 import { ThemeSelector } from "@/components/ui/ThemeSelector";
 
 import { useTheme } from "@/lib/ThemeContext";
-import { DEMO_WEDDING_CONFIG, WeddingConfig } from "@/types/wedding";
+import {
+  DEMO_WEDDING_CONFIG,
+  FALLBACK_LOCATION,
+  VenueEvent,
+  WeddingConfig,
+} from "@/types/wedding";
 
 interface WeddingEngineProps {
   config?: WeddingConfig;
@@ -36,6 +41,11 @@ export function WeddingEngine({
   );
 
   const handleCurtainOpen = () => setCurtainOpen(true);
+
+  const location: VenueEvent =
+    config.venueDetails.find((d) => d.label === "Location") ??
+    DEMO_WEDDING_CONFIG.venueDetails.find((d) => d.label === "Location") ??
+    FALLBACK_LOCATION;
 
   return (
     <>
@@ -99,7 +109,11 @@ export function WeddingEngine({
             // These sections only mount after the date is revealed
             ...(dateRevealed
               ? [
-                  <Countdown key="countdown" />,
+                  <Countdown
+                    key="countdown"
+                    date={config.date}
+                    location={location}
+                  />,
                   <Timeline key="timeline" events={config.timeline} />,
                   <VenueDetails key="venue" details={config.venueDetails} />,
                   <WeddingMenu key="menu" courses={config.menuCourses} />,
@@ -107,8 +121,15 @@ export function WeddingEngine({
                     key="rsvp"
                     weddingId={config.id}
                     enabled={config.rsvpEnabled}
+                    rsvpDeadline={config.rsvpDeadline}
                   />,
-                  <Finale key="finale" finaleTagLine={config.finaleTagLine} />,
+                  <Finale
+                    key="finale"
+                    bride={config.bride}
+                    groom={config.groom}
+                    finaleTagLine={config.finaleTagLine}
+                    date={config.date}
+                  />,
                 ]
               : []),
           ].map((section, i) => (

@@ -1,7 +1,15 @@
 "use client";
 
-import { useTheme } from "@/lib/ThemeContext";
 import { useEffect, useRef, useState } from "react";
+
+import { createCountDownLoaction, formattedDate } from "@/lib/helper";
+import { useTheme } from "@/lib/ThemeContext";
+
+import {
+  DEMO_WEDDING_CONFIG,
+  FALLBACK_LOCATION,
+  VenueEvent,
+} from "@/types/wedding";
 
 const WEDDING_DATE = new Date("2026-07-12T16:00:00");
 
@@ -10,6 +18,11 @@ interface TimeLeft {
   hours: number;
   minutes: number;
   seconds: number;
+}
+
+interface CoundownProps {
+  date?: string;
+  location?: VenueEvent;
 }
 
 function getTimeLeft(): TimeLeft {
@@ -92,7 +105,7 @@ function CountUnit({
       </div>
 
       <p
-        className="font-label text-[9px] tracking-[0.45em] uppercase"
+        className="font-label text-[11px] font-bold tracking-[0.45em] uppercase"
         style={{ color: `${theme.gold}70` }}
       >
         {label}
@@ -101,11 +114,16 @@ function CountUnit({
   );
 }
 
-export function Countdown() {
+export function Countdown({
+  date,
+  location = FALLBACK_LOCATION,
+}: CoundownProps) {
   const { theme } = useTheme();
   const [timeLeft, setTimeLeft] = useState<TimeLeft>(getTimeLeft());
   const ref = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
+
+  const displayDate = date ?? DEMO_WEDDING_CONFIG.date;
 
   useEffect(() => {
     const tick = setInterval(() => setTimeLeft(getTimeLeft()), 1000);
@@ -147,7 +165,7 @@ export function Countdown() {
         }}
       >
         <p
-          className="font-label uppercase tracking-[0.5em] text-[11px]"
+          className="font-label uppercase tracking-[0.5em] text-[14px] font-semibold"
           style={{ color: `${theme.gold}70` }}
         >
           Until We Say I Do
@@ -170,9 +188,9 @@ export function Countdown() {
         />
         <p
           className="font-display italic"
-          style={{ color: `${theme.gold}70`, fontSize: "clamp(14px,2vw,18px)" }}
+          style={{ color: `${theme.gold}70`, fontSize: "clamp(16px,2vw,22px)" }}
         >
-          12 July 2026 · Ashford Estate, Tuscany
+          {formattedDate(displayDate)} · {createCountDownLoaction(location)}
         </p>
       </div>
 
@@ -185,11 +203,11 @@ export function Countdown() {
         }}
       >
         {units.map((u, i) => (
-          <div key={u.label} className="flex items-start gap-4">
+          <div key={u.label} className="flex items-center gap-4">
             <CountUnit value={u.value} label={u.label} theme={theme} />
             {i < units.length - 1 && (
               <span
-                className="font-display text-3xl mt-8 leading-none select-none"
+                className="font-display text-5xl font-bold mt-8 leading-none select-none"
                 style={{ color: `${theme.gold}50` }}
               >
                 :

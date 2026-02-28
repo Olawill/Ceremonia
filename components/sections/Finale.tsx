@@ -1,10 +1,14 @@
 "use client";
 
-import { useTheme } from "@/lib/ThemeContext";
-import { fireConfetti } from "@/lib/confetti";
 import gsap from "gsap";
 import ScrollTrigger from "gsap/ScrollTrigger";
 import { useEffect, useRef } from "react";
+
+import { useTheme } from "@/lib/ThemeContext";
+import { fireConfetti } from "@/lib/confetti";
+
+import { formattedDate } from "@/lib/helper";
+import { DEMO_WEDDING_CONFIG } from "@/types/wedding";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -12,6 +16,7 @@ interface FinaleProps {
   bride?: string;
   groom?: string;
   finaleTagLine?: string;
+  date?: string;
 }
 
 function BrideGroomSVG({
@@ -537,10 +542,13 @@ export function Finale({
   bride = "Taiwo",
   groom = "Tayo",
   finaleTagLine,
+  date,
 }: FinaleProps) {
   const { theme } = useTheme();
   const sectionRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+
+  const displayDate = date ?? DEMO_WEDDING_CONFIG.date;
 
   useEffect(() => {
     if (!sectionRef.current || !contentRef.current) return;
@@ -656,7 +664,7 @@ export function Finale({
           className="font-label tracking-[0.4em] text-sm font-semibold"
           style={{ color: `${theme.gold}85`, marginTop: "16px" }}
         >
-          12 · JULY · 2026
+          {formattedDate(displayDate, true)}
         </p>
 
         <p
