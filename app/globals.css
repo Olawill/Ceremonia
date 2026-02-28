@@ -1,0 +1,203 @@
+@import "tailwindcss";
+
+/* ─── Theme CSS Variables (Royal is default) ───────────────────────────── */
+:root {
+  --curtain: #6a0d17;
+  --curtain-dark: #3d0610;
+  --curtain-sheen: #9b1525;
+  --gold: #d4af37;
+  --gold-light: #f0d060;
+  --bg: #0a0a0a;
+  --bg-mid: #120808;
+  --text: #f5f0e8;
+  --particle: rgba(212, 175, 55, 0.4);
+}
+
+[data-theme="midnight"] {
+  --curtain: #0d1b4a;
+  --curtain-dark: #060d25;
+  --curtain-sheen: #1a2e72;
+  --gold: #c9a84c;
+  --gold-light: #e8cc70;
+  --bg: #050510;
+  --bg-mid: #08081a;
+  --text: #e8f0ff;
+  --particle: rgba(201, 168, 76, 0.35);
+}
+
+[data-theme="forest"] {
+  --curtain: #1a3d2e;
+  --curtain-dark: #0d1f17;
+  --curtain-sheen: #2d6b4e;
+  --gold: #d4af37;
+  --gold-light: #f0d060;
+  --bg: #080f0b;
+  --bg-mid: #0f1a12;
+  --text: #f0f8f0;
+  --particle: rgba(212, 175, 55, 0.35);
+}
+
+@theme {
+  --color-curtain: var(--curtain);
+  --color-curtain-dark: var(--curtain-dark);
+  --color-curtain-sheen: var(--curtain-sheen);
+  --color-gold: var(--gold);
+  --color-gold-light: var(--gold-light);
+  --color-bg: var(--bg);
+  --color-bg-mid: var(--bg-mid);
+  --color-wtext: var(--text);
+
+  --font-display: var(--font-display), "Palatino Linotype", serif;
+  --font-label: var(--font-label), serif;
+}
+
+/* ─── Base ──────────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: "Cormorant Garamond", "Palatino Linotype", serif;
+  overflow-x: hidden;
+}
+
+/* ─── Scrollbar ─────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--gold) 60%, transparent);
+  border-radius: 4px;
+}
+
+/* ─── Animations ────────────────────────────────────────────────────────── */
+@keyframes curtainPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 0% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes revealPop {
+  from {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes confettiBurst {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(
+        calc(-50% + var(--dx, 0px)),
+        calc(-50% + var(--dy, 0px))
+      )
+      rotate(720deg) scale(0.3);
+    opacity: 0;
+  }
+}
+
+/* ─── Utility classes ───────────────────────────────────────────────────── */
+.font-display {
+  font-family: "Cormorant Garamond", "Palatino Linotype", serif;
+}
+.font-label {
+  font-family: "Cinzel", serif;
+}
+
+.gold-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--gold),
+    var(--gold-light),
+    var(--gold)
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 3s linear infinite;
+}
+
+.animate-pulse-soft {
+  animation: curtainPulse 3s ease-in-out infinite;
+}
+
+.animate-reveal-pop {
+  animation: revealPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.animate-fade-up {
+  animation: fadeUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ─── Curtain fold gradient ─────────────────────────────────────────────── */
+.curtain-fold {
+  background: linear-gradient(
+    90deg,
+    var(--curtain-dark) 0%,
+    var(--curtain) 30%,
+    var(--curtain-sheen) 50%,
+    var(--curtain) 70%,
+    var(--curtain-dark) 100%
+  );
+}
+
+/* ─── Form base ─────────────────────────────────────────────────────────── */
+input,
+select {
+  font-family: "Cormorant Garamond", serif;
+  width: 100%;
+}
+
+input::placeholder {
+  color: color-mix(in srgb, var(--text) 40%, transparent);
+}
+
+select option {
+  background-color: var(--bg);
+  color: var(--text);
+}
