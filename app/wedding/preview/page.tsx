@@ -10,7 +10,10 @@ export default async function WeddingPreviewPage({ searchParams }: Props) {
   let initialConfig = null;
   if (initial) {
     try {
-      initialConfig = JSON.parse(atob(decodeURIComponent(initial)));
+      const bytes = Uint8Array.from(atob(decodeURIComponent(initial)), (c) =>
+        c.charCodeAt(0),
+      );
+      initialConfig = JSON.parse(new TextDecoder().decode(bytes));
     } catch {
       // Invalid base64 — render demo
     }

@@ -55,10 +55,10 @@ export function TimelineEditor({ config, onChange }: Props) {
   }, [watch, onChange]);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5!">
       <p
-        className="font-label text-[10px] tracking-[0.5em] uppercase"
-        style={{ color: "#D4AF3770" }}
+        className="font-label text-[12px] font-semibold tracking-[0.5em] uppercase"
+        style={{ color: "#D4AF37" }}
       >
         Our Story
       </p>
@@ -66,13 +66,13 @@ export function TimelineEditor({ config, onChange }: Props) {
       {fields.map((field, i) => (
         <div
           key={field.id}
-          className="p-4 rounded-xl space-y-3 relative"
+          className="p-4! rounded-xl space-y-3! relative font-semibold"
           style={{ background: "#D4AF3708", border: "1px solid #D4AF3720" }}
         >
           <button
             type="button"
             onClick={() => remove(i)}
-            className="absolute top-3 right-3 font-label text-[10px] tracking-widest"
+            className="absolute top-3 right-3 font-label text-[10px] tracking-widest hover:cursor-pointer hover:font-bold! hover:scale-1.15!"
             style={{ color: "#D4AF3750" }}
           >
             <XIcon className="size-3" />
@@ -125,10 +125,10 @@ export function TimelineEditor({ config, onChange }: Props) {
             desc: "",
           })
         }
-        className="w-full py-3 rounded-xl font-label text-[10px] tracking-[0.4em] uppercase transition-all border"
+        className="w-full py-3! rounded-xl font-label text-[12px] forn-semibold tracking-[0.4em] uppercase transition-all border"
         style={{
-          borderColor: "#D4AF3730",
-          color: "#D4AF3770",
+          borderColor: "#D4AF3760",
+          color: "#D4AF37",
           borderStyle: "dashed",
         }}
       >

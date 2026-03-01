@@ -21,7 +21,11 @@ export function PreviewFrame({ config }: Props) {
 
   // The preview URL — uses /wedding/preview which listens for postMessage
   const previewUrl = `/wedding/preview?initial=${encodeURIComponent(
-    btoa(JSON.stringify(config)),
+    btoa(
+      Array.from(new TextEncoder().encode(JSON.stringify(config)))
+        .map((b) => String.fromCharCode(b))
+        .join(""),
+    ),
   )}`;
 
   return (

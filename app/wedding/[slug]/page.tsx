@@ -15,6 +15,8 @@ import type {
 } from "@/types/wedding";
 import { DEMO_WEDDING_CONFIG } from "@/types/wedding";
 
+import { Plan } from "@/lib/plans";
+
 interface Props {
   params: Promise<{ slug: string }>;
 }
@@ -95,5 +97,11 @@ export default async function WeddingPage({ params }: Props) {
     notificationEmail: wedding.notificationEmail ?? undefined,
   };
 
-  return <WeddingEngine config={config} showWatermark={showWatermark} />;
+  return (
+    <WeddingEngine
+      config={config}
+      showWatermark={showWatermark}
+      ownerPlan={(owner?.plan ?? "free") as Plan}
+    />
+  );
 }

@@ -179,11 +179,11 @@ export function ScratchDate({
           style={{ width: "min(640px, 85vw)", height: 180 }}
         >
           {/* Revealed layer (underneath the foil) */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4 pb-2 bg-[linear-gradient(135deg,var(--theme-curtain)_0%,var(--theme-bg)_100%)]">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4 pb-2 bg-[linear-gradient(135deg,var(--theme-curtain)_0%,var(--theme-bg)_100%)] text-4xl lg:text-6xl">
             <p
               className="font-label font-semibold"
               style={{
-                fontSize: "clamp(26px,7vw,52px)",
+                // fontSize: "clamp(26px,7vw,52px)",
                 color: theme.gold,
                 letterSpacing: "0.15em",
                 textShadow: `0 0 30px ${theme.gold}80`,

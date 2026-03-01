@@ -21,7 +21,7 @@ export function PlanGate({ requires, children, featureName }: Props) {
   if (can(requires)) return <>{children}</>;
 
   return (
-    <div className="relative rounded-xl overflow-hidden">
+    <div className="relative rounded-xl">
       {/* Blurred preview of the locked content */}
       <div
         className="pointer-events-none select-none"
@@ -32,7 +32,7 @@ export function PlanGate({ requires, children, featureName }: Props) {
 
       {/* Upgrade overlay */}
       <div
-        className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6 text-center rounded-xl"
+        className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6! text-center rounded-xl"
         style={{ background: "rgba(8,8,8,0.85)", backdropFilter: "blur(2px)" }}
       >
         <SparklesIcon className="size-5 text-dash-gold" />
@@ -43,8 +43,8 @@ export function PlanGate({ requires, children, featureName }: Props) {
           {requires.charAt(0).toUpperCase() + requires.slice(1)} Plan
         </p>
         <p
-          className="font-display italic text-sm"
-          style={{ color: "#F5F0E870" }}
+          className="font-display italic text-sm font-bold"
+          style={{ color: "#F5F0E8" }}
         >
           {featureName
             ? `${featureName} requires the ${requires} plan or above.`
@@ -52,7 +52,7 @@ export function PlanGate({ requires, children, featureName }: Props) {
         </p>
         <Link
           href="/app/billing"
-          className="font-label text-[11px] tracking-[0.4em] uppercase px-6 py-3 rounded-full
+          className="font-label text-[11px] font-semibold tracking-[0.4em] uppercase px-6! py-2.5! rounded-full
                     transition-all border"
           style={{
             borderColor: "#D4AF3760",
@@ -60,7 +60,9 @@ export function PlanGate({ requires, children, featureName }: Props) {
             background: "#D4AF3715",
           }}
         >
-          Upgrade <ArrowRightIcon className="size-3" />
+          <span className="flex items-center gap-1">
+            Upgrade <ArrowRightIcon className="size-3" />
+          </span>
         </Link>
       </div>
     </div>

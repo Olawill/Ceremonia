@@ -55,14 +55,18 @@ interface FieldProps {
 export function Field({ label, error, hint, children }: FieldProps) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="font-label text-[10px] tracking-[0.4em] uppercase text-dash-gold/70">
+      <label className="font-label text-[10px] tracking-[0.4em] uppercase text-dash-gold/90">
         {label}
       </label>
       {children}
       {error ? (
-        <p className="font-display italic text-xs text-dash-error">{error}</p>
+        <p className="font-display font-semibold italic text-sm text-dash-error">
+          {error}
+        </p>
       ) : hint ? (
-        <p className="font-display italic text-xs text-dash-text/30">{hint}</p>
+        <p className="font-display font-semibold italic text-sm text-dash-text/70">
+          {hint}
+        </p>
       ) : null}
     </div>
   );

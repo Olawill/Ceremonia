@@ -1,3 +1,4 @@
+import { clerkClient } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
@@ -54,6 +55,11 @@ export async function POST(req: NextRequest) {
           stripeCustomerId: sub.customer as string,
         })
         .where(eq(users.id, userId));
+
+      const clerk = await clerkClient();
+      await clerk.users.updateUserMetadata(userId, {
+        publicMetadata: { plan },
+      });
       break;
     }
 
@@ -64,6 +70,11 @@ export async function POST(req: NextRequest) {
       if (!userId) break;
 
       await db.update(users).set({ plan: "free" }).where(eq(users.id, userId));
+
+      const clerk = await clerkClient();
+      await clerk.users.updateUserMetadata(userId, {
+        publicMetadata: { plan: "free" },
+      });
       break;
     }
 
@@ -88,6 +99,11 @@ export async function POST(req: NextRequest) {
           stripeCustomerId: session.customer as string,
         })
         .where(eq(users.id, userId));
+
+      const clerk = await clerkClient();
+      await clerk.users.updateUserMetadata(userId, {
+        publicMetadata: { plan },
+      });
       break;
     }
   }

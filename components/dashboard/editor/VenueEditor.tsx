@@ -60,10 +60,10 @@ export function VenueEditor({ config, onChange }: Props) {
     errors.venueDetails?.root?.message ?? (errors.venueDetails as any)?.message;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5!">
       <p
-        className="font-label text-[10px] tracking-[0.5em] uppercase"
-        style={{ color: "#D4AF3770" }}
+        className="font-label text-[12px] font-semibold tracking-[0.5em] uppercase"
+        style={{ color: "#D4AF37" }}
       >
         Venue &amp; Schedule
       </p>
@@ -77,7 +77,7 @@ export function VenueEditor({ config, onChange }: Props) {
       {fields.map((field, i) => (
         <div
           key={field.id}
-          className="p-4 rounded-xl space-y-3 relative"
+          className="p-4! rounded-xl space-y-3! relative font-semibold"
           style={{ background: "#D4AF3708", border: "1px solid #D4AF3720" }}
         >
           <button
@@ -128,10 +128,10 @@ export function VenueEditor({ config, onChange }: Props) {
       <button
         type="button"
         onClick={() => append({ label: "", value: "", sub: "" })}
-        className="w-full py-3 rounded-xl font-label text-[10px] tracking-[0.4em] uppercase transition-all border"
+        className="w-full py-3! rounded-xl font-label text-[12px] font-semibold tracking-[0.4em] uppercase transition-all border"
         style={{
-          borderColor: "#D4AF3730",
-          color: "#D4AF3770",
+          borderColor: "#D4AF3760",
+          color: "#D4AF37",
           borderStyle: "dashed",
         }}
       >

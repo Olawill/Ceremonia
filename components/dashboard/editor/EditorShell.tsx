@@ -107,24 +107,15 @@ export function EditorShell({ initialConfig, isNew }: Props) {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-full overflow-hidden">
       {showDialog && <NewWeddingDialog onConfirm={handleNewWeddingConfirm} />}
 
       {/* Left — controls */}
-      <div
-        className="w-[420px] shrink-0 flex flex-col border-r overflow-hidden"
-        style={{ borderColor: "#D4AF3718" }}
-      >
+      <div className="w-[420px] shrink-0 flex flex-col border-r overflow-hidden border-[#D4AF3718]">
         {/* Editor header */}
-        <div
-          className="px-6 py-4 border-b flex items-center justify-between shrink-0"
-          style={{ borderColor: "#D4AF3718" }}
-        >
+        <div className="px-6! py-4! border-b flex items-center justify-between shrink-0 border-[#D4AF3718]">
           <div>
-            <p
-              className="font-display italic"
-              style={{ fontSize: 18, color: "#F5F0E8" }}
-            >
+            <p className="font-display italic text-[#F5F0E8] text-xl!">
               {config.bride || "Bride"} & {config.groom || "Groom"}
             </p>
             {!isNew && (
@@ -139,7 +130,7 @@ export function EditorShell({ initialConfig, isNew }: Props) {
           <button
             onClick={handleSave}
             disabled={saveState === "saving"}
-            className="font-label text-[11px] tracking-[0.3em] uppercase px-5 py-2.5
+            className="font-label text-[11px] tracking-[0.3em] uppercase p-2.5!
                       rounded-full border transition-all flex items-center gap-1.5"
             style={{
               borderColor: saveState === "error" ? "#ff4444" : "#D4AF3760",
@@ -192,15 +183,15 @@ export function EditorShell({ initialConfig, isNew }: Props) {
           style={{ borderColor: "#D4AF3718" }}
         >
           <span
-            className="font-label text-[10px] tracking-widest uppercase"
-            style={{ color: "#D4AF3760" }}
+            className="font-label text-[12px] font-semibold tracking-widest uppercase"
+            style={{ color: "#D4AF37" }}
           >
             Live Preview
           </span>
           {isPending && (
             <span
-              className="font-label text-[10px] tracking-widest uppercase"
-              style={{ color: "#D4AF3740" }}
+              className="font-label text-[12px] font-semibold tracking-widest uppercase"
+              style={{ color: "#D4AF37" }}
             >
               Refreshing…
             </span>

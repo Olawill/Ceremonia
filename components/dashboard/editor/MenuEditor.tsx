@@ -90,10 +90,10 @@ export function MenuEditor({ config, onChange }: Props) {
   }, [watch, onChange]);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5!">
       <p
-        className="font-label text-[10px] tracking-[0.5em] uppercase"
-        style={{ color: "#D4AF3770" }}
+        className="font-label text-[12px] font-semibold tracking-[0.5em] uppercase"
+        style={{ color: "#D4AF37" }}
       >
         Wedding Menu
       </p>
@@ -112,11 +112,11 @@ export function MenuEditor({ config, onChange }: Props) {
       <button
         type="button"
         onClick={() => appendCourse({ course: "", items: [{ value: "" }] })}
-        className="w-full py-3 rounded-xl font-label text-[10px] tracking-[0.4em]
+        className="w-full py-3! rounded-xl font-label text-[12px] font-semibold tracking-[0.4em]
                   uppercase transition-all border"
         style={{
-          borderColor: "#D4AF3730",
-          color: "#D4AF3770",
+          borderColor: "#D4AF3760",
+          color: "#D4AF37",
           borderStyle: "dashed",
         }}
       >
@@ -155,7 +155,7 @@ function CourseCard({
 
   return (
     <div
-      className="p-4 rounded-xl space-y-4 relative"
+      className="p-4! rounded-xl space-y-4! relative font-semibold"
       style={{ background: "#D4AF3708", border: "1px solid #D4AF3720" }}
     >
       <button
@@ -175,10 +175,10 @@ function CourseCard({
         />
       </Field>
 
-      <div className="space-y-2">
+      <div className="space-y-2!">
         <p
-          className="font-label text-[10px] tracking-[0.3em] uppercase"
-          style={{ color: "#D4AF3760" }}
+          className="font-label text-[12px] font-semibold tracking-[0.3em] uppercase"
+          style={{ color: "#D4AF37" }}
         >
           Dishes
         </p>
@@ -233,8 +233,8 @@ function CourseCard({
         <button
           type="button"
           onClick={() => appendItem({ value: "" })}
-          className="font-label text-[10px] tracking-[0.3em] uppercase"
-          style={{ color: "#D4AF3760" }}
+          className="font-label text-[10px] font-semibold tracking-[0.3em] uppercase"
+          style={{ color: "#D4AF37" }}
         >
           <span className="flex items-center justify-center gap-1.5">
             <PlusIcon className="size-3" />

@@ -10,6 +10,7 @@ import { MenuEditor } from "@/components/dashboard/editor/MenuEditor";
 import { RSVPSettings } from "@/components/dashboard/editor/RSVPSettings";
 import { TimelineEditor } from "@/components/dashboard/editor/TimelineEditor";
 import { VenueEditor } from "@/components/dashboard/editor/VenueEditor";
+import clsx from "clsx";
 
 const TABS = [
   { id: "design", label: "Design" },
@@ -33,21 +34,17 @@ export function EditorSidebar({ config, onChange }: Props) {
   return (
     <div className="flex flex-col h-full">
       {/* Tab bar */}
-      <div
-        className="flex border-b shrink-0"
-        style={{ borderColor: "#D4AF3718" }}
-      >
+      <div className="flex border-b shrink-0 text-[#D4AF3718]">
         {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className="flex-1 py-3.5 font-label text-[10px] tracking-[0.3em] uppercase
-                      transition-all duration-200 border-b-2"
-            style={{
-              color: activeTab === tab.id ? "#D4AF37" : "#D4AF3750",
-              borderBottomColor:
-                activeTab === tab.id ? "#D4AF37" : "transparent",
-            }}
+            className={clsx(
+              "flex-1 py-3.5! font-label text-[10px] font-bold tracking-[0.3em] uppercase transition-all duration-200 border-b-2",
+              activeTab === tab.id
+                ? "text-[#D4AF37] border-b-[#D4AF37]"
+                : "text-[#D4AF37]/50 transparent",
+            )}
           >
             {tab.label}
           </button>
@@ -55,7 +52,7 @@ export function EditorSidebar({ config, onChange }: Props) {
       </div>
 
       {/* Tab content */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+      <div className="flex-1 overflow-y-auto p-2! space-y-6!">
         {activeTab === "design" && (
           <DesignPanel config={config} onChange={onChange} />
         )}

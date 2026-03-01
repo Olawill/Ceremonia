@@ -66,10 +66,10 @@ export function RSVPSettings({ config, onChange }: Props) {
   }, [watch, onChange]);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5! font-semibold">
       <p
-        className="font-label text-[10px] tracking-[0.5em] uppercase"
-        style={{ color: "#D4AF3770" }}
+        className="font-label text-[12px] font-semibold tracking-[0.5em] uppercase"
+        style={{ color: "#D4AF37" }}
       >
         RSVP Settings
       </p>
@@ -98,8 +98,8 @@ export function RSVPSettings({ config, onChange }: Props) {
       />
 
       <p
-        className="font-label text-[10px] tracking-[0.5em] uppercase"
-        style={{ color: "#D4AF3770" }}
+        className="font-label text-[10px] font-semibold tracking-[0.5em] uppercase"
+        style={{ color: "#D4AF37" }}
       >
         Access
       </p>
@@ -164,7 +164,7 @@ function Toggle({
       </div>
       <span
         className="font-display italic text-sm"
-        style={{ color: "#F5F0E870" }}
+        style={{ color: "#F5F0E8" }}
       >
         {label}
       </span>

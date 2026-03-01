@@ -14,22 +14,19 @@ interface Props {
 
 const curtainStyles = [
   { label: "velvet", isFree: true },
-  { isFree: true, label: "drape" },
+  { isFree: false, label: "drape" },
 ] as const;
 
 export function DesignPanel({ config, onChange }: Props) {
   const { features } = usePlan();
 
   return (
-    <div className="space-y-6">
-      <p
-        className="font-label text-[10px] tracking-[0.5em] uppercase"
-        style={{ color: "#D4AF3770" }}
-      >
+    <div className="space-y-6!">
+      <p className="font-label text-[12px] text-[#D4AF37] font-bold tracking-[0.5em] uppercase">
         Theme
       </p>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-3!">
         {(Object.keys(themes) as ThemeKey[])
           .filter((_, i) => features.allBuiltInThemes || i < 3)
           .map((key) => {
@@ -53,7 +50,7 @@ export function DesignPanel({ config, onChange }: Props) {
                   }}
                 />
                 <span
-                  className="font-label text-[9px] tracking-widest uppercase"
+                  className="font-label text-[11px] tracking-widest uppercase"
                   style={{ color: t.gold }}
                 >
                   {t.name}
@@ -71,10 +68,7 @@ export function DesignPanel({ config, onChange }: Props) {
         }}
       />
 
-      <p
-        className="font-label text-[10px] tracking-[0.5em] uppercase"
-        style={{ color: "#D4AF3770" }}
-      >
+      <p className="font-label text-[12px] text-[#D4AF37] font-bold tracking-[0.5em] uppercase">
         Curtain Style
       </p>
 
@@ -86,7 +80,7 @@ export function DesignPanel({ config, onChange }: Props) {
                 <button
                   key={label}
                   onClick={() => onChange({ curtainStyle: label })}
-                  className="py-4 rounded-xl border font-label text-[10px] tracking-widest
+                  className="py-4! rounded-xl border font-label text-[12px] font-bold! tracking-widest
                       uppercase transition-all"
                   style={{
                     borderColor:
@@ -99,7 +93,7 @@ export function DesignPanel({ config, onChange }: Props) {
                         : "transparent",
                   }}
                 >
-                  {label === "velvet" ? "🎭 Velvet" : "🪢 Draped"}
+                  {"🪢 Draped"}
                 </button>
               </PlanGate>
             );
@@ -109,7 +103,7 @@ export function DesignPanel({ config, onChange }: Props) {
             <button
               key={label}
               onClick={() => onChange({ curtainStyle: label })}
-              className="py-4 rounded-xl border font-label text-[10px] tracking-widest
+              className="py-4! rounded-xl border font-label text-[12px] font-bold! tracking-widest
                       uppercase transition-all"
               style={{
                 borderColor:

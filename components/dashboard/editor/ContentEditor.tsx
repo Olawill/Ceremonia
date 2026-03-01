@@ -58,7 +58,7 @@ export function ContentEditor({ config, onChange }: Props) {
   }, [watch, onChange]);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5! font-semibold">
       <SectionHeading>The Couple</SectionHeading>
 
       <div className="grid grid-cols-2 gap-4">
@@ -139,8 +139,8 @@ export function ContentEditor({ config, onChange }: Props) {
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
     <p
-      className="font-label text-[10px] tracking-[0.5em] uppercase pt-2"
-      style={{ color: "#D4AF3770" }}
+      className="font-label text-[12px] font-semibold tracking-[0.5em] uppercase pt-2"
+      style={{ color: "#D4AF37" }}
     >
       {children}
     </p>

@@ -18,6 +18,8 @@ import { AudioPlayer } from "@/components/ui/AudioPlayer";
 import { ThemeSelector } from "@/components/ui/ThemeSelector";
 
 import { useTheme } from "@/lib/ThemeContext";
+import { Plan } from "@/lib/plans";
+
 import {
   DEMO_WEDDING_CONFIG,
   FALLBACK_LOCATION,
@@ -28,11 +30,13 @@ import {
 interface WeddingEngineProps {
   config?: WeddingConfig;
   showWatermark?: boolean;
+  ownerPlan?: Plan;
 }
 
 export function WeddingEngine({
   config = DEMO_WEDDING_CONFIG,
   showWatermark,
+  ownerPlan = "free",
 }: WeddingEngineProps) {
   const { theme } = useTheme();
   const [curtainOpen, setCurtainOpen] = useState(false);
@@ -65,6 +69,7 @@ export function WeddingEngine({
       <ThemeSelector
         curtainStyle={curtainStyle}
         onCurtainChange={setCurtainStyle}
+        ownerPlan={ownerPlan}
       />
       <AudioPlayer
         autoPlay={curtainOpen}
