@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { Field, Input } from "@/components/ui/FormPrimitives";
 import clsx from "clsx";
+import { ArrowRightIcon, SparklesIcon } from "lucide-react";
 
 const schema = z.object({
   bride: z.string().min(1, "Required"),
@@ -37,11 +38,13 @@ export function NewWeddingDialog({ onConfirm }: Props) {
   return (
     // Full-screen overlay
     <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-dash-bg/95 backdrop-blur-md">
-      <div className="w-full max-w-md rounded-2xl p-10 space-y-8 bg-dash-surface border border-dash-border">
+      <div className="w-full max-w-md mx-auto rounded-2xl p-10 space-y-8 bg-dash-surface border border-dash-border">
         {/* Header */}
         <div className="text-center space-y-3">
           <p className="font-label text-xs tracking-[0.5em] uppercase text-dash-gold/70">
-            ✦ New Wedding
+            <span className="flex items-center justify-center gap-2">
+              <SparklesIcon className="size-3.5" /> New Wedding
+            </span>
           </p>
           <h2 className="font-display font-light text-3xl text-dash-text tracking-wide">
             Let's get started
@@ -102,7 +105,9 @@ export function NewWeddingDialog({ onConfirm }: Props) {
                 : "bg-white/5 border border-dash-border text-dash-gold/25 cursor-not-allowed",
             )}
           >
-            Open Editor →
+            <span className="flex items-center justify-center gap-2">
+              Open Editor <ArrowRightIcon className="w-3.5 h-3.5" />
+            </span>
           </button>
         </form>
       </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useTheme } from "@/lib/ThemeContext";
+import clsx from "clsx";
 import gsap from "gsap";
 import { useRef, useState } from "react";
 
@@ -410,19 +411,17 @@ export function DrapedCurtain({ onOpen }: Props) {
       ref={wrapperRef}
       onClick={handleClick}
       onMouseMove={handleMouseMove}
-      className="fixed inset-0 z-100 overflow-hidden"
-      style={{
-        cursor: clicked ? "default" : "pointer",
-        pointerEvents: done ? "none" : "all",
-        background: "#050505",
-      }}
+      className={clsx(
+        "fixed inset-0 z-100 overflow-hidden bg-[#050505]",
+        clicked ? "cursor-default" : "cursor-pointer",
+        done ? "pointer-events-none" : "pointer-events-auto",
+      )}
     >
       {/* ── Moving left panel ── */}
       {!opened && (
         <div
           ref={leftPanelRef}
-          className="absolute top-0 bottom-0 left-0 overflow-hidden"
-          style={{ width: "50%", boxShadow: "12px 0 50px rgba(0,0,0,0.9)" }}
+          className="absolute top-0 bottom-0 left-0 w-1/2 overflow-hidden shadow-[12px_0_50px_rgba(0,0,0,0.9)]"
         >
           <div className="absolute inset-0 flex">{renderFolds("left", 20)}</div>
           <div

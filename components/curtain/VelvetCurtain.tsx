@@ -1,6 +1,7 @@
 "use client";
 
 import { useTheme } from "@/lib/ThemeContext";
+import clsx from "clsx";
 import gsap from "gsap";
 import { useRef, useState } from "react";
 
@@ -59,11 +60,11 @@ export function VelvetCurtain({ onOpen }: Props) {
       ref={wrapperRef}
       onClick={handleClick}
       onMouseMove={handleMouseMove}
-      className="fixed inset-0 z-100 flex"
-      style={{
-        cursor: clicked ? "default" : "pointer",
-        pointerEvents: done ? "none" : "all",
-      }}
+      className={clsx(
+        "fixed inset-0 z-100 flex",
+        clicked ? "cursor-default" : "cursor-pointer",
+        done ? "pointer-events-none" : "pointer-events-auto",
+      )}
     >
       {/* ── Top valance ─────────────────────────────────────────────────── */}
       <div
@@ -93,11 +94,10 @@ export function VelvetCurtain({ onOpen }: Props) {
       {/* ── Left panel ─────────────────────────────────────────────────── */}
       <div
         ref={leftRef}
-        className="absolute top-0 bottom-0 left-0 overflow-hidden"
-        style={{
-          width: "50%",
-          boxShadow: clicked ? "none" : "10px 0 40px rgba(0,0,0,0.8)",
-        }}
+        className={clsx(
+          "absolute top-0 bottom-0 left-0 w-1/2 overflow-hidden",
+          !clicked && "shadow-[10px_0_40px_rgba(0,0,0,0.8)]",
+        )}
       >
         <div className="absolute inset-0 flex">
           {Array.from({ length: halfFolds }).map((_, i) => (
@@ -135,11 +135,10 @@ export function VelvetCurtain({ onOpen }: Props) {
       {/* ── Right panel ────────────────────────────────────────────────── */}
       <div
         ref={rightRef}
-        className="absolute top-0 bottom-0 right-0 overflow-hidden"
-        style={{
-          width: "50%",
-          boxShadow: clicked ? "none" : "-10px 0 40px rgba(0,0,0,0.8)",
-        }}
+        className={clsx(
+          "absolute top-0 bottom-0 right-0 w-1/2 overflow-hidden",
+          !clicked && "shadow-[-10px_0_40px_rgba(0,0,0,0.8)]",
+        )}
       >
         <div className="absolute inset-0 flex">
           {Array.from({ length: halfFolds }).map((_, i) => (
@@ -176,15 +175,7 @@ export function VelvetCurtain({ onOpen }: Props) {
       {/* ── Centre CTA ─────────────────────────────────────────────────── */}
       {!clicked && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 z-10">
-          <p
-            className="font-display animate-pulse-soft text-center"
-            style={{
-              fontSize: "clamp(28px,5vw,56px)",
-              color: theme.gold,
-              textShadow: `0 0 40px ${theme.gold}80, 0 2px 4px rgba(0,0,0,0.9)`,
-              letterSpacing: "0.15em",
-            }}
-          >
+          <p className="font-display animate-pulse-soft text-center text-[clamp(28px,5vw,56px)] text-(--theme-gold) [text-shadow:0_0_40px_var(--theme-gold-80),0_2px_4px_rgba(0,0,0,0.9)] tracking-[0.15em]">
             You Are Invited
           </p>
           <p

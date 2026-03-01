@@ -1,7 +1,9 @@
 "use client";
 
-import { useTheme } from "@/lib/ThemeContext";
+import { MusicIcon, PauseIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+
+import { useTheme } from "@/lib/ThemeContext";
 
 interface AudioPlayerProps {
   autoPlay: boolean;
@@ -70,7 +72,11 @@ export function AudioPlayer({
           boxShadow: playing ? `0 0 20px ${theme.gold}40` : "none",
         }}
       >
-        {playing ? "⏸" : "♫"}
+        {playing ? (
+          <PauseIcon className="size-4" />
+        ) : (
+          <MusicIcon className="size-4" />
+        )}
       </button>
 
       {/* Animated bars when playing */}

@@ -29,6 +29,8 @@ export function ThemeProvider({
     initialThemeKey ?? defaultThemeKey,
   );
 
+  const theme = themes[themeKey];
+
   const setThemeKey = (key: ThemeKey) => {
     setThemeKeyState(key);
     document.documentElement.setAttribute(
@@ -42,6 +44,16 @@ export function ThemeProvider({
     if (themeKey !== "royal") {
       document.documentElement.setAttribute("data-theme", themeKey);
     }
+
+    const root = document.documentElement;
+    root.style.setProperty("--theme-gold", theme.gold);
+    root.style.setProperty("--theme-gold-light", theme.goldLight);
+    root.style.setProperty("--theme-curtain", theme.curtain);
+    root.style.setProperty("--theme-curtain-dark", theme.curtainDark);
+    root.style.setProperty("--theme-curtain-sheen", theme.curtainSheen);
+    root.style.setProperty("--theme-bg", theme.bg);
+    root.style.setProperty("--theme-bg-mid", theme.bgMid);
+    root.style.setProperty("--theme-text", theme.text);
   }, [themeKey]);
 
   return (

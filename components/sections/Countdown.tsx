@@ -10,6 +10,7 @@ import {
   FALLBACK_LOCATION,
   VenueEvent,
 } from "@/types/wedding";
+import clsx from "clsx";
 
 const WEDDING_DATE = new Date("2026-07-12T16:00:00");
 
@@ -104,10 +105,7 @@ function CountUnit({
         )}
       </div>
 
-      <p
-        className="font-label text-[11px] font-bold tracking-[0.45em] uppercase"
-        style={{ color: `${theme.gold}70` }}
-      >
+      <p className="font-label text-[11px] font-bold tracking-[0.45em] uppercase text-(--theme-gold) opacity-70">
         {label}
       </p>
     </div>
@@ -158,11 +156,12 @@ export function Countdown({
     >
       {/* Heading */}
       <div
-        className="text-center space-y-4 transition-all duration-1000"
-        style={{
-          opacity: visible ? 1 : 0,
-          transform: visible ? "translateY(0)" : "translateY(40px)",
-        }}
+        className={clsx(
+          "text-center space-y-4 transition-all duration-1000",
+          visible
+            ? "opacity-100 translate-y-0"
+            : "opacity-0 translate-y-[40px]",
+        )}
       >
         <p
           className="font-label uppercase tracking-[0.5em] text-[14px] font-semibold"

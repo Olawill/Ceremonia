@@ -1,10 +1,11 @@
 "use client";
 
+import clsx from "clsx";
+import { ArrowRightIcon, Loader2Icon, StarIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { useApi } from "@/hooks/useApi";
-
 import type { Plan } from "@/lib/plans";
 import { PRICING } from "@/lib/plans";
 
@@ -113,48 +114,46 @@ export function BillingClient({ currentPlan, hasStripeAccount }: Props) {
   };
 
   return (
-    <div className="p-10 max-w-6xl">
-      {/* Header */}
+    <div className="w-full p-10 max-w-6xl">
+      {/* ── Header ── */}
       <div className="mb-10 space-y-2">
-        <p
-          className="font-label text-xs tracking-[0.5em] uppercase"
-          style={{ color: "#D4AF3770" }}
-        >
+        <p className="font-label text-xs font-semibold tracking-[0.5em] uppercase text-dash-gold/70">
           Billing
         </p>
-        <h1
-          className="font-display font-light"
-          style={{ fontSize: "clamp(28px,4vw,42px)", letterSpacing: "0.04em" }}
-        >
+        <h1 className="font-display font-light text-[clamp(28px,4vw,42px)] tracking-[0.04em] text-dash-text">
           Plans & Pricing
         </h1>
-        <p
-          className="font-display italic"
-          style={{ color: "#F5F0E850", fontSize: 16 }}
-        >
+        <p className="font-display italic font-semibold text-base text-dash-text/50 mb-6!">
           Current plan:{" "}
-          <span style={{ color: "#D4AF37" }}>
+          <span className="text-dash-gold">
             {currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)}
           </span>
         </p>
       </div>
 
-      {/* Manage subscription button */}
+      {/* ── Manage subscription ── */}
       {hasStripeAccount && currentPlan !== "free" && (
         <div className="mb-8">
           <button
             onClick={handlePortal}
             disabled={loading === "portal"}
-            className="font-label text-xs tracking-[0.4em] uppercase px-6 py-3 rounded-full border transition-all"
-            style={{ borderColor: "#D4AF3740", color: "#D4AF3780" }}
+            className="flex items-center gap-2 font-label text-xs tracking-[0.4em] uppercase px-6 py-3 rounded-full border border-dash-border-md text-dash-gold/80 transition-all hover:text-dash-gold hover:border-dash-border-hi disabled:opacity-50"
           >
-            {loading === "portal" ? "Redirecting…" : "Manage Subscription →"}
+            {loading === "portal" ? (
+              <>
+                <Loader2Icon className="size-3.5 animate-spin" /> Redirecting…
+              </>
+            ) : (
+              <>
+                Manage Subscription <ArrowRightIcon className="size-3.5" />
+              </>
+            )}
           </button>
         </div>
       )}
 
-      {/* Pricing grid */}
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      {/* ── Pricing grid ── */}
+      <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {TIERS.map((tier) => {
           const isCurrent = tier.plan === currentPlan;
           const isHighlighted = "highlighted" in tier && tier.highlighted;
@@ -162,58 +161,51 @@ export function BillingClient({ currentPlan, hasStripeAccount }: Props) {
           return (
             <div
               key={tier.plan}
-              className="rounded-2xl p-7 flex flex-col gap-5 relative"
-              style={{
-                background: isHighlighted ? "#D4AF3710" : "#D4AF3705",
-                border: `1px solid ${isCurrent ? "#D4AF37" : isHighlighted ? "#D4AF3740" : "#D4AF3718"}`,
-              }}
+              className={clsx(
+                "rounded-2xl p-7! flex flex-col gap-5 relative",
+                isHighlighted
+                  ? "bg-dash-gold/6 border border-dash-border-md"
+                  : "bg-dash-gold/2 border border-dash-border",
+                isCurrent && "border-dash-gold",
+              )}
             >
+              {/* Current badge */}
               {isCurrent && (
                 <div
-                  className="absolute top-4 right-4 font-label text-[9px] tracking-widest
-                              uppercase px-2.5 py-1 rounded-full"
-                  style={{ background: "#D4AF3720", color: "#D4AF37" }}
+                  className="absolute top-4 right-4 font-label font-semibold text-[9px] tracking-widest
+                                uppercase px-2.5! py-1! rounded-full
+                                bg-dash-gold/10 text-dash-gold"
                 >
                   Current
                 </div>
               )}
 
-              <div>
-                <p
-                  className="font-label text-xs tracking-widest uppercase mb-1"
-                  style={{ color: "#D4AF37" }}
-                >
+              {/* Plan header */}
+              <div className="space-y-0.5 font-semibold">
+                <p className="font-label text-sm tracking-widest uppercase text-dash-gold">
                   {tier.name}
                 </p>
-                <p
-                  className="font-display font-light"
-                  style={{ fontSize: 28, color: "#F5F0E8" }}
-                >
+                <p className="font-display font-light text-[28px] text-dash-text">
                   {tier.price}
                 </p>
-                <p
-                  className="font-display italic text-sm"
-                  style={{ color: "#F5F0E850" }}
-                >
+                <p className="font-display italic text-dash-text/50">
                   {tier.description}
                 </p>
               </div>
 
-              <ul className="space-y-2 flex-1">
+              {/* Feature list */}
+              <ul className="space-y-2! flex-1">
                 {tier.features.map((f) => (
                   <li key={f} className="flex items-start gap-2">
-                    <span style={{ color: "#D4AF37", flexShrink: 0 }}>✦</span>
-                    <span
-                      className="font-display italic text-sm"
-                      style={{ color: "#F5F0E870" }}
-                    >
+                    <StarIcon className="size-3 text-dash-gold fill-dash-gold shrink-0 mt-0.5" />
+                    <span className="font-display italic text-dash-text/70">
                       {f}
                     </span>
                   </li>
                 ))}
               </ul>
 
-              {/* CTA buttons */}
+              {/* CTA */}
               {tier.cta && !isCurrent && (
                 <div className="flex flex-col gap-2">
                   {"pricingMonthly" in tier && tier.pricingMonthly && (
@@ -225,18 +217,16 @@ export function BillingClient({ currentPlan, hasStripeAccount }: Props) {
                         )
                       }
                       disabled={!!loading}
-                      className="w-full py-3 rounded-xl font-label text-[10px] tracking-[0.3em]
-                                uppercase transition-all border"
-                      style={{
-                        borderColor: "#D4AF3760",
-                        color: "#D4AF37",
-                        background: "#D4AF3715",
-                        opacity: loading ? 0.6 : 1,
-                      }}
+                      className="flex items-center justify-center gap-1.5 w-full py-2! rounded-xl font-label text-[14px] tracking-[0.3em] uppercase transition-all border border-dash-border-hi text-dash-gold bg-dash-gold/8 hover:bg-dash-gold/[0.14] disabled:opacity-50 cursor-pointer"
                     >
-                      {loading === tier.pricingMonthly.priceId
-                        ? "Redirecting…"
-                        : tier.pricingMonthly.label}
+                      {loading === tier.pricingMonthly.priceId ? (
+                        <>
+                          <Loader2Icon className="size-3 animate-spin" />{" "}
+                          Redirecting…
+                        </>
+                      ) : (
+                        tier.pricingMonthly.label
+                      )}
                     </button>
                   )}
                   {"pricingOnce" in tier && tier.pricingOnce && (
@@ -245,13 +235,16 @@ export function BillingClient({ currentPlan, hasStripeAccount }: Props) {
                         handleCheckout(tier.pricingOnce!.priceId, "payment")
                       }
                       disabled={!!loading}
-                      className="w-full py-3 rounded-xl font-label text-[10px] tracking-[0.3em]
-                                uppercase transition-all border"
-                      style={{ borderColor: "#D4AF3720", color: "#D4AF3760" }}
+                      className="flex items-center justify-center gap-1.5 w-full py-2! rounded-xl font-label text-[14px] tracking-[0.3em] uppercase transition-all border border-dash-border text-dash-gold/60 hover:text-dash-gold hover:border-dash-border-md disabled:opacity-50 cursor-pointer"
                     >
-                      {loading === tier.pricingOnce.priceId
-                        ? "Redirecting…"
-                        : tier.pricingOnce.label}
+                      {loading === tier.pricingOnce.priceId ? (
+                        <>
+                          <Loader2Icon className="size-3 animate-spin" />{" "}
+                          Redirecting…
+                        </>
+                      ) : (
+                        tier.pricingOnce.label
+                      )}
                     </button>
                   )}
                 </div>

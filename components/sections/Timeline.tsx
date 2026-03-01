@@ -1,6 +1,7 @@
 "use client";
 
 import { useTheme } from "@/lib/ThemeContext";
+import clsx from "clsx";
 import gsap from "gsap";
 import ScrollTrigger from "gsap/ScrollTrigger";
 import { useEffect, useRef } from "react";
@@ -115,54 +116,33 @@ export function Timeline({ events }: TimelineProps) {
           return (
             <div
               key={ev.year}
-              className={`timeline-item relative flex items-center gap-10 mb-20
-                ${isLeft ? "flex-row" : "flex-row-reverse"}`}
+              className={clsx(
+                "timeline-item relative flex items-center gap-10 mb-20",
+                isLeft ? "flex-row" : "flex-row-reverse",
+              )}
             >
               {/* Card */}
               <div
-                className="w-[calc(50%-32px)] rounded-xl p-7 backdrop-blur-sm"
-                style={{
-                  background: `linear-gradient(135deg, ${theme.curtain}18, ${theme.bg}90)`,
-                  border: `1px solid ${theme.gold}28`,
-                  boxShadow: `0 4px 40px rgba(0,0,0,0.5), inset 0 1px 0 ${theme.gold}18`,
-                  textAlign: isLeft ? "right" : "left",
-                  padding: "8px",
-                }}
+                className={clsx(
+                  "w-[calc(50%-32px)] rounded-xl p-4! backdrop-blur-sm",
+                  "bg-[linear-gradient(135deg,var(--theme-curtain)_0%,var(--theme-bg)_90%)]",
+                  "border border-(--theme-gold) shadow-[0_4px_40px_rgba(0,0,0,0.5)]",
+                  isLeft ? "text-right" : "text-left",
+                )}
               >
-                <p
-                  className="font-label font-bold text-[13px] tracking-[0.4em] mb-2"
-                  style={{ color: `${theme.gold}80` }}
-                >
+                <p className="font-label font-bold text-[13px] tracking-[0.4em] mb-2 text-(--theme-gold) opacity-80">
                   {ev.year}
                 </p>
-                <h3
-                  className="font-display font-light mb-2"
-                  style={{
-                    fontSize: "clamp(18px,3vw,26px)",
-                    color: theme.text,
-                    letterSpacing: "0.05em",
-                  }}
-                >
+                <h3 className="font-display font-light mb-2 text-[clamp(18px,3vw,26px)] text-(--theme-text) tracking-[0.05em]">
                   {ev.title}
                 </h3>
-                <p
-                  className="font-display italic leading-relaxed"
-                  style={{ color: `${theme.text}75`, fontSize: 16 }}
-                >
+                <p className="font-display italic leading-relaxed text-base text-(--theme-text) opacity-75">
                   {ev.desc}
                 </p>
               </div>
 
               {/* Centre dot */}
-              <div
-                className="absolute left-1/2 -translate-x-1/2 w-12 h-12 shrink-0 rounded-full flex items-center justify-center text-lg z-10"
-                style={{
-                  background: `radial-gradient(circle, ${theme.gold}, ${theme.curtain})`,
-                  border: `2px solid ${theme.gold}`,
-                  boxShadow: `0 0 30px ${theme.gold}60, 0 0 60px ${theme.gold}20`,
-                  color: theme.text,
-                }}
-              >
+              <div className="absolute left-1/2 -translate-x-1/2 w-12 h-12 shrink-0 rounded-full flex items-center justify-center text-lg z-10 text-(--theme-text) border-2 border-(--theme-gold) bg-[radial-gradient(circle,var(--theme-gold),var(--theme-curtain))] shadow-[0_0_30px_var(--theme-gold)]">
                 {ev.icon}
               </div>
 

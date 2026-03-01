@@ -1,5 +1,6 @@
 "use client";
 
+import { PaletteIcon } from "lucide-react";
 import { useState } from "react";
 
 import { useTheme } from "@/lib/ThemeContext";
@@ -20,7 +21,7 @@ export function ThemeSelector({ curtainStyle, onCurtainChange }: Props) {
       <button
         onClick={() => setOpen((o) => !o)}
         className="font-label text-[11px] tracking-[0.3em] px-8 py-4 rounded-full border
-                backdrop-blur-md transition-all duration-300 cursor-pointer"
+                backdrop-blur-md transition-all duration-300 cursor-pointer flex items-center gap-2"
         style={{
           borderColor: `${theme.gold}60`,
           background: `${theme.bg}CC`,
@@ -28,7 +29,7 @@ export function ThemeSelector({ curtainStyle, onCurtainChange }: Props) {
           padding: "8px",
         }}
       >
-        ◈ THEME
+        <PaletteIcon className="size-4" /> THEME
       </button>
 
       {open && (

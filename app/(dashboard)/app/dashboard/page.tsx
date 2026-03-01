@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { db } from "@/db";
 import { weddings } from "@/db/schema";
+import { SparklesIcon } from "lucide-react";
 
 export default async function DashboardPage() {
   const { userId } = await auth();
@@ -14,10 +15,10 @@ export default async function DashboardPage() {
     : [];
 
   return (
-    <div className="p-10 max-w-5xl">
+    <div className="w-full">
       <div className="mb-10 space-y-2">
         <p
-          className="font-label text-sm font-semibold tracking-[0.5em] uppercase"
+          className="font-label text-sm font-bold tracking-[0.5em] uppercase"
           style={{ color: "#D4AF3770" }}
         >
           Dashboard
@@ -31,22 +32,17 @@ export default async function DashboardPage() {
       </div>
 
       {myWeddings.length === 0 ? (
-        <div
-          className="rounded-2xl p-16 text-center border border-[#D4AF3720] bg-[#D4AF3706]"
-          // style={{ borderColor: "#D4AF3720", background: "#D4AF3706" }}
-        >
-          <p
-            className="font-display italic font-semibold text-2xl mb-6 text-[#F5F0E850]"
-            // style={{ color: "" }}
-          >
+        <div className="rounded-2xl p-16! text-center border border-[#D4AF3720] bg-[#D4AF3706] space-y-4!">
+          <p className="font-display italic font-semibold text-2xl mb-6 text-[#F5F0E8]">
             No weddings yet
           </p>
           <Link
             href="/app/editor/new"
-            className="font-label text-xs tracking-[0.4em] font-semibold h-12 uppercase px-8 py-6 rounded-full border transition-all border-[#D4AF3760] text-[#D4AF37]"
-            // style={{ borderColor: "#D4AF3760", color: "#D4AF37" }}
+            className="font-label text-sm tracking-[0.4em] font-semibold h-12 uppercase px-8! py-3! rounded-full border transition-all border-[#D4AF3760] text-[#D4AF37] flex items-center! justify-center! w-full"
           >
-            ✦ Create Your First Wedding
+            <span className="flex items-center gap-2 w-fit">
+              <SparklesIcon className="size-4" /> Create Your First Wedding
+            </span>
           </Link>
         </div>
       ) : (
@@ -97,14 +93,17 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      <Link
-        href="/app/editor/new"
-        className="inline-flex items-center gap-2 mt-8 font-label text-xs
-                  tracking-[0.4em] uppercase transition-all"
-        style={{ color: "#D4AF3770" }}
-      >
-        ✦ Add another wedding
-      </Link>
+      {myWeddings.length > 0 && (
+        <Link
+          href="/app/editor/new"
+          className="inline-flex items-center gap-2 mt-8! font-label text-xs
+                  tracking-[0.4em] uppercase transition-all rounded-lg border-[#D4AF3760] text-[#D4AF37]"
+        >
+          <span className="flex items-center gap-2 w-fit">
+            <SparklesIcon className="size-4" /> Add another wedding
+          </span>
+        </Link>
+      )}
     </div>
   );
 }

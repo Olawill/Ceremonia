@@ -8,6 +8,7 @@ import { z } from "zod";
 import type { VenueEvent, WeddingConfig } from "@/types/wedding";
 
 import { Field, Input } from "@/components/ui/FormPrimitives";
+import { PlusIcon, XIcon } from "lucide-react";
 
 const schema = z.object({
   venueDetails: z
@@ -85,7 +86,7 @@ export function VenueEditor({ config, onChange }: Props) {
             className="absolute top-3 right-3 font-label text-[10px] tracking-widest"
             style={{ color: "#D4AF3750" }}
           >
-            ✕
+            <XIcon className="size-3" />
           </button>
 
           <div className="grid grid-cols-2 gap-3">
@@ -127,15 +128,17 @@ export function VenueEditor({ config, onChange }: Props) {
       <button
         type="button"
         onClick={() => append({ label: "", value: "", sub: "" })}
-        className="w-full py-3 rounded-xl font-label text-[10px] tracking-[0.4em]
-                   uppercase transition-all border"
+        className="w-full py-3 rounded-xl font-label text-[10px] tracking-[0.4em] uppercase transition-all border"
         style={{
           borderColor: "#D4AF3730",
           color: "#D4AF3770",
           borderStyle: "dashed",
         }}
       >
-        + Add Row
+        <span className="flex items-center justify-center gap-1.5">
+          <PlusIcon className="size-3" />
+          Add Row
+        </span>
       </button>
     </div>
   );

@@ -11,6 +11,12 @@ import { DEMO_WEDDING_CONFIG } from "@/types/wedding";
 import { EditorSidebar } from "@/components/dashboard/editor/EditorSidebar";
 import { NewWeddingDialog } from "@/components/dashboard/editor/NewWeddingDialog";
 import { PreviewFrame } from "@/components/dashboard/editor/PreviewFrame";
+import {
+  AlertCircleIcon,
+  CheckIcon,
+  Loader2Icon,
+  SaveIcon,
+} from "lucide-react";
 
 interface Props {
   initialConfig: WeddingConfig | null;
@@ -134,7 +140,7 @@ export function EditorShell({ initialConfig, isNew }: Props) {
             onClick={handleSave}
             disabled={saveState === "saving"}
             className="font-label text-[11px] tracking-[0.3em] uppercase px-5 py-2.5
-                      rounded-full border transition-all"
+                      rounded-full border transition-all flex items-center gap-1.5"
             style={{
               borderColor: saveState === "error" ? "#ff4444" : "#D4AF3760",
               color:
@@ -147,13 +153,26 @@ export function EditorShell({ initialConfig, isNew }: Props) {
               opacity: saveState === "saving" ? 0.6 : 1,
             }}
           >
-            {saveState === "saving"
-              ? "Saving…"
-              : saveState === "saved"
-                ? "✓ Saved"
-                : saveState === "error"
-                  ? "Error"
-                  : "Save"}
+            {saveState === "saving" && (
+              <>
+                <Loader2Icon className="size-3.5 animate-spin" /> Saving…
+              </>
+            )}
+            {saveState === "saved" && (
+              <>
+                <CheckIcon className="size-3.5" /> Saved
+              </>
+            )}
+            {saveState === "error" && (
+              <>
+                <AlertCircleIcon className="size-3.5" /> Error
+              </>
+            )}
+            {saveState === "idle" && (
+              <>
+                <SaveIcon className="size-3.5" /> Save
+              </>
+            )}
           </button>
         </div>
 

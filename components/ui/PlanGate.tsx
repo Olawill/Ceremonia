@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { usePlan } from "@/hooks/usePlan";
 
 import type { Plan } from "@/lib/plans";
+import { ArrowRightIcon, SparklesIcon } from "lucide-react";
 
 interface Props {
   requires: Plan;
@@ -34,7 +35,7 @@ export function PlanGate({ requires, children, featureName }: Props) {
         className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6 text-center rounded-xl"
         style={{ background: "rgba(8,8,8,0.85)", backdropFilter: "blur(2px)" }}
       >
-        <div style={{ color: "#D4AF37", fontSize: 24 }}>✦</div>
+        <SparklesIcon className="size-5 text-dash-gold" />
         <p
           className="font-label text-xs tracking-[0.4em] uppercase"
           style={{ color: "#D4AF37" }}
@@ -59,7 +60,7 @@ export function PlanGate({ requires, children, featureName }: Props) {
             background: "#D4AF3715",
           }}
         >
-          Upgrade →
+          Upgrade <ArrowRightIcon className="size-3" />
         </Link>
       </div>
     </div>

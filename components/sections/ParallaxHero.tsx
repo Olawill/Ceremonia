@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { useTheme } from "@/lib/ThemeContext";
+import clsx from "clsx";
 
 interface ParallaxHeroProps {
   bride?: string;
@@ -33,14 +34,12 @@ export function ParallaxHero({
 
   return (
     <section
-      className="relative flex flex-col items-center justify-center overflow-hidden"
+      className={clsx(
+        "min-h-screen flex flex-col items-center justify-center relative transition-[opacity,transform] duration-1400 ease-[cubic-bezier(0.16,1,0.3,1)]",
+        mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-[30px]",
+      )}
       style={{
-        height: "90vh",
-        opacity: mounted ? 1 : 0,
-        transform: mounted ? "translateY(0)" : "translateY(30px)",
-        transition:
-          "opacity 1.4s ease, transform 1.4s cubic-bezier(0.16,1,0.3,1)",
-        background: `radial-gradient(ellipse at 50% ${30 - scrollY * 0.015}%, ${theme.curtain}50 0%, ${theme.bg} 70%)`,
+        background: `radial-gradient(ellipse at 50% ${30 - scrollY * 0.015}%, var(--theme-curtain)50 0%, var(--theme-bg) 70%)`,
       }}
     >
       {/* Parallax orbs */}
@@ -72,24 +71,14 @@ export function ParallaxHero({
         className="relative z-10 flex flex-col items-center text-center gap-5 px-6"
         style={{ transform: `translateY(${scrollY * 0.12}px)` }}
       >
-        <p
-          className="font-label font-semibold uppercase tracking-[1.2em] text-[14px]"
-          style={{ color: `${theme.gold}90` }}
-        >
+        <p className="font-label font-semibold uppercase tracking-[1.2em] text-[14px] text-(--theme-gold) opacity-90">
           Together in Love
         </p>
 
-        <h1
-          className="font-display font-light leading-none"
-          style={{
-            fontSize: "clamp(48px,10vw,120px)",
-            color: theme.text,
-            letterSpacing: "0.04em",
-          }}
-        >
+        <h1 className="font-display font-light leading-none text-[clamp(48px,10vw,120px)] text-(--theme-text) tracking-[0.04em]">
           {bride}
           <br />
-          <span style={{ color: theme.gold, opacity: 0.8 }}>&</span>
+          <span className="text-(--theme-gold) opacity-80">&</span>
           <br />
           {groom}
         </h1>
@@ -107,12 +96,7 @@ export function ParallaxHero({
           </p>
         )}
 
-        <div
-          className="w-20 h-px my-1"
-          style={{
-            background: `linear-gradient(90deg, transparent, ${theme.gold}, transparent)`,
-          }}
-        />
+        <div className="w-20 h-px my-1 bg-[linear-gradient(90deg,transparent,var(--theme-gold),transparent)]" />
 
         <p
           className="font-display italic"

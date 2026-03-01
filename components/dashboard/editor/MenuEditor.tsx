@@ -14,6 +14,7 @@ import { z } from "zod";
 import type { Course, WeddingConfig } from "@/types/wedding";
 
 import { Field, Input } from "@/components/ui/FormPrimitives";
+import { PlusIcon, XIcon } from "lucide-react";
 
 const schema = z.object({
   menuCourses: z.array(
@@ -119,7 +120,10 @@ export function MenuEditor({ config, onChange }: Props) {
           borderStyle: "dashed",
         }}
       >
-        + Add Course
+        <span className="flex items-center justify-center gap-1.5">
+          <PlusIcon className="size-3" />
+          Add Course
+        </span>
       </button>
     </div>
   );
@@ -160,7 +164,7 @@ function CourseCard({
         className="absolute top-3 right-3 font-label text-[10px] tracking-widest"
         style={{ color: "#D4AF3750" }}
       >
-        ✕
+        <XIcon className="size-3" />
       </button>
 
       <Field label="Course Name" error={courseError}>
@@ -219,7 +223,7 @@ function CourseCard({
                   className="font-label text-[10px] mt-2.5 shrink-0"
                   style={{ color: "#D4AF3750" }}
                 >
-                  ✕
+                  <XIcon className="size-3" />
                 </button>
               )}
             </div>
@@ -232,7 +236,10 @@ function CourseCard({
           className="font-label text-[10px] tracking-[0.3em] uppercase"
           style={{ color: "#D4AF3760" }}
         >
-          + Add Dish
+          <span className="flex items-center justify-center gap-1.5">
+            <PlusIcon className="size-3" />
+            Add Dish
+          </span>
         </button>
       </div>
     </div>

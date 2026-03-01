@@ -159,27 +159,14 @@ export function ScratchDate({
     >
       {/* Header */}
       <div className="text-center space-y-4">
-        <p
-          className="font-label uppercase tracking-[0.5em] font-semibold text-[14px]"
-          style={{ color: `${theme.gold}70` }}
-        >
+        <p className="font-label uppercase tracking-[0.5em] font-semibold text-[14px] text-(--theme-gold) opacity-70">
           A Special Surprise
         </p>
-        <h2
-          className="font-display font-light"
-          style={{
-            fontSize: "clamp(28px,5vw,52px)",
-            color: theme.text,
-            letterSpacing: "0.08em",
-          }}
-        >
+        <h2 className="font-display font-light text-[clamp(28px,5vw,52px)] text-(--theme-text) tracking-[0.08em]">
           Reveal Our Date
         </h2>
         {!revealed && (
-          <p
-            className="font-display italic text-lg font-semibold"
-            style={{ color: `${theme.gold}55` }}
-          >
+          <p className="font-display italic text-lg font-semibold text-(--theme-gold) opacity-55">
             Scratch the golden foil to continue ↓
           </p>
         )}
@@ -188,23 +175,11 @@ export function ScratchDate({
       {/* Scratch card */}
       <div className="relative">
         <div
-          className="relative overflow-hidden rounded-2xl"
-          style={{
-            width: "min(640px, 85vw)",
-            height: 180,
-            boxShadow: `0 0 60px ${theme.gold}35, 0 20px 60px rgba(0,0,0,0.8)`,
-            border: `1px solid ${theme.gold}45`,
-          }}
+          className="relative overflow-hidden rounded-2xl shadow-[0_0_60px_var(--theme-gold)_35,0_20px_60px_rgba(0,0,0,0.8)] border border-(--theme-gold)"
+          style={{ width: "min(640px, 85vw)", height: 180 }}
         >
           {/* Revealed layer (underneath the foil) */}
-          <div
-            className="absolute inset-0 flex flex-col items-center justify-center gap-2"
-            style={{
-              background: `linear-gradient(135deg, ${theme.curtain}30, ${theme.bg})`,
-              padding: "16px",
-              paddingBottom: "8px",
-            }}
-          >
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4 pb-2 bg-[linear-gradient(135deg,var(--theme-curtain)_0%,var(--theme-bg)_100%)]">
             <p
               className="font-label font-semibold"
               style={{
@@ -236,16 +211,10 @@ export function ScratchDate({
         {/* Progress bar */}
         {!revealed && progress < 85 && (
           <div className="mt-3 space-y-1.5">
-            <div
-              className="h-0.5 rounded-full overflow-hidden"
-              style={{ background: `${theme.gold}20`, marginTop: "8px" }}
-            >
+            <div className="h-0.5 rounded-full overflow-hidden mt-2 bg-(--theme-gold) opacity-20">
               <div
-                className="h-full rounded-full transition-all duration-100"
-                style={{
-                  width: `${progress}%`,
-                  background: `linear-gradient(90deg, ${theme.gold}, ${theme.goldLight})`,
-                }}
+                className="h-full rounded-full transition-all duration-100 bg-[linear-gradient(90deg,var(--theme-gold),var(--theme-gold-light))]"
+                style={{ width: `${progress}%` }}
               />
             </div>
             <p

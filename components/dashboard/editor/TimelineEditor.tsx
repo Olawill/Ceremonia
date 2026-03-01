@@ -8,6 +8,7 @@ import { z } from "zod";
 import type { TimelineEvent, WeddingConfig } from "@/types/wedding";
 
 import { Field, Input, Textarea } from "@/components/ui/FormPrimitives";
+import { PlusIcon, XIcon } from "lucide-react";
 
 const schema = z.object({
   timeline: z.array(
@@ -74,7 +75,7 @@ export function TimelineEditor({ config, onChange }: Props) {
             className="absolute top-3 right-3 font-label text-[10px] tracking-widest"
             style={{ color: "#D4AF3750" }}
           >
-            ✕
+            <XIcon className="size-3" />
           </button>
 
           <div className="grid grid-cols-3 gap-3">
@@ -124,15 +125,17 @@ export function TimelineEditor({ config, onChange }: Props) {
             desc: "",
           })
         }
-        className="w-full py-3 rounded-xl font-label text-[10px] tracking-[0.4em]
-                   uppercase transition-all border"
+        className="w-full py-3 rounded-xl font-label text-[10px] tracking-[0.4em] uppercase transition-all border"
         style={{
           borderColor: "#D4AF3730",
           color: "#D4AF3770",
           borderStyle: "dashed",
         }}
       >
-        + Add Milestone
+        <span className="flex items-center justify-center gap-1.5">
+          <PlusIcon className="size-3" />
+          Add Milestone
+        </span>
       </button>
     </div>
   );
