@@ -8,6 +8,7 @@ import { z } from "zod";
 import type { WeddingConfig } from "@/types/wedding";
 
 import { Field, Input } from "@/components/ui/FormPrimitives";
+import { PlanGate } from "@/components/ui/PlanGate";
 
 const schema = z
   .object({
@@ -103,31 +104,33 @@ export function RSVPSettings({ config, onChange }: Props) {
         Access
       </p>
 
-      <Field label="Password Protection">
-        <Toggle
-          value={passwordProtected}
-          onChange={(v) => {
-            setValue("passwordProtected", v);
-            onChange({ passwordProtected: v });
-          }}
-          label={
-            passwordProtected
-              ? "Password required to view"
-              : "Public — anyone with the link can view"
-          }
-        />
-      </Field>
-
-      {passwordProtected && (
-        <Field label="Password" error={errors.password?.message}>
-          <Input
-            type="text"
-            {...register("password")}
-            placeholder="Enter a password (min 4 chars)"
-            hasError={!!errors.password}
+      <PlanGate requires="pro" featureName="Password protection">
+        <Field label="Password Protection">
+          <Toggle
+            value={passwordProtected}
+            onChange={(v) => {
+              setValue("passwordProtected", v);
+              onChange({ passwordProtected: v });
+            }}
+            label={
+              passwordProtected
+                ? "Password required to view"
+                : "Public — anyone with the link can view"
+            }
           />
         </Field>
-      )}
+
+        {passwordProtected && (
+          <Field label="Password" error={errors.password?.message}>
+            <Input
+              type="text"
+              {...register("password")}
+              placeholder="Enter a password (min 4 chars)"
+              hasError={!!errors.password}
+            />
+          </Field>
+        )}
+      </PlanGate>
     </div>
   );
 }

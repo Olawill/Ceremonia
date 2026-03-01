@@ -47,6 +47,26 @@
   --color-bg-mid: var(--bg-mid);
   --color-wtext: var(--text);
 
+  /* ── Dashboard UI tokens (fixed, not theme-switched) ── */
+  --color-dash-bg: #080808;
+  --color-dash-surface: #0e0e0e;
+  --color-dash-border: #d4af3720;
+  --color-dash-border-md: #d4af3740;
+  --color-dash-border-hi: #d4af3760;
+  --color-dash-gold: #d4af37;
+  --color-dash-gold-dim: #d4af3770;
+  --color-dash-gold-faint: #d4af3718;
+  --color-dash-text: #f5f0e8;
+  --color-dash-text-dim: #f5f0e870;
+  --color-dash-text-faint: #f5f0e840;
+  --color-dash-error: #ff6b6b;
+  --color-dash-curtain: #6a0d17;
+  --color-dash-curtain-dk: #3d0610;
+
+  /* ── Sidebar specific ── */
+  --sidebar-width: 240px;
+  --sidebar-width-collapsed: 56px;
+
   --font-display: var(--font-display), "Palatino Linotype", serif;
   --font-label: var(--font-label), serif;
 }
@@ -200,4 +220,65 @@ input::placeholder {
 select option {
   background-color: var(--bg);
   color: var(--text);
+}
+
+/* ─── Dashboard base ────────────────────────────────────────────────────── */
+.dash-surface {
+  background-color: var(--color-dash-surface);
+  border-color: var(--color-dash-border);
+}
+
+.dash-input {
+  background-color: color-mix(in srgb, var(--color-dash-bg) 80%, transparent);
+  border: 1px solid var(--color-dash-border-md);
+  color: var(--color-dash-text);
+  border-radius: 0.5rem;
+  padding: 10px 14px;
+  font-family: "Cormorant Garamond", serif;
+  font-size: 1rem;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.dash-input:focus {
+  border-color: var(--color-dash-gold);
+}
+.dash-input.has-error {
+  border-color: var(--color-dash-error);
+}
+
+.dash-btn-primary {
+  background: linear-gradient(
+    135deg,
+    var(--color-dash-curtain),
+    var(--color-dash-curtain-dk)
+  );
+  border: 1px solid var(--color-dash-border-hi);
+  color: var(--color-dash-gold);
+  border-radius: 0.75rem;
+  padding: 12px 24px;
+  font-family: "Cinzel", serif;
+  font-size: 0.625rem;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.dash-btn-primary:hover {
+  background: linear-gradient(
+    135deg,
+    var(--color-dash-curtain-dk),
+    var(--color-dash-curtain)
+  );
+  box-shadow: 0 0 20px
+    color-mix(in srgb, var(--color-dash-gold) 30%, transparent);
+}
+.dash-btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ─── Sidebar transition ────────────────────────────────────────────────── */
+.sidebar-transition {
+  transition: width 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }

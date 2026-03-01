@@ -27,10 +27,12 @@ import {
 
 interface WeddingEngineProps {
   config?: WeddingConfig;
+  showWatermark?: boolean;
 }
 
 export function WeddingEngine({
   config = DEMO_WEDDING_CONFIG,
+  showWatermark,
 }: WeddingEngineProps) {
   const { theme } = useTheme();
   const [curtainOpen, setCurtainOpen] = useState(false);
@@ -51,6 +53,22 @@ export function WeddingEngine({
     <>
       {/* Always-visible overlays */}
       <DustParticles />
+
+      {showWatermark && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
+          <p
+            className="font-label text-[10px] tracking-[0.4em] uppercase px-4 py-2 rounded-full"
+            style={{
+              background: "rgba(0,0,0,0.6)",
+              color: "#D4AF3760",
+              backdropFilter: "blur(8px)",
+            }}
+          >
+            Made with Ceremonia
+          </p>
+        </div>
+      )}
+
       <ThemeSelector
         curtainStyle={curtainStyle}
         onCurtainChange={setCurtainStyle}

@@ -1,23 +1,12 @@
 "use client";
 
+import clsx from "clsx";
 import {
   forwardRef,
   type InputHTMLAttributes,
   type ReactNode,
   type TextareaHTMLAttributes,
 } from "react";
-
-const inputStyle = {
-  background: "#ffffff08",
-  border: "1px solid #D4AF3725",
-  color: "#F5F0E8",
-  borderRadius: 10,
-  padding: "10px 14px",
-  fontSize: 13,
-  width: "100%",
-  outline: "none",
-  fontFamily: "var(--font-display)",
-} as const;
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   hasError?: boolean;
@@ -28,21 +17,10 @@ interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ hasError, style, ...props }, ref) => (
+  ({ hasError, className, ...props }, ref) => (
     <input
       ref={ref}
-      style={{
-        background: "#ffffff08",
-        border: `1px solid ${hasError ? "#ff6b6b50" : "#D4AF3725"}`,
-        color: "#F5F0E8",
-        borderRadius: 10,
-        padding: "10px 14px",
-        fontSize: 13,
-        width: "100%",
-        outline: "none",
-        fontFamily: "var(--font-display)",
-        ...style,
-      }}
+      className={clsx("dash-input", hasError && "has-error", className)}
       {...props}
     />
   ),
@@ -51,22 +29,15 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 Input.displayName = "Input";
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ hasError, style, ...props }, ref) => (
+  ({ hasError, className, ...props }, ref) => (
     <textarea
       ref={ref}
-      style={{
-        background: "#ffffff08",
-        border: `1px solid ${hasError ? "#ff6b6b50" : "#D4AF3725"}`,
-        color: "#F5F0E8",
-        borderRadius: 10,
-        padding: "10px 14px",
-        fontSize: 13,
-        width: "100%",
-        outline: "none",
-        fontFamily: "var(--font-display)",
-        resize: "vertical",
-        ...style,
-      }}
+      rows={props.rows ?? 3}
+      className={clsx(
+        "dash-input resize-none",
+        hasError && "has-error",
+        className,
+      )}
       {...props}
     />
   ),
@@ -74,37 +45,24 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
 
 Textarea.displayName = "Textarea";
 
-export function Field({
-  label,
-  hint,
-  error,
-  children,
-}: {
+interface FieldProps {
   label: string;
-  hint?: string;
   error?: string;
+  hint?: string;
   children: ReactNode;
-}) {
+}
+
+export function Field({ label, error, hint, children }: FieldProps) {
   return (
-    <div className="space-y-1.5">
-      <label
-        className="font-label text-[10px] tracking-[0.35em] uppercase block"
-        style={{ color: error ? "#ff6b6b" : "#D4AF3770" }}
-      >
+    <div className="flex flex-col gap-1.5">
+      <label className="font-label text-[10px] tracking-[0.4em] uppercase text-dash-gold/70">
         {label}
       </label>
       {children}
       {error ? (
-        <p className="font-display italic text-xs" style={{ color: "#ff6b6b" }}>
-          {error}
-        </p>
+        <p className="font-display italic text-xs text-dash-error">{error}</p>
       ) : hint ? (
-        <p
-          className="font-display italic text-xs"
-          style={{ color: "#F5F0E830" }}
-        >
-          {hint}
-        </p>
+        <p className="font-display italic text-xs text-dash-text/30">{hint}</p>
       ) : null}
     </div>
   );

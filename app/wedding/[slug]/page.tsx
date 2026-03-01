@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 
 import { db } from "@/db";
-import { weddings } from "@/db/schema";
+import { users, weddings } from "@/db/schema";
 
 import { WeddingEngine } from "@/components/WeddingEngine";
 
@@ -50,6 +50,16 @@ export default async function WeddingPage({ params }: Props) {
     notFound();
   }
 
+  const [owner] = wedding.userId
+    ? await db
+        .select({ plan: users.plan })
+        .from(users)
+        .where(eq(users.id, wedding.userId))
+        .limit(1)
+    : [{ plan: "free" }];
+
+  const showWatermark = (owner?.plan ?? "free") === "free";
+
   // Increment view count (fire-and-forget, don't await)
   db.update(weddings)
     .set({ viewCount: (wedding.viewCount ?? 0) + 1 })
@@ -85,5 +95,5 @@ export default async function WeddingPage({ params }: Props) {
     notificationEmail: wedding.notificationEmail ?? undefined,
   };
 
-  return <WeddingEngine config={config} />;
+  return <WeddingEngine config={config} showWatermark={showWatermark} />;
 }

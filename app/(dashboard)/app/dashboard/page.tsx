@@ -17,7 +17,7 @@ export default async function DashboardPage() {
     <div className="p-10 max-w-5xl">
       <div className="mb-10 space-y-2">
         <p
-          className="font-label text-xs tracking-[0.5em] uppercase"
+          className="font-label text-sm font-semibold tracking-[0.5em] uppercase"
           style={{ color: "#D4AF3770" }}
         >
           Dashboard
@@ -32,19 +32,19 @@ export default async function DashboardPage() {
 
       {myWeddings.length === 0 ? (
         <div
-          className="rounded-2xl p-16 text-center border"
-          style={{ borderColor: "#D4AF3720", background: "#D4AF3706" }}
+          className="rounded-2xl p-16 text-center border border-[#D4AF3720] bg-[#D4AF3706]"
+          // style={{ borderColor: "#D4AF3720", background: "#D4AF3706" }}
         >
           <p
-            className="font-display italic text-2xl mb-6"
-            style={{ color: "#F5F0E850" }}
+            className="font-display italic font-semibold text-2xl mb-6 text-[#F5F0E850]"
+            // style={{ color: "" }}
           >
             No weddings yet
           </p>
           <Link
             href="/app/editor/new"
-            className="font-label text-xs tracking-[0.4em] uppercase px-8 py-4 rounded-full border transition-all"
-            style={{ borderColor: "#D4AF3760", color: "#D4AF37" }}
+            className="font-label text-xs tracking-[0.4em] font-semibold h-12 uppercase px-8 py-6 rounded-full border transition-all border-[#D4AF3760] text-[#D4AF37]"
+            // style={{ borderColor: "#D4AF3760", color: "#D4AF37" }}
           >
             ✦ Create Your First Wedding
           </Link>

@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { Field, Input } from "@/components/ui/FormPrimitives";
+import clsx from "clsx";
 
 const schema = z.object({
   bride: z.string().min(1, "Required"),
@@ -35,49 +36,24 @@ export function NewWeddingDialog({ onConfirm }: Props) {
 
   return (
     // Full-screen overlay
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-6"
-      style={{ background: "rgba(5,5,5,0.92)", backdropFilter: "blur(12px)" }}
-    >
-      <div
-        className="w-full max-w-md rounded-2xl p-10 space-y-8"
-        style={{ background: "#0E0E0E", border: "1px solid #D4AF3730" }}
-      >
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-dash-bg/95 backdrop-blur-md">
+      <div className="w-full max-w-md rounded-2xl p-10 space-y-8 bg-dash-surface border border-dash-border">
         {/* Header */}
         <div className="text-center space-y-3">
-          <p
-            className="font-label text-xs tracking-[0.5em] uppercase"
-            style={{ color: "#D4AF3770" }}
-          >
+          <p className="font-label text-xs tracking-[0.5em] uppercase text-dash-gold/70">
             ✦ New Wedding
           </p>
-          <h2
-            className="font-display font-light"
-            style={{
-              fontSize: "clamp(24px,4vw,36px)",
-              color: "#F5F0E8",
-              letterSpacing: "0.05em",
-            }}
-          >
+          <h2 className="font-display font-light text-3xl text-dash-text tracking-wide">
             Let's get started
           </h2>
-          <p
-            className="font-display italic text-sm"
-            style={{ color: "#F5F0E840" }}
-          >
+          <p className="font-display italic text-sm text-dash-text/25">
             You can customise everything in the editor — this is just the
             essentials.
           </p>
         </div>
 
         {/* Divider */}
-        <div
-          className="h-px"
-          style={{
-            background:
-              "linear-gradient(90deg, transparent, #D4AF3730, transparent)",
-          }}
-        />
+        <div className="h-px bg-dash-border" />
 
         {/* Form */}
         <form onSubmit={handleSubmit(onConfirm)} className="space-y-5">
@@ -119,16 +95,12 @@ export function NewWeddingDialog({ onConfirm }: Props) {
           <button
             type="submit"
             disabled={!isValid}
-            className="w-full py-4 rounded-xl font-label text-xs tracking-[0.4em]
-                      uppercase transition-all duration-300 mt-2"
-            style={{
-              background: isValid
-                ? "linear-gradient(135deg, #6A0D17, #3D0610)"
-                : "#ffffff08",
-              border: `1px solid ${isValid ? "#D4AF3760" : "#D4AF3720"}`,
-              color: isValid ? "#D4AF37" : "#D4AF3740",
-              cursor: isValid ? "pointer" : "not-allowed",
-            }}
+            className={clsx(
+              "w-full py-4 rounded-xl font-label text-xs tracking-[0.4em] uppercase transition-all duration-300 mt-2",
+              isValid
+                ? "dash-btn-primary"
+                : "bg-white/5 border border-dash-border text-dash-gold/25 cursor-not-allowed",
+            )}
           >
             Open Editor →
           </button>
