@@ -1,13 +1,17 @@
-// server/routers/rsvp.ts
-import { db } from "@/db";
-import { rsvps, users, weddings } from "@/db/schema";
-import { RSVPNotificationEmail } from "@/emails/RSVPNotification";
-import { PLAN_FEATURES } from "@/lib/plans";
 import { count, eq } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { db } from "@/db";
+import { rsvps, users, weddings } from "@/db/schema";
+
+import { RSVPNotificationEmail } from "@/emails/RSVPNotification";
+
+import { env } from "@/env";
+
+import { PLAN_FEATURES } from "@/lib/plans";
+
+const resend = new Resend(env.RESEND_API_KEY);
 
 export const rsvpRouter = new Elysia({ prefix: "/rsvp" })
   // GET /api/rsvp?weddingId=... — fetch RSVPs for a wedding (used by dashboard)

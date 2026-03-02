@@ -6,6 +6,7 @@ import { Elysia, t } from "elysia";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 
+import { env } from "@/env";
 import { getAuthUserId } from "@/server/auth";
 // import { PRICING, type Plan } from "@/lib/plans";
 
@@ -26,8 +27,6 @@ export const billingRouter = new Elysia({ prefix: "/billing" })
         .where(eq(users.id, userId))
         .limit(1);
 
-      console.log({ user });
-
       if (!user) return status(404, { message: "User not found" });
 
       const session = await stripe.checkout.sessions.create({
@@ -35,8 +34,8 @@ export const billingRouter = new Elysia({ prefix: "/billing" })
         customer: user.stripeCustomerId ?? undefined,
         customer_email: user.stripeCustomerId ? undefined : user.email,
         line_items: [{ price: body.priceId, quantity: 1 }],
-        success_url: `${process.env.NEXT_PUBLIC_APP_URL}/app/billing?success=true`,
-        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/app/billing?cancelled=true`,
+        success_url: `${env.NEXT_PUBLIC_APP_URL}/app/billing?success=true`,
+        cancel_url: `${env.NEXT_PUBLIC_APP_URL}/app/billing?cancelled=true`,
         metadata: { userId },
         subscription_data:
           body.mode === "subscription" ? { metadata: { userId } } : undefined,
@@ -69,7 +68,7 @@ export const billingRouter = new Elysia({ prefix: "/billing" })
 
     const session = await stripe.billingPortal.sessions.create({
       customer: user.stripeCustomerId,
-      return_url: `${process.env.NEXT_PUBLIC_APP_URL}/app/billing`,
+      return_url: `${env.NEXT_PUBLIC_APP_URL}/app/billing`,
     });
 
     return { url: session.url };

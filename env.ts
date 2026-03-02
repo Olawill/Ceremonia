@@ -1,0 +1,48 @@
+import { createEnv } from "@t3-oss/env-nextjs";
+import { z } from "zod";
+
+export const env = createEnv({
+  server: {
+    DATABASE_URL: z.string().url(),
+    CLERK_SECRET_KEY: z.string().min(1),
+    CLERK_WEBHOOK_SECRET: z.string().min(1),
+    STRIPE_SECRET_KEY: z.string().min(1),
+    STRIPE_WEBHOOK_SECRET: z.string().min(1),
+    RESEND_API_KEY: z.string().min(1),
+  },
+  client: {
+    NEXT_PUBLIC_WEDDING_THEME: z.string().min(1),
+    NEXT_PUBLIC_APP_URL: z.url(),
+    NEXT_PUBLIC_ROOT_DOMAIN: z.string().min(1),
+    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
+    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().min(1),
+    NEXT_PUBLIC_STRIPE_PRICE_STARTER_MONTHLY: z.string().min(1),
+    NEXT_PUBLIC_STRIPE_PRICE_STARTER_ONCE: z.string().min(1),
+    NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY: z.string().min(1),
+    NEXT_PUBLIC_STRIPE_PRICE_AGENCY_MONTHLY: z.string().min(1),
+  },
+  runtimeEnv: {
+    DATABASE_URL: process.env.DATABASE_URL,
+    CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
+    CLERK_WEBHOOK_SECRET: process.env.CLERK_WEBHOOK_SECRET,
+    STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+    STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
+    RESEND_API_KEY: process.env.RESEND_API_KEY,
+
+    NEXT_PUBLIC_WEDDING_THEME: process.env.NEXT_PUBLIC_WEDDING_THEME,
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+    NEXT_PUBLIC_ROOT_DOMAIN: process.env.NEXT_PUBLIC_ROOT_DOMAIN,
+    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:
+      process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:
+      process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+    NEXT_PUBLIC_STRIPE_PRICE_STARTER_MONTHLY:
+      process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER_MONTHLY,
+    NEXT_PUBLIC_STRIPE_PRICE_STARTER_ONCE:
+      process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER_ONCE,
+    NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY:
+      process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY,
+    NEXT_PUBLIC_STRIPE_PRICE_AGENCY_MONTHLY:
+      process.env.NEXT_PUBLIC_STRIPE_PRICE_AGENCY_MONTHLY,
+  },
+});

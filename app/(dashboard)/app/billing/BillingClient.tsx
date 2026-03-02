@@ -205,7 +205,7 @@ export function BillingClient({
 
       {/* ── Header ── */}
       <div className="mb-10 space-y-2">
-        <p className="font-label text-xs font-semibold tracking-[0.5em] uppercase text-dash-gold/70">
+        <p className="font-label text-sm font-semibold tracking-[0.5em] uppercase text-dash-gold/70">
           Billing
         </p>
         <h1 className="font-display font-light text-[clamp(28px,4vw,42px)] tracking-[0.04em] text-dash-text">

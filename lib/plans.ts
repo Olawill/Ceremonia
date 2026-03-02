@@ -1,3 +1,5 @@
+import { env } from "@/env";
+
 export type Plan = "free" | "starter" | "pro" | "agency";
 
 export interface PlanFeatures {
@@ -97,26 +99,26 @@ export function planMeetsRequirement(
 export const PRICING = {
   starter: {
     monthly: {
-      priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER_MONTHLY!,
+      priceId: env.NEXT_PUBLIC_STRIPE_PRICE_STARTER_MONTHLY!,
       amount: 9,
       label: "$9/mo",
     },
     once: {
-      priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER_ONCE!,
+      priceId: env.NEXT_PUBLIC_STRIPE_PRICE_STARTER_ONCE!,
       amount: 29,
       label: "$29 once",
     },
   },
   pro: {
     monthly: {
-      priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY!,
+      priceId: env.NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY!,
       amount: 19,
       label: "$19/mo",
     },
   },
   agency: {
     monthly: {
-      priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_AGENCY_MONTHLY!,
+      priceId: env.NEXT_PUBLIC_STRIPE_PRICE_AGENCY_MONTHLY!,
       amount: 79,
       label: "$79/mo",
     },

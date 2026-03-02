@@ -5,6 +5,7 @@ import { Webhook } from "svix";
 
 import { db } from "@/db";
 import { users } from "@/db/schema";
+import { env } from "@/env";
 import { stripe } from "@/lib/stripe";
 
 type ClerkWebhookEvent =
@@ -25,7 +26,7 @@ type ClerkWebhookEvent =
     };
 
 export async function POST(req: NextRequest) {
-  const webhookSecret = process.env.CLERK_WEBHOOK_SECRET;
+  const webhookSecret = env.CLERK_WEBHOOK_SECRET;
   if (!webhookSecret) {
     return NextResponse.json(
       { error: "Missing webhook secret" },

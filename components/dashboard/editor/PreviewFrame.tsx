@@ -1,16 +1,15 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 import type { WeddingConfig } from "@/types/wedding";
 
 interface Props {
   config: WeddingConfig;
+  iframeRef: React.RefObject<HTMLIFrameElement | null>;
 }
 
-export function PreviewFrame({ config }: Props) {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-
+export function PreviewFrame({ config, iframeRef }: Props) {
   // Send config to the iframe via postMessage whenever it changes
   useEffect(() => {
     const iframe = iframeRef.current;

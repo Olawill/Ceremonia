@@ -1,5 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse, type NextRequest } from "next/server";
+import { env } from "./env";
 
 const isProtectedRoute = createRouteMatcher(["/app(.*)"]);
 
@@ -10,7 +11,7 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
   // Determine subdomain
   // In dev: localhost:3000 → no subdomain
   // In prod: isabella-alexander.ceremonia.app → "isabella-alexander"
-  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "ceremonia.app";
+  const rootDomain = env.NEXT_PUBLIC_ROOT_DOMAIN || "ceremonia.app";
   const isLocalhost = host.includes("localhost");
 
   let subdomain: string | null = null;

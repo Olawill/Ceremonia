@@ -55,10 +55,10 @@ export function RSVPsClient({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-display font-semibold text-[#F5F0E8]">
+          <h1 className="text-[clamp(28px,4vw,42px)] font-display font-semibold text-[#F5F0E8]">
             RSVPs
           </h1>
-          <p className="text-sm font-display italic font-semibold text-[#F5F0E890] mt-1">
+          <p className="text-lg font-display italic font-semibold text-[#F5F0E890] mt-1">
             Guest responses for your wedding
           </p>
         </div>

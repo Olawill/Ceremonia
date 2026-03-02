@@ -26,9 +26,10 @@ type TabId = (typeof TABS)[number]["id"];
 interface Props {
   config: WeddingConfig;
   onChange: (patch: Partial<WeddingConfig>) => void;
+  previewIframeRef: React.RefObject<HTMLIFrameElement | null>;
 }
 
-export function EditorSidebar({ config, onChange }: Props) {
+export function EditorSidebar({ config, onChange, previewIframeRef }: Props) {
   const [activeTab, setActiveTab] = useState<TabId>("couple");
 
   return (
@@ -54,7 +55,11 @@ export function EditorSidebar({ config, onChange }: Props) {
       {/* Tab content */}
       <div className="flex-1 overflow-y-auto p-2! space-y-6!">
         {activeTab === "design" && (
-          <DesignPanel config={config} onChange={onChange} />
+          <DesignPanel
+            config={config}
+            onChange={onChange}
+            previewIframeRef={previewIframeRef}
+          />
         )}
         {activeTab === "couple" && (
           <ContentEditor config={config} onChange={onChange} />

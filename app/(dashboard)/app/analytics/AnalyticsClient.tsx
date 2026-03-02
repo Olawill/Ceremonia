@@ -23,20 +23,20 @@ interface Props {
 
 export function AnalyticsClient({ weddings, rsvps }: Props) {
   return (
-    <div className="p-8 max-w-5xl mx-auto space-y-8">
+    <div className="p-8 max-w-5xl mx-auto space-y-8!">
       <div>
-        <h1 className="text-2xl font-display font-light text-[#F5F0E8]">
+        <h1 className="text-[clamp(28px,4vw,42px)] font-display font-light text-[#F5F0E8]">
           Analytics
         </h1>
-        <p className="text-sm font-display italic text-[#F5F0E860] mt-1">
+        <p className="text-lg font-semibold font-display italic text-[#F5F0E880] mt-1">
           Views and RSVP performance across your weddings
         </p>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-4!">
         {weddings.length === 0 && (
-          <div className="text-center py-20 rounded-xl border border-[#ffffff10]">
-            <p className="font-display text-lg font-light text-[#F5F0E860]">
+          <div className="text-center py-20! rounded-xl border border-[#ffffff80]">
+            <p className="font-display font-semibold text-2xl text-[#F5F0E880]">
               No weddings yet
             </p>
           </div>

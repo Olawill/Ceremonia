@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useState, useTransition } from "react";
+import { useCallback, useRef, useState, useTransition } from "react";
 
 import { useApi } from "@/hooks/useApi";
 
@@ -34,6 +34,8 @@ export function EditorShell({ initialConfig, isNew }: Props) {
   const api = useApi();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+
+  const previewIframeRef = useRef<HTMLIFrameElement>(null);
 
   // Live config state — every sidebar change updates this
   const [config, setConfig] = useState<WeddingConfig>(
@@ -169,7 +171,11 @@ export function EditorShell({ initialConfig, isNew }: Props) {
 
         {/* Scrollable sidebar */}
         <div className="flex-1 overflow-y-auto">
-          <EditorSidebar config={config} onChange={updateConfig} />
+          <EditorSidebar
+            config={config}
+            onChange={updateConfig}
+            previewIframeRef={previewIframeRef}
+          />
         </div>
       </div>
 
@@ -198,7 +204,7 @@ export function EditorShell({ initialConfig, isNew }: Props) {
           )}
         </div>
         <div className="flex-1 overflow-hidden">
-          <PreviewFrame config={config} />
+          <PreviewFrame config={config} iframeRef={previewIframeRef} />
         </div>
       </div>
     </div>

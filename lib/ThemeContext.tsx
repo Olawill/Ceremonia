@@ -14,6 +14,7 @@ interface ThemeContextValue {
   themeKey: ThemeKey;
   theme: WeddingTheme;
   setThemeKey: (key: ThemeKey) => void;
+  setCustomTheme: (theme: WeddingTheme) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -29,36 +30,46 @@ export function ThemeProvider({
     initialThemeKey ?? defaultThemeKey,
   );
 
-  const theme = themes[themeKey];
+  const [customTheme, setCustomThemeState] = useState<WeddingTheme | null>(
+    null,
+  );
+
+  const theme = customTheme ?? themes[themeKey];
 
   const setThemeKey = (key: ThemeKey) => {
     setThemeKeyState(key);
+    setCustomThemeState(null); // switching built-in theme clears custom
     document.documentElement.setAttribute(
       "data-theme",
       key === "royal" ? "" : key,
     );
   };
 
+  const setCustomTheme = (t: WeddingTheme) => {
+    setCustomThemeState(t);
+  };
+
+  // Only apply CSS vars for built-in theme switches — skip when custom is active
   useEffect(() => {
-    // Ensure initial data-theme is set
+    if (customTheme) return;
+    const root = document.documentElement;
+    const t = themes[themeKey];
     if (themeKey !== "royal") {
       document.documentElement.setAttribute("data-theme", themeKey);
     }
-
-    const root = document.documentElement;
-    root.style.setProperty("--theme-gold", theme.gold);
-    root.style.setProperty("--theme-gold-light", theme.goldLight);
-    root.style.setProperty("--theme-curtain", theme.curtain);
-    root.style.setProperty("--theme-curtain-dark", theme.curtainDark);
-    root.style.setProperty("--theme-curtain-sheen", theme.curtainSheen);
-    root.style.setProperty("--theme-bg", theme.bg);
-    root.style.setProperty("--theme-bg-mid", theme.bgMid);
-    root.style.setProperty("--theme-text", theme.text);
-  }, [themeKey]);
+    root.style.setProperty("--curtain", t.curtain);
+    root.style.setProperty("--curtain-dark", t.curtainDark);
+    root.style.setProperty("--curtain-sheen", t.curtainSheen);
+    root.style.setProperty("--gold", t.gold);
+    root.style.setProperty("--gold-light", t.goldLight);
+    root.style.setProperty("--bg", t.bg);
+    root.style.setProperty("--bg-mid", t.bgMid);
+    root.style.setProperty("--text", t.text);
+  }, [themeKey, customTheme]);
 
   return (
     <ThemeContext.Provider
-      value={{ themeKey, theme: themes[themeKey], setThemeKey }}
+      value={{ themeKey, theme, setThemeKey, setCustomTheme }}
     >
       {children}
     </ThemeContext.Provider>

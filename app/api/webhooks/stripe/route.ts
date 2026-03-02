@@ -8,14 +8,15 @@ import { stripe } from "@/lib/stripe";
 
 import { db } from "@/db";
 import { users } from "@/db/schema";
+import { env } from "@/env";
 
 // Map Stripe product/price IDs → plan names
 // Fill these in after creating products in your Stripe dashboard
 const PRICE_TO_PLAN: Record<string, Plan> = {
-  [process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER_MONTHLY!]: "starter",
-  [process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER_ONCE!]: "starter",
-  [process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY!]: "pro",
-  [process.env.NEXT_PUBLIC_STRIPE_PRICE_AGENCY_MONTHLY!]: "agency",
+  [env.NEXT_PUBLIC_STRIPE_PRICE_STARTER_MONTHLY!]: "starter",
+  [env.NEXT_PUBLIC_STRIPE_PRICE_STARTER_ONCE!]: "starter",
+  [env.NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY!]: "pro",
+  [env.NEXT_PUBLIC_STRIPE_PRICE_AGENCY_MONTHLY!]: "agency",
 };
 
 export async function POST(req: NextRequest) {
@@ -31,7 +32,7 @@ export async function POST(req: NextRequest) {
     event = stripe.webhooks.constructEvent(
       body,
       sig,
-      process.env.STRIPE_WEBHOOK_SECRET!,
+      env.STRIPE_WEBHOOK_SECRET,
     );
   } catch {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });

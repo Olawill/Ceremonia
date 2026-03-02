@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface NavItem {
   href: string;
@@ -36,6 +36,8 @@ const NAV_ITEMS: NavItem[] = [
 export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   return (
     <aside
@@ -132,16 +134,18 @@ export function Sidebar() {
             collapsed && "justify-center",
           )}
         >
-          <UserButton
-            appearance={{
-              elements: {
-                avatarBox: "size-7 shrink-0",
-                userButtonPopoverCard: "bg-dash-surface border-dash-border",
-              },
-            }}
-          />
+          {mounted && (
+            <UserButton
+              appearance={{
+                elements: {
+                  avatarBox: "size-7 shrink-0",
+                  userButtonPopoverCard: "bg-dash-surface border-dash-border",
+                },
+              }}
+            />
+          )}
           {!collapsed && (
-            <span className="font-display italic text-dash-text/50 truncate">
+            <span className="font-display font-semibold italic text-dash-text/80 truncate">
               Account
             </span>
           )}
