@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { users, weddings } from "@/db/schema";
 
 import { WeddingEngine } from "@/components/WeddingEngine";
+import { PasswordGate } from "@/components/wedding/PasswordGate";
 
 import type { ThemeKey, WeddingTheme } from "@/types/theme";
 import type {
@@ -98,10 +99,15 @@ export default async function WeddingPage({ params }: Props) {
   };
 
   return (
-    <WeddingEngine
-      config={config}
-      showWatermark={showWatermark}
-      ownerPlan={(owner?.plan ?? "free") as Plan}
-    />
+    <>
+      {wedding.passwordProtected && wedding.password && (
+        <PasswordGate password={wedding.password} />
+      )}
+      <WeddingEngine
+        config={config}
+        showWatermark={showWatermark}
+        ownerPlan={(owner?.plan ?? "free") as Plan}
+      />
+    </>
   );
 }

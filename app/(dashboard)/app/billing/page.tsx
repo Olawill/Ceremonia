@@ -9,7 +9,12 @@ import { BillingClient } from "./BillingClient";
 
 import type { Plan } from "@/lib/plans";
 
-export default async function BillingPage() {
+export default async function BillingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ success?: string; cancelled?: string }>;
+}) {
+  const { success, cancelled } = await searchParams;
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
 
@@ -22,5 +27,12 @@ export default async function BillingPage() {
   const plan = (user?.plan as Plan | undefined) ?? "free";
   const hasStripe = !!user?.stripeCustomerId;
 
-  return <BillingClient currentPlan={plan} hasStripeAccount={hasStripe} />;
+  return (
+    <BillingClient
+      currentPlan={plan}
+      hasStripeAccount={hasStripe}
+      paymentSuccess={success === "true"}
+      paymentCancelled={cancelled === "true"}
+    />
+  );
 }

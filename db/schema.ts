@@ -23,7 +23,7 @@ export const users = pgTable("users", {
 export const weddings = pgTable("weddings", {
   id: uuid("id").defaultRandom().primaryKey(),
   slug: text("slug").notNull().unique(),
-  userId: text("user_id").references(() => users.id),
+  userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
   bride: text("bride").notNull(),
   groom: text("groom").notNull(),
   date: date("date").notNull(),
@@ -49,7 +49,9 @@ export const weddings = pgTable("weddings", {
 
 export const rsvps = pgTable("rsvps", {
   id: uuid("id").defaultRandom().primaryKey(),
-  weddingId: uuid("wedding_id").references(() => weddings.id),
+  weddingId: uuid("wedding_id").references(() => weddings.id, {
+    onDelete: "cascade",
+  }),
   name: text("name").notNull(),
   attendance: text("attendance").notNull(),
   guests: integer("guests").default(1),

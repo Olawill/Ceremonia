@@ -49,7 +49,7 @@ export function NewWeddingDialog({ onConfirm }: Props) {
           <h2 className="font-display font-light text-3xl text-dash-text tracking-wide">
             Let's get started
           </h2>
-          <p className="font-display italic font-bold text-sm text-dash-text/25">
+          <p className="font-display italic font-bold text-sm text-dash-text/65">
             You can customise everything in the editor — this is just the
             essentials.
           </p>
@@ -105,7 +105,7 @@ export function NewWeddingDialog({ onConfirm }: Props) {
               "w-full py-4! rounded-xl font-label text-xs tracking-[0.4em] uppercase transition-all duration-300 mt-2",
               isValid
                 ? "dash-btn-primary"
-                : "bg-white/5 border border-dash-border text-dash-gold/25 cursor-not-allowed",
+                : "bg-white/5 border border-dash-border text-dash-gold/80! disabled:text-dash-gold/25! cursor-not-allowed",
             )}
           >
             <span className="flex items-center justify-center gap-2">

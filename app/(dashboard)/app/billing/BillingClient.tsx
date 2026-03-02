@@ -3,15 +3,18 @@
 import clsx from "clsx";
 import { ArrowRightIcon, Loader2Icon, StarIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useApi } from "@/hooks/useApi";
 import type { Plan } from "@/lib/plans";
 import { PRICING } from "@/lib/plans";
+import { useUser } from "@clerk/nextjs";
 
 interface Props {
   currentPlan: Plan;
   hasStripeAccount: boolean;
+  paymentSuccess?: boolean;
+  paymentCancelled?: boolean;
 }
 
 const TIERS = [
@@ -80,10 +83,52 @@ const TIERS = [
   },
 ] as const;
 
-export function BillingClient({ currentPlan, hasStripeAccount }: Props) {
-  const api = useApi();
+export function BillingClient({
+  currentPlan,
+  hasStripeAccount,
+  paymentSuccess,
+  paymentCancelled,
+}: Props) {
+  const { api } = useApi();
   const router = useRouter();
+  const { user } = useUser();
   const [loading, setLoading] = useState<string | null>(null);
+  const [activePlan, setActivePlan] = useState<Plan>(currentPlan);
+  const [syncing, setSyncing] = useState(false);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // When Stripe redirects back with ?success=true, poll Clerk's session
+  // until the plan in publicMetadata has updated (webhook will have fired)
+  useEffect(() => {
+    if (!paymentSuccess) return;
+
+    setSyncing(true);
+
+    pollRef.current = setInterval(async () => {
+      await user?.reload();
+      const updatedPlan =
+        (user?.publicMetadata?.plan as Plan | undefined) ?? "free";
+
+      if (updatedPlan !== currentPlan) {
+        setActivePlan(updatedPlan);
+        setSyncing(false);
+        clearInterval(pollRef.current!);
+        // Clean up the URL
+        router.replace("/app/billing");
+      }
+    }, 1500);
+
+    // Stop polling after 30s regardless
+    const timeout = setTimeout(() => {
+      clearInterval(pollRef.current!);
+      setSyncing(false);
+    }, 30_000);
+
+    return () => {
+      clearInterval(pollRef.current!);
+      clearTimeout(timeout);
+    };
+  }, [paymentSuccess]);
 
   const handleCheckout = async (
     priceId: string,
@@ -91,7 +136,7 @@ export function BillingClient({ currentPlan, hasStripeAccount }: Props) {
   ) => {
     setLoading(priceId);
     try {
-      const { data, error } = await api.api.billing.checkout.post({
+      const { data, error } = await api.billing.checkout.post({
         priceId,
         mode,
       });
@@ -105,7 +150,7 @@ export function BillingClient({ currentPlan, hasStripeAccount }: Props) {
   const handlePortal = async () => {
     setLoading("portal");
     try {
-      const { data, error } = await api.api.billing.portal.post({});
+      const { data, error } = await api.billing.portal.post({});
       if (error || !data?.url) throw new Error("Portal failed");
       router.push(data.url);
     } catch {
@@ -115,6 +160,49 @@ export function BillingClient({ currentPlan, hasStripeAccount }: Props) {
 
   return (
     <div className="w-full p-10 max-w-6xl">
+      {/* ── Success banner ── */}
+      {paymentSuccess && (
+        <div className="mb-8! rounded-xl border border-[#D4AF3740] bg-[#D4AF3710] px-6! py-4! flex items-center gap-4">
+          {syncing ? (
+            <>
+              <Loader2Icon className="size-4 text-dash-gold animate-spin shrink-0" />
+              <div>
+                <p className="font-label font-semibold! text-[11px] tracking-[0.4em] uppercase text-dash-gold">
+                  Activating your plan…
+                </p>
+                <p className="font-display italic text-sm font-semibold! text-dash-text/60 mt-0.5">
+                  This usually takes a few seconds
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              <span className="text-dash-gold text-xl">✦</span>
+              <div>
+                <p className="font-label text-[11px] tracking-[0.4em] uppercase text-dash-gold">
+                  Payment successful
+                </p>
+                <p className="font-display italic text-sm text-dash-text/60 mt-0.5">
+                  Your plan has been upgraded to{" "}
+                  <span className="text-dash-gold capitalize">
+                    {activePlan}
+                  </span>
+                </p>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ── Cancelled banner ── */}
+      {paymentCancelled && (
+        <div className="mb-8 rounded-xl border border-[#ffffff15] bg-[#ffffff05] px-6 py-4">
+          <p className="font-label text-[11px] tracking-[0.4em] uppercase text-dash-text/50">
+            Payment cancelled — no charge was made
+          </p>
+        </div>
+      )}
+
       {/* ── Header ── */}
       <div className="mb-10 space-y-2">
         <p className="font-label text-xs font-semibold tracking-[0.5em] uppercase text-dash-gold/70">
@@ -126,18 +214,18 @@ export function BillingClient({ currentPlan, hasStripeAccount }: Props) {
         <p className="font-display italic font-semibold text-base text-dash-text/50 mb-6!">
           Current plan:{" "}
           <span className="text-dash-gold">
-            {currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)}
+            {activePlan.charAt(0).toUpperCase() + activePlan.slice(1)}
           </span>
         </p>
       </div>
 
       {/* ── Manage subscription ── */}
       {hasStripeAccount && currentPlan !== "free" && (
-        <div className="mb-8">
+        <div className="mb-8!">
           <button
             onClick={handlePortal}
             disabled={loading === "portal"}
-            className="flex items-center gap-2 font-label text-xs tracking-[0.4em] uppercase px-6 py-3 rounded-full border border-dash-border-md text-dash-gold/80 transition-all hover:text-dash-gold hover:border-dash-border-hi disabled:opacity-50"
+            className="flex items-center gap-2 font-label text-sm font-bold tracking-[0.4em] uppercase px-6! py-3! rounded-full border border-dash-border-md text-dash-gold/80 transition-all hover:text-dash-gold hover:border-dash-border-hi disabled:opacity-50"
           >
             {loading === "portal" ? (
               <>
@@ -155,7 +243,7 @@ export function BillingClient({ currentPlan, hasStripeAccount }: Props) {
       {/* ── Pricing grid ── */}
       <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {TIERS.map((tier) => {
-          const isCurrent = tier.plan === currentPlan;
+          const isCurrent = tier.plan === activePlan;
           const isHighlighted = "highlighted" in tier && tier.highlighted;
 
           return (

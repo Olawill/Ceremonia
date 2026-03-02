@@ -26,6 +26,8 @@ export const billingRouter = new Elysia({ prefix: "/billing" })
         .where(eq(users.id, userId))
         .limit(1);
 
+      console.log({ user });
+
       if (!user) return status(404, { message: "User not found" });
 
       const session = await stripe.checkout.sessions.create({

@@ -12,10 +12,10 @@ import { users } from "@/db/schema";
 // Map Stripe product/price IDs → plan names
 // Fill these in after creating products in your Stripe dashboard
 const PRICE_TO_PLAN: Record<string, Plan> = {
-  [process.env.STRIPE_PRICE_STARTER_MONTHLY!]: "starter",
-  [process.env.STRIPE_PRICE_STARTER_ONCE!]: "starter",
-  [process.env.STRIPE_PRICE_PRO_MONTHLY!]: "pro",
-  [process.env.STRIPE_PRICE_AGENCY_MONTHLY!]: "agency",
+  [process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER_MONTHLY!]: "starter",
+  [process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER_ONCE!]: "starter",
+  [process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY!]: "pro",
+  [process.env.NEXT_PUBLIC_STRIPE_PRICE_AGENCY_MONTHLY!]: "agency",
 };
 
 export async function POST(req: NextRequest) {

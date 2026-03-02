@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { useApi } from "@/hooks/useApi";
 import { useTheme } from "@/lib/ThemeContext";
 import { fireConfetti } from "@/lib/confetti";
 import { formattedDeadlineDate } from "@/lib/helper";
@@ -33,6 +34,7 @@ export function RSVP({
   rsvpDeadline,
 }: RSVPProps) {
   const { theme } = useTheme();
+  const api = useApi();
   const [submitted, setSubmitted] = useState(false);
   const [submittedName, setSubmittedName] = useState("");
   const [submittedAttendance, setSubmittedAttendance] = useState("");
@@ -56,7 +58,35 @@ export function RSVP({
   const attendance = watch("attendance");
 
   const onSubmit = async (data: FormValues) => {
-    // Wire to API in Week 6 — for now just show success
+    if (weddingId && weddingId !== "demo") {
+      const { data: rsvpData, error } = await api.api.rsvp.post({
+        weddingId,
+        name: data.name,
+        attendance: data.attendance,
+        guests: data.guests ? Number(data.guests) : 1,
+        dietary: data.dietary || undefined,
+      });
+
+      if (error) {
+        // TODO: Add toast
+
+        if (error.status === 403) {
+          // Toast: error.value
+        }
+
+        if (error.status === 404) {
+          // Toast: error.value
+        }
+
+        if (error.status === 422) {
+          // Toast: error.value.message
+        }
+
+        console.error("RSVP failed", error);
+        return;
+      }
+    }
+
     setSubmittedName(data.name);
     setSubmittedAttendance(data.attendance);
     setSubmitted(true);
