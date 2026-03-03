@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 
 import { db } from "@/db";
@@ -98,16 +99,21 @@ export default async function WeddingPage({ params }: Props) {
     notificationEmail: wedding.notificationEmail ?? undefined,
   };
 
+  const cookieStore = await cookies();
+  const isUnlocked = cookieStore.get(`wedding-${slug}-unlocked`)?.value === "1";
+
+  const isPasswordProtected = wedding.passwordProtected && !!wedding.password;
+  const requiresGate = isPasswordProtected && !isUnlocked;
+
+  if (requiresGate) {
+    return <PasswordGate slug={slug} />;
+  }
+
   return (
-    <>
-      {wedding.passwordProtected && wedding.password && (
-        <PasswordGate password={wedding.password} />
-      )}
-      <WeddingEngine
-        config={config}
-        showWatermark={showWatermark}
-        ownerPlan={(owner?.plan ?? "free") as Plan}
-      />
-    </>
+    <WeddingEngine
+      config={config}
+      showWatermark={showWatermark}
+      ownerPlan={(owner?.plan ?? "free") as Plan}
+    />
   );
 }

@@ -81,15 +81,6 @@ export function ThemeCustomiser({ config, onChange, previewIframeRef }: Props) {
     setColors((prev) => ({ ...prev, [key]: value }));
   }, []);
 
-  useEffect(() => {
-    const builtTheme: WeddingTheme = {
-      key: "royal",
-      name: themeName,
-      ...colors,
-    };
-    onChange({ customTheme: builtTheme, themeKey: "royal" });
-  }, [colors]);
-
   const handleSave = async () => {
     setSaving(true);
     const builtTheme: WeddingTheme = {
@@ -97,6 +88,9 @@ export function ThemeCustomiser({ config, onChange, previewIframeRef }: Props) {
       name: themeName,
       ...colors,
     };
+
+    // Persist into wedding config so it's included in the next Save
+    onChange({ customTheme: builtTheme, themeKey: "royal" });
 
     const { data } = await api["custom-themes"].post({
       name: themeName,
@@ -124,22 +118,22 @@ export function ThemeCustomiser({ config, onChange, previewIframeRef }: Props) {
     <div className="space-y-5!">
       {/* Saved themes */}
       {!loading && savedThemes.length > 0 && (
-        <div className="space-y-2">
-          <p className="font-label text-[10px] tracking-[0.4em] uppercase text-[#D4AF3780]">
+        <div className="space-y-2!">
+          <p className="font-label text-[10px] tracking-[0.4em] uppercase text-[#D4AF37]">
             Saved Themes
           </p>
           <div className="flex flex-col gap-1.5">
             {savedThemes.map((t) => (
               <div
                 key={t.id}
-                className="flex items-center gap-2 rounded-lg border border-[#D4AF3720] px-3 py-2 group"
+                className="flex items-center gap-2 rounded-lg border border-[#D4AF3790] px-3! py-2! group"
               >
                 {/* Color preview dots */}
                 <div className="flex gap-1 shrink-0">
                   {[t.theme.curtain, t.theme.gold, t.theme.bg].map((c) => (
                     <div
                       key={c}
-                      className="w-3 h-3 rounded-full border border-white/10"
+                      className="size-3 rounded-full border border-white/80"
                       style={{ background: c }}
                     />
                   ))}
@@ -152,9 +146,9 @@ export function ThemeCustomiser({ config, onChange, previewIframeRef }: Props) {
                 </span>
                 <button
                   onClick={() => handleDelete(t.id)}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity text-[#D4AF3760] hover:text-[#D4AF37]"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity text-[#D4AF3780] hover:text-[#D4AF37]"
                 >
-                  <Trash2Icon className="w-3.5 h-3.5" />
+                  <Trash2Icon className="size-3.5" />
                 </button>
               </div>
             ))}

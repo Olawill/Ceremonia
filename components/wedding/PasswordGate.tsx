@@ -1,26 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { unlockWedding } from "@/app/wedding/[slug]/actions";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 
 interface Props {
-  password: string;
+  slug: string;
 }
 
-export function PasswordGate({ password }: Props) {
+export function PasswordGate({ slug }: Props) {
   const [input, setInput] = useState("");
   const [error, setError] = useState(false);
-  const [unlocked, setUnlocked] = useState(false);
-
-  if (unlocked) return null;
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (input === password) {
-      setUnlocked(true);
-    } else {
-      setError(true);
-      setInput("");
-    }
+    startTransition(async () => {
+      const result = await unlockWedding(slug, input);
+      if (result.success) {
+        router.refresh(); // Re-render the page — server will now see the cookie
+      } else {
+        setError(true);
+        setInput("");
+      }
+    });
   };
 
   return (
@@ -44,6 +48,7 @@ export function PasswordGate({ password }: Props) {
               setError(false);
             }}
             placeholder="Password"
+            autoFocus
             className="w-full px-4 py-3 rounded-lg bg-[#F5F0E808] border border-[#D4AF3730] text-[#F5F0E8] font-display text-base outline-none focus:border-[#D4AF37] transition-colors placeholder:text-[#F5F0E840]"
           />
           {error && (
@@ -53,9 +58,10 @@ export function PasswordGate({ password }: Props) {
           )}
           <button
             type="submit"
-            className="w-full py-3 rounded-lg border border-[#D4AF37] bg-[#D4AF3715] text-[#D4AF37] font-label text-[12px] tracking-[0.4em] uppercase transition-colors hover:bg-[#D4AF3725]"
+            disabled={isPending || !input.trim()}
+            className="w-full py-3 rounded-lg border border-[#D4AF37] bg-[#D4AF3715] text-[#D4AF37] font-label text-[12px] tracking-[0.4em] uppercase transition-colors hover:bg-[#D4AF3725] disabled:opacity-50"
           >
-            Enter
+            {isPending ? "Checking…" : "Enter"}
           </button>
         </form>
       </div>

@@ -1,11 +1,12 @@
+import bearer from "@elysiajs/bearer";
 import { and, eq } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 
 import { db } from "@/db";
 import { weddings } from "@/db/schema";
 
+import { hashPassword } from "@/lib/password";
 import { getAuthUserId } from "@/server/auth";
-import bearer from "@elysiajs/bearer";
 
 // Zod-compatible Elysia schema for a VenueEvent
 const VenueEventSchema = t.Object({
@@ -101,7 +102,12 @@ export const weddingsRouter = new Elysia({ prefix: "/weddings" })
 
       const [created] = await db
         .insert(weddings)
-        .values({ ...body, slug: finalSlug, userId })
+        .values({
+          ...body,
+          slug: finalSlug,
+          userId,
+          password: body.password ? hashPassword(body.password) : null,
+        })
         .returning();
 
       return created;
@@ -118,7 +124,11 @@ export const weddingsRouter = new Elysia({ prefix: "/weddings" })
 
       const [updated] = await db
         .update(weddings)
-        .set(body)
+        .set({
+          ...body,
+          // Only update password if a new one was provided
+          ...(body.password ? { password: hashPassword(body.password) } : {}),
+        })
         .where(and(eq(weddings.slug, params.slug), eq(weddings.userId, userId)))
         .returning();
 

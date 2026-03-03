@@ -44,7 +44,7 @@ export default function AuthLayout({
         {/* Logo */}
         <div className="relative z-10">
           <p
-            className="font-label text-3xl tracking-[0.5em] uppercase"
+            className="font-label font-bold text-3xl tracking-[0.5em] uppercase"
             style={{ color: "#D4AF3780" }}
           >
             ✦ Ceremonia

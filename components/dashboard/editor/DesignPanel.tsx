@@ -91,9 +91,9 @@ export function DesignPanel({ config, onChange, previewIframeRef }: Props) {
                       uppercase transition-all"
                   style={{
                     borderColor:
-                      config.curtainStyle === label ? "#D4AF3760" : "#D4AF3720",
+                      config.curtainStyle === label ? "#D4AF3790" : "#D4AF3760",
                     color:
-                      config.curtainStyle === label ? "#D4AF37" : "#D4AF3750",
+                      config.curtainStyle === label ? "#D4AF37" : "#D4AF3780",
                     background:
                       config.curtainStyle === label
                         ? "#D4AF3710"
@@ -114,8 +114,8 @@ export function DesignPanel({ config, onChange, previewIframeRef }: Props) {
                       uppercase transition-all"
               style={{
                 borderColor:
-                  config.curtainStyle === label ? "#D4AF3760" : "#D4AF3720",
-                color: config.curtainStyle === label ? "#D4AF37" : "#D4AF3750",
+                  config.curtainStyle === label ? "#D4AF3790" : "#D4AF3760",
+                color: config.curtainStyle === label ? "#D4AF37" : "#D4AF3780",
                 background:
                   config.curtainStyle === label ? "#D4AF3710" : "transparent",
               }}
