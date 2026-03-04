@@ -179,11 +179,12 @@ export default async function MarketingPage() {
           {TIERS.map((tier) => (
             <div
               key={tier.name}
-              className={`rounded-2xl p-7! flex flex-col gap-5 border ${
+              className={clsx(
+                "rounded-2xl p-7! flex flex-col gap-5 border hover:border-[#D4AF3780] hover:shadow-md",
                 tier.highlighted
                   ? "border-[#D4AF3780] bg-[#D4AF3708]"
-                  : "border-[#D4AF3720] bg-[#D4AF3703]"
-              }`}
+                  : "border-[#D4AF3720] bg-[#D4AF3703]",
+              )}
             >
               <div>
                 <p className="font-label text-sm font-semibold tracking-widest uppercase text-[#D4AF37] mb-1">

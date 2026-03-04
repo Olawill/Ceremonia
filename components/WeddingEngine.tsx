@@ -113,6 +113,7 @@ export function WeddingEngine({
               bride={config.bride}
               groom={config.groom}
               tagLine={config.tagLine}
+              heroPhotoUrl={config.heroPhotoUrl}
             />,
 
             // ScratchDate locks scroll until revealed

@@ -11,6 +11,7 @@ import { RSVPSettings } from "@/components/dashboard/editor/RSVPSettings";
 import { TimelineEditor } from "@/components/dashboard/editor/TimelineEditor";
 import { VenueEditor } from "@/components/dashboard/editor/VenueEditor";
 import clsx from "clsx";
+import { MediaUploader } from "./MediaUploader";
 
 const TABS = [
   { id: "design", label: "Design" },
@@ -18,6 +19,7 @@ const TABS = [
   { id: "venue", label: "Venue" },
   { id: "timeline", label: "Timeline" },
   { id: "menu", label: "Menu" },
+  { id: "media", label: "Media" },
   { id: "rsvp", label: "RSVP" },
 ] as const;
 
@@ -35,7 +37,7 @@ export function EditorSidebar({ config, onChange, previewIframeRef }: Props) {
   return (
     <div className="flex flex-col h-full">
       {/* Tab bar */}
-      <div className="flex border-b shrink-0 text-[#D4AF3718]">
+      <div className="flex flex-wrap gap-2 overflow-x-auto border-b shrink-0 text-[#D4AF3718]">
         {TABS.map((tab) => (
           <button
             key={tab.id}
@@ -44,7 +46,7 @@ export function EditorSidebar({ config, onChange, previewIframeRef }: Props) {
               "flex-1 py-3.5! font-label text-[10px] font-bold tracking-[0.3em] uppercase transition-all duration-200 border-b-2",
               activeTab === tab.id
                 ? "text-[#D4AF37] border-b-[#D4AF37]"
-                : "text-[#D4AF37]/50 transparent",
+                : "text-[#D4AF3780] transparent",
             )}
           >
             {tab.label}
@@ -72,6 +74,9 @@ export function EditorSidebar({ config, onChange, previewIframeRef }: Props) {
         )}
         {activeTab === "menu" && (
           <MenuEditor config={config} onChange={onChange} />
+        )}
+        {activeTab === "media" && (
+          <MediaUploader config={config} onChange={onChange} />
         )}
         {activeTab === "rsvp" && (
           <RSVPSettings config={config} onChange={onChange} />

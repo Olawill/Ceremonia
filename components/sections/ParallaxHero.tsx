@@ -9,12 +9,14 @@ interface ParallaxHeroProps {
   bride?: string;
   groom?: string;
   tagLine?: string;
+  heroPhotoUrl?: string;
 }
 
 export function ParallaxHero({
   bride = "Taiwo",
   groom = "Tayo",
   tagLine,
+  heroPhotoUrl,
 }: ParallaxHeroProps) {
   const { theme } = useTheme();
   const [scrollY, setScrollY] = useState(0);
@@ -63,6 +65,11 @@ export function ParallaxHero({
           right: "5%",
           transform: `translateY(${scrollY * 0.18}px)`,
           background: `radial-gradient(circle, ${theme.curtain}30, transparent 70%)`,
+          backgroundImage: heroPhotoUrl
+            ? `linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url(${heroPhotoUrl})`
+            : undefined,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
         }}
       />
 
