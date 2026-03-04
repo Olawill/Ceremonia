@@ -16,6 +16,7 @@ export const users = pgTable("users", {
   id: text("id").primaryKey(), // Clerk user ID
   email: text("email").notNull(),
   stripeCustomerId: text("stripe_customer_id"),
+  brandName: text("brand_name"),
   plan: planEnum("plan").default("free"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -23,6 +24,7 @@ export const users = pgTable("users", {
 export const weddings = pgTable("weddings", {
   id: uuid("id").defaultRandom().primaryKey(),
   slug: text("slug").notNull().unique(),
+  customDomain: text("custom_domain").unique(),
   userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
   bride: text("bride").notNull(),
   groom: text("groom").notNull(),

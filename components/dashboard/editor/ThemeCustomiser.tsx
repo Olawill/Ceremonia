@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2Icon, SaveIcon, Trash2Icon } from "lucide-react";
+import { GlobeIcon, Loader2Icon, SaveIcon, Trash2Icon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import { useApi } from "@/hooks/useApi";
@@ -22,12 +22,14 @@ interface SavedCustomTheme {
   id: string;
   name: string;
   theme: WeddingTheme;
+  isPublic: boolean;
 }
 
 interface Props {
   config: WeddingConfig;
   onChange: (patch: Partial<WeddingConfig>) => void;
   previewIframeRef: React.RefObject<HTMLIFrameElement | null>;
+  ownerPlan?: string;
 }
 
 const DEFAULT_CUSTOM_THEME: Omit<WeddingTheme, "key" | "name"> = {
@@ -42,7 +44,12 @@ const DEFAULT_CUSTOM_THEME: Omit<WeddingTheme, "key" | "name"> = {
   particle: "rgba(212,175,55,0.4)",
 };
 
-export function ThemeCustomiser({ config, onChange, previewIframeRef }: Props) {
+export function ThemeCustomiser({
+  config,
+  onChange,
+  previewIframeRef,
+  ownerPlan,
+}: Props) {
   const { api } = useApi();
   const [themeName, setThemeName] = useState("My Custom Theme");
   const [colors, setColors] = useState<Omit<WeddingTheme, "key" | "name">>(
@@ -114,6 +121,13 @@ export function ThemeCustomiser({ config, onChange, previewIframeRef }: Props) {
     onChange({ customTheme: saved.theme, themeKey: "royal" });
   };
 
+  const handleTogglePublic = async (id: string, isPublic: boolean) => {
+    await api["custom-themes"]({ id }).patch({ isPublic });
+    setSavedThemes((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, isPublic } : t)),
+    );
+  };
+
   return (
     <div className="space-y-5!">
       {/* Saved themes */}
@@ -144,6 +158,15 @@ export function ThemeCustomiser({ config, onChange, previewIframeRef }: Props) {
                 >
                   {t.name}
                 </span>
+                {ownerPlan === "agency" && (
+                  <button
+                    onClick={() => handleTogglePublic(t.id, !t.isPublic)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-[#D4AF3760] hover:text-[#D4AF37] ml-1"
+                    title={t.isPublic ? "Make private" : "Share to marketplace"}
+                  >
+                    <GlobeIcon className="w-3.5 h-3.5" />
+                  </button>
+                )}
                 <button
                   onClick={() => handleDelete(t.id)}
                   className="opacity-0 group-hover:opacity-100 transition-opacity text-[#D4AF3780] hover:text-[#D4AF37]"

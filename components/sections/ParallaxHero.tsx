@@ -41,7 +41,11 @@ export function ParallaxHero({
         mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-[30px]",
       )}
       style={{
-        background: `radial-gradient(ellipse at 50% ${30 - scrollY * 0.015}%, var(--theme-curtain)50 0%, var(--theme-bg) 70%)`,
+        background: heroPhotoUrl
+          ? `linear-gradient(to bottom, rgba(0,0,0,0.55), rgba(0,0,0,0.75)), url(${heroPhotoUrl})`
+          : `radial-gradient(ellipse at 50% ${30 - scrollY * 0.015}%, var(--theme-curtain)50 0%, var(--theme-bg) 70%)`,
+        backgroundSize: heroPhotoUrl ? "cover" : undefined,
+        backgroundPosition: heroPhotoUrl ? "center" : undefined,
       }}
     >
       {/* Parallax orbs */}
@@ -65,11 +69,6 @@ export function ParallaxHero({
           right: "5%",
           transform: `translateY(${scrollY * 0.18}px)`,
           background: `radial-gradient(circle, ${theme.curtain}30, transparent 70%)`,
-          backgroundImage: heroPhotoUrl
-            ? `linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url(${heroPhotoUrl})`
-            : undefined,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
         }}
       />
 

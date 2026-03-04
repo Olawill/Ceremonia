@@ -16,6 +16,7 @@ const schema = z
     rsvpDeadline: z.string().optional(),
     passwordProtected: z.boolean(),
     password: z.string().optional(),
+    customDomain: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     if (
@@ -23,7 +24,7 @@ const schema = z
       (!data.password || data.password.trim().length < 4)
     ) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Password must be at least 4 characters",
         path: ["password"],
       });
@@ -130,6 +131,19 @@ export function RSVPSettings({ config, onChange }: Props) {
             />
           </Field>
         )}
+      </PlanGate>
+
+      <PlanGate requires="pro" featureName="Custom domain">
+        <Field
+          label="Custom Domain"
+          hint="Point your own domain here (e.g. james-sarah.com). Set a CNAME to cname.ceremonia.app"
+        >
+          <Input
+            type="text"
+            {...register("customDomain")}
+            placeholder="james-sarah.com"
+          />
+        </Field>
       </PlanGate>
     </div>
   );

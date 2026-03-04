@@ -31,6 +31,13 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     return NextResponse.rewrite(url);
   }
 
+  // Custom domain support — non-ceremonia.app hosts
+  if (!isLocalhost && !host.endsWith(rootDomain)) {
+    // Rewrite to a special route that will look up the domain in DB
+    url.pathname = `/wedding/domain/${host}${url.pathname}`;
+    return NextResponse.rewrite(url);
+  }
+
   // Protect dashboard routes
   if (isProtectedRoute(req)) {
     await auth.protect();

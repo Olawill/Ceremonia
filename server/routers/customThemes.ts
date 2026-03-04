@@ -74,6 +74,7 @@ export const customThemesRouter = new Elysia({ prefix: "/custom-themes" })
         .set({
           ...(body.name ? { name: body.name } : {}),
           ...(body.theme ? { theme: body.theme } : {}),
+          ...(body.isPublic !== undefined ? { isPublic: body.isPublic } : {}),
         })
         .where(
           and(eq(customThemes.id, params.id), eq(customThemes.userId, userId)),
@@ -87,6 +88,7 @@ export const customThemesRouter = new Elysia({ prefix: "/custom-themes" })
       body: t.Object({
         name: t.Optional(t.String()),
         theme: t.Optional(ThemeSchema),
+        isPublic: t.Optional(t.Boolean()),
       }),
     },
   )

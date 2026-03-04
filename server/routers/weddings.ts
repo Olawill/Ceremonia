@@ -32,6 +32,7 @@ const WeddingBodySchema = t.Object({
   groom: t.String({ minLength: 1 }),
   tagLine: t.Optional(t.String()),
   finaleTagLine: t.Optional(t.String()),
+  customDomain: t.Optional(t.String()),
   date: t.String(),
   venueDetails: t.Array(VenueEventSchema),
   themeKey: t.String(),
@@ -128,6 +129,9 @@ export const weddingsRouter = new Elysia({ prefix: "/weddings" })
           ...body,
           // Only update password if a new one was provided
           ...(body.password ? { password: hashPassword(body.password) } : {}),
+          ...(body.customDomain !== undefined
+            ? { customDomain: body.customDomain || null }
+            : {}),
         })
         .where(and(eq(weddings.slug, params.slug), eq(weddings.userId, userId)))
         .returning();

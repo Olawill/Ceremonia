@@ -22,7 +22,7 @@ const curtainStyles = [
 ] as const;
 
 export function DesignPanel({ config, onChange, previewIframeRef }: Props) {
-  const { features } = usePlan();
+  const { features, plan: ownerPlan } = usePlan();
 
   return (
     <div className="space-y-6!">
@@ -142,6 +142,7 @@ export function DesignPanel({ config, onChange, previewIframeRef }: Props) {
           config={config}
           onChange={onChange}
           previewIframeRef={previewIframeRef}
+          ownerPlan={ownerPlan}
         />
       </PlanGate>
     </div>

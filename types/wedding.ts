@@ -21,6 +21,7 @@ export interface VenueEvent {
 export interface WeddingConfig {
   id: string;
   slug: string;
+  customDomain?: string;
   bride: string;
   groom: string;
   tagLine?: string;

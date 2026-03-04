@@ -56,11 +56,11 @@ export default async function WeddingPage({ params }: Props) {
 
   const [owner] = wedding.userId
     ? await db
-        .select({ plan: users.plan })
+        .select({ plan: users.plan, brandName: users.brandName })
         .from(users)
         .where(eq(users.id, wedding.userId))
         .limit(1)
-    : [{ plan: "free" }];
+    : [{ plan: "free", brandName: null }];
 
   const showWatermark = (owner?.plan ?? "free") === "free";
 
@@ -114,6 +114,7 @@ export default async function WeddingPage({ params }: Props) {
       config={config}
       showWatermark={showWatermark}
       ownerPlan={(owner?.plan ?? "free") as Plan}
+      brandName={owner?.brandName ?? undefined}
     />
   );
 }
