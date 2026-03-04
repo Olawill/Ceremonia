@@ -5,6 +5,10 @@ import { env } from "./env";
 const isProtectedRoute = createRouteMatcher(["/app(.*)"]);
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
+  if (req.nextUrl.pathname.startsWith("/api/webhooks")) {
+    return NextResponse.next();
+  }
+
   const host = req.headers.get("host") || "";
   const url = req.nextUrl.clone();
 

@@ -26,6 +26,7 @@ import {
   VenueEvent,
   WeddingConfig,
 } from "@/types/wedding";
+import { Registry } from "./sections/Registry";
 
 interface WeddingEngineProps {
   config?: WeddingConfig;
@@ -142,6 +143,9 @@ export function WeddingEngine({
                     enabled={config.rsvpEnabled}
                     rsvpDeadline={config.rsvpDeadline}
                   />,
+                  ...(config.registryEnabled
+                    ? [<Registry key="registry" weddingSlug={config.slug} />]
+                    : []),
                   <Finale
                     key="finale"
                     bride={config.bride}

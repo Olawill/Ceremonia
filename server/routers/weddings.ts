@@ -12,14 +12,14 @@ import { getAuthUserId } from "@/server/auth";
 const VenueEventSchema = t.Object({
   label: t.String(),
   value: t.String(),
-  sub: t.String(),
+  sub: t.Optional(t.String()),
 });
 
 const TimelineEventSchema = t.Object({
   year: t.String(),
   icon: t.String(),
   title: t.String(),
-  desc: t.String(),
+  desc: t.Optional(t.String()),
 });
 
 const CourseSchema = t.Object({
@@ -98,18 +98,27 @@ export const weddingsRouter = new Elysia({ prefix: "/weddings" })
         .from(weddings)
         .where(eq(weddings.slug, slug))
         .limit(1);
+      console.log({ existing });
 
       const finalSlug = existing ? `${slug}-${Date.now()}` : slug;
+      console.log({ finalSlug });
 
-      const [created] = await db
-        .insert(weddings)
-        .values({
-          ...body,
-          slug: finalSlug,
-          userId,
-          password: body.password ? hashPassword(body.password) : null,
-        })
-        .returning();
+      let created;
+      try {
+        [created] = await db
+          .insert(weddings)
+          .values({
+            ...body,
+            slug: finalSlug,
+            userId,
+            password: body.password ? hashPassword(body.password) : null,
+          })
+          .returning();
+        console.log({ created });
+      } catch (e) {
+        console.error("INSERT ERROR:", e);
+        return status(500, { message: String(e) });
+      }
 
       return created;
     },

@@ -7,6 +7,7 @@ import { z } from "zod";
 
 import type { WeddingConfig } from "@/types/wedding";
 
+import { DatePicker } from "@/components/ui/DatePicker";
 import { Field, Input, Textarea } from "@/components/ui/FormPrimitives";
 
 const schema = z.object({
@@ -79,7 +80,11 @@ export function ContentEditor({ config, onChange }: Props) {
       </div>
 
       <Field label="Wedding Date" error={errors.date?.message}>
-        <Input type="date" {...register("date")} hasError={!!errors.date} />
+        <DatePicker
+          value={watch("date") ?? ""}
+          onChange={(val) => setValue("date", val, { shouldValidate: true })}
+          hasError={!!errors.date}
+        />
       </Field>
 
       <Field

@@ -7,6 +7,7 @@ import { z } from "zod";
 
 import type { WeddingConfig } from "@/types/wedding";
 
+import { DatePicker } from "@/components/ui/DatePicker";
 import { Field, Input } from "@/components/ui/FormPrimitives";
 import { PlanGate } from "@/components/ui/PlanGate";
 
@@ -87,7 +88,13 @@ export function RSVPSettings({ config, onChange }: Props) {
       </Field>
 
       <Field label="RSVP Deadline">
-        <Input type="date" {...register("rsvpDeadline")} />
+        <DatePicker
+          value={watch("rsvpDeadline") ?? ""}
+          onChange={(val) =>
+            setValue("rsvpDeadline", val, { shouldValidate: true })
+          }
+          hasError={!!errors.rsvpDeadline}
+        />
       </Field>
 
       <div

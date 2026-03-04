@@ -41,6 +41,7 @@ export interface WeddingConfig {
   passwordProtected: boolean;
   password?: string;
   notificationEmail?: string;
+  registryEnabled?: boolean;
 }
 
 export const FALLBACK_LOCATION: VenueEvent = {

@@ -21,7 +21,7 @@ export function PlanGate({ requires, children, featureName }: Props) {
   if (can(requires)) return <>{children}</>;
 
   return (
-    <div className="relative rounded-xl">
+    <div className="relative rounded-xl mb-12!">
       {/* Blurred preview of the locked content */}
       <div
         className="pointer-events-none select-none"

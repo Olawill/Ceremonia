@@ -12,6 +12,7 @@ import { TimelineEditor } from "@/components/dashboard/editor/TimelineEditor";
 import { VenueEditor } from "@/components/dashboard/editor/VenueEditor";
 import clsx from "clsx";
 import { MediaUploader } from "./MediaUploader";
+import { RegistryEditor } from "./RegistryEditor";
 
 const TABS = [
   { id: "design", label: "Design" },
@@ -21,6 +22,7 @@ const TABS = [
   { id: "menu", label: "Menu" },
   { id: "media", label: "Media" },
   { id: "rsvp", label: "RSVP" },
+  { id: "registry", label: "Registry" },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -81,6 +83,7 @@ export function EditorSidebar({ config, onChange, previewIframeRef }: Props) {
         {activeTab === "rsvp" && (
           <RSVPSettings config={config} onChange={onChange} />
         )}
+        {activeTab === "registry" && <RegistryEditor config={config} />}
       </div>
     </div>
   );

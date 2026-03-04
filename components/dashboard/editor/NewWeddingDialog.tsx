@@ -1,12 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import clsx from "clsx";
+import { ArrowRightIcon, SparklesIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { DatePicker } from "@/components/ui/DatePicker";
 import { Field, Input } from "@/components/ui/FormPrimitives";
-import clsx from "clsx";
-import { ArrowRightIcon, SparklesIcon } from "lucide-react";
 
 const schema = z.object({
   bride: z.string().min(1, "Required"),
@@ -29,6 +30,8 @@ export function NewWeddingDialog({ onConfirm }: Props) {
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors, isValid },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -82,7 +85,14 @@ export function NewWeddingDialog({ onConfirm }: Props) {
           </div>
 
           <Field label="Wedding Date" error={errors.date?.message}>
-            <Input type="date" {...register("date")} hasError={!!errors.date} />
+            <DatePicker
+              value={watch("date") ?? ""}
+              onChange={(val) =>
+                setValue("date", val, { shouldValidate: true })
+              }
+              hasError={!!errors.date}
+              placeholder="Pick the big day"
+            />
           </Field>
 
           <Field

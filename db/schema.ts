@@ -1,3 +1,4 @@
+import { relations } from "drizzle-orm";
 import {
   boolean,
   date,
@@ -44,6 +45,7 @@ export const weddings = pgTable("weddings", {
   passwordProtected: boolean("password_protected").default(false),
   password: text("password"),
   published: boolean("published").default(false),
+  registryEnabled: boolean("registry_enabled").default(true),
   viewCount: integer("view_count").default(0),
   notificationEmail: text("notification_email"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -70,3 +72,92 @@ export const customThemes = pgTable("custom_themes", {
   isPublic: boolean("is_public").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+export const registryItems = pgTable("registry_items", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  weddingId: uuid("wedding_id")
+    .notNull()
+    .references(() => weddings.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description"),
+  price: integer("price"), // in pence/cents, e.g. 4999 = £49.99
+  imageUrl: text("image_url"),
+  productUrl: text("product_url"), // Amazon/John Lewis/etc link
+  retailer: text("retailer"), // "Amazon", "John Lewis", etc.
+  quantity: integer("quantity").default(1), // how many needed
+  category: text("category"), // "Kitchen", "Travel", etc.
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const registryClaims = pgTable("registry_claims", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  itemId: uuid("item_id")
+    .notNull()
+    .references(() => registryItems.id, { onDelete: "cascade" }),
+  weddingId: uuid("wedding_id")
+    .notNull()
+    .references(() => weddings.id, { onDelete: "cascade" }),
+  // Guest identity — no auth, just a name + session token
+  guestName: text("guest_name").notNull(),
+  // A short random token stored in the guest's localStorage so they can "unclaim"
+  // This is NOT a security token — it's just UX to let the same browser unclaim
+  claimToken: text("claim_token").notNull(),
+  // "reserved" = guest clicked "I'll buy this" | "purchased" = guest confirmed purchase
+  status: text("status").notNull().default("reserved"), // "reserved" | "purchased"
+  createdAt: timestamp("created_at").defaultNow(),
+  purchasedAt: timestamp("purchased_at"),
+});
+
+// ─── Relations ───────────────────────────────────────────────────────────────
+
+export const usersRelations = relations(users, ({ many }) => ({
+  weddings: many(weddings),
+  customThemes: many(customThemes),
+}));
+
+export const weddingsRelations = relations(weddings, ({ one, many }) => ({
+  owner: one(users, {
+    fields: [weddings.userId],
+    references: [users.id],
+  }),
+  rsvps: many(rsvps),
+  registryItems: many(registryItems),
+  registryClaims: many(registryClaims),
+}));
+
+export const rsvpsRelations = relations(rsvps, ({ one }) => ({
+  wedding: one(weddings, {
+    fields: [rsvps.weddingId],
+    references: [weddings.id],
+  }),
+}));
+
+export const customThemesRelations = relations(customThemes, ({ one }) => ({
+  owner: one(users, {
+    fields: [customThemes.userId],
+    references: [users.id],
+  }),
+}));
+
+export const registryItemsRelations = relations(
+  registryItems,
+  ({ one, many }) => ({
+    wedding: one(weddings, {
+      fields: [registryItems.weddingId],
+      references: [weddings.id],
+    }),
+    claims: many(registryClaims),
+  }),
+);
+
+export const registryClaimsRelations = relations(registryClaims, ({ one }) => ({
+  item: one(registryItems, {
+    fields: [registryClaims.itemId],
+    references: [registryItems.id],
+  }),
+  wedding: one(weddings, {
+    fields: [registryClaims.weddingId],
+    references: [weddings.id],
+  }),
+}));

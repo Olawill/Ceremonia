@@ -1,0 +1,1 @@
+ALTER TABLE "weddings" ADD COLUMN "registry_enabled" boolean DEFAULT true;
