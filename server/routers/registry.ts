@@ -1,11 +1,15 @@
 import bearer from "@elysiajs/bearer";
-import { and, eq } from "drizzle-orm";
+import { and, count, eq } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import { JSDOM } from "jsdom";
 import { nanoid } from "nanoid";
 
 import { db } from "@/db";
-import { registryClaims, registryItems, weddings } from "@/db/schema";
+import { registryClaims, registryItems, users, weddings } from "@/db/schema";
+
+import { type Plan, PLAN_FEATURES, planMeetsRequirement } from "@/lib/plans";
+import { getPostHogClient } from "@/lib/posthog-server";
+
 import { getAuthUserId } from "@/server/auth";
 
 export const registryRouter = new Elysia({ prefix: "/registry" })
@@ -52,6 +56,41 @@ export const registryRouter = new Elysia({ prefix: "/registry" })
         )
         .limit(1);
       if (!wedding) return status(404, { message: "Not found" });
+
+      // Fetch owner plan
+      const [owner] = await db
+        .select({ plan: users.plan })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+
+      const plan = owner?.plan ?? "free";
+      const features = PLAN_FEATURES[plan];
+
+      // Enforce registry item cap
+      if (features.registryItemLimit !== Infinity) {
+        const [{ itemCount }] = await db
+          .select({ itemCount: count() })
+          .from(registryItems)
+          .where(eq(registryItems.weddingId, params.weddingId));
+
+        if (itemCount >= features.registryItemLimit) {
+          const posthog = getPostHogClient();
+          posthog.capture({
+            distinctId: userId,
+            event: "plan_limit_hit",
+            properties: {
+              feature: "registry_item_limit",
+              plan,
+              limit: features.registryItemLimit,
+            },
+          });
+          await posthog.shutdown();
+          return status(403, {
+            message: `Your ${plan} plan allows a maximum of ${features.registryItemLimit} registry items. Please upgrade.`,
+          });
+        }
+      }
 
       const [item] = await db
         .insert(registryItems)
@@ -153,6 +192,27 @@ export const registryRouter = new Elysia({ prefix: "/registry" })
     async ({ body, bearer, status }) => {
       const userId = await getAuthUserId(bearer);
       if (!userId) return status(401, { message: "Unauthorized" });
+
+      // Fetch owner plan
+      const [owner] = await db
+        .select({ plan: users.plan })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+
+      if (!PLAN_FEATURES[owner?.plan ?? "free"].registryScraper) {
+        const posthog = getPostHogClient();
+        posthog.capture({
+          distinctId: userId,
+          event: "plan_limit_hit",
+          properties: { feature: "registry_scraper", plan: owner?.plan },
+        });
+        await posthog.shutdown();
+        return status(403, {
+          message:
+            "URL scraping requires the Starter plan. Add items manually or upgrade.",
+        });
+      }
 
       const urls = Array.isArray(body.urls) ? body.urls : [body.urls];
       if (urls.length > 20)
@@ -274,6 +334,283 @@ export const registryRouter = new Elysia({ prefix: "/registry" })
       body: t.Object({
         urls: t.Union([t.String(), t.Array(t.String())]),
       }),
+    },
+  )
+
+  // POST /api/registry/scrape-page — Agency: scrape all products from a listing/category/search page
+  .post(
+    "/scrape-page",
+    async ({ body, bearer, status }) => {
+      const userId = await getAuthUserId(bearer);
+      if (!userId) return status(401, { message: "Unauthorized" });
+
+      // Agency-only feature
+      const [user] = await db
+        .select({ plan: users.plan })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+
+      if (!planMeetsRequirement((user?.plan ?? "free") as Plan, "agency")) {
+        return status(403, {
+          message: "Page import requires the Agency plan.",
+        });
+      }
+
+      const { url } = body;
+
+      let html: string;
+      try {
+        const res = await fetch(url, {
+          headers: {
+            "User-Agent":
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept-Language": "en-GB,en;q=0.9",
+          },
+          signal: AbortSignal.timeout(12000),
+        });
+        if (!res.ok)
+          return status(400, { message: "Could not fetch that page" });
+        html = await res.text();
+      } catch {
+        return status(400, { message: "Could not reach that URL" });
+      }
+
+      const dom = new JSDOM(html);
+      const doc = dom.window.document;
+      const hostname = new URL(url).hostname.replace("www.", "");
+      const origin = new URL(url).origin;
+
+      // ── Per-retailer product link selectors ──────────────────────────
+      type RetailerConfig = {
+        linkSelector: string;
+        hrefFilter?: (href: string) => boolean;
+        absolutify?: (href: string) => string;
+      };
+
+      const RETAILER_CONFIGS: Record<string, RetailerConfig> = {
+        "amazon.co.uk": {
+          linkSelector: 'a[href*="/dp/"], a[href*="/gp/product/"]',
+          hrefFilter: (h) => /\/dp\/[A-Z0-9]{10}/.test(h),
+          absolutify: (h) =>
+            h.startsWith("http")
+              ? h.split("?")[0]
+              : `https://www.amazon.co.uk${h.split("?")[0]}`,
+        },
+        "amazon.com": {
+          linkSelector: 'a[href*="/dp/"], a[href*="/gp/product/"]',
+          hrefFilter: (h) => /\/dp\/[A-Z0-9]{10}/.test(h),
+          absolutify: (h) =>
+            h.startsWith("http")
+              ? h.split("?")[0]
+              : `https://www.amazon.com${h.split("?")[0]}`,
+        },
+        "johnlewis.com": {
+          linkSelector: 'a[href*="/p/"]',
+          hrefFilter: (h) => /\/p\/\d+/.test(h),
+          absolutify: (h) =>
+            h.startsWith("http") ? h : `https://www.johnlewis.com${h}`,
+        },
+        "etsy.com": {
+          linkSelector: 'a[href*="/listing/"]',
+          hrefFilter: (h) => /\/listing\/\d+/.test(h),
+          absolutify: (h) =>
+            h.startsWith("http")
+              ? h.split("?")[0]
+              : `https://www.etsy.com${h.split("?")[0]}`,
+        },
+        "ikea.com": {
+          linkSelector: 'a[href*="/p/"]',
+          hrefFilter: (h) => /\/p\//.test(h),
+          absolutify: (h) => (h.startsWith("http") ? h : `${origin}${h}`),
+        },
+        "anthropologie.com": {
+          linkSelector: 'a[href*="/shop/"]',
+          hrefFilter: (h) => /\/shop\//.test(h),
+          absolutify: (h) =>
+            h.startsWith("http") ? h : `https://www.anthropologie.com${h}`,
+        },
+        "crateandbarrel.com": {
+          linkSelector: 'a[href*="/s/"], a[class*="product"]',
+          absolutify: (h) =>
+            h.startsWith("http") ? h : `https://www.crateandbarrel.com${h}`,
+        },
+        "wayfair.com": {
+          linkSelector: 'a[href*="/-/"]',
+          hrefFilter: (h) => h.includes("/-/"),
+          absolutify: (h) =>
+            h.startsWith("http") ? h : `https://www.wayfair.com${h}`,
+        },
+        "notonthehighstreet.com": {
+          linkSelector: 'a[href*="/product/"]',
+          hrefFilter: (h) => h.includes("/product/"),
+          absolutify: (h) =>
+            h.startsWith("http") ? h : `https://www.notonthehighstreet.com${h}`,
+        },
+      };
+
+      // ── Generic fallback: find all <a> tags that look like product pages ─
+      const genericProductLinkFilter = (href: string) => {
+        const lower = href.toLowerCase();
+        return (
+          !lower.includes("javascript:") &&
+          !lower.includes("mailto:") &&
+          !lower.includes("#") &&
+          (lower.includes("/product") ||
+            lower.includes("/item") ||
+            lower.includes("/p/") ||
+            lower.includes("/shop/") ||
+            lower.includes("/dp/") ||
+            lower.includes("/listing"))
+        );
+      };
+
+      let productUrls: string[] = [];
+
+      const config = RETAILER_CONFIGS[hostname];
+      if (config) {
+        const links = Array.from(
+          doc.querySelectorAll<HTMLAnchorElement>(config.linkSelector),
+        );
+        productUrls = links
+          .map((a) => a.getAttribute("href") ?? "")
+          .filter((h) => h && (!config.hrefFilter || config.hrefFilter(h)))
+          .map((h) => (config.absolutify ? config.absolutify(h) : h));
+      } else {
+        // Generic fallback
+        const links = Array.from(
+          doc.querySelectorAll<HTMLAnchorElement>("a[href]"),
+        );
+        productUrls = links
+          .map((a) => a.getAttribute("href") ?? "")
+          .filter(genericProductLinkFilter)
+          .map((h) => (h.startsWith("http") ? h : `${origin}${h}`));
+      }
+
+      // Deduplicate
+      productUrls = [...new Set(productUrls)].slice(0, 20);
+
+      if (productUrls.length === 0) {
+        return status(422, {
+          message:
+            "No product links found on that page. Try pasting individual product URLs instead.",
+        });
+      }
+
+      // Now scrape each product URL (reusing existing scrape logic)
+      const results = await Promise.allSettled(
+        productUrls.map(async (productUrl) => {
+          try {
+            const res = await fetch(productUrl, {
+              headers: {
+                "User-Agent":
+                  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept-Language": "en-GB,en;q=0.9",
+              },
+              signal: AbortSignal.timeout(8000),
+            });
+            if (!res.ok) return { url: productUrl, error: "Failed to fetch" };
+
+            const productHtml = await res.text();
+            const productDom = new JSDOM(productHtml);
+            const productDoc = productDom.window.document;
+
+            const getMeta = (property: string) =>
+              productDoc
+                .querySelector(
+                  `meta[property="${property}"], meta[name="${property}"]`,
+                )
+                ?.getAttribute("content") ?? null;
+
+            const title =
+              getMeta("og:title") ??
+              productDoc.querySelector("title")?.textContent?.trim() ??
+              null;
+            const imageUrl = getMeta("og:image") ?? null;
+            const description = getMeta("og:description") ?? null;
+            const siteName = getMeta("og:site_name") ?? null;
+
+            let price: number | null = null;
+            const scripts = productDoc.querySelectorAll(
+              'script[type="application/ld+json"]',
+            );
+            for (const script of scripts) {
+              try {
+                const json = JSON.parse(script.textContent ?? "");
+                const offers = json?.offers ?? json?.[0]?.offers;
+                const priceRaw =
+                  offers?.price ?? offers?.[0]?.price ?? json?.price ?? null;
+                if (priceRaw) {
+                  const parsed = parseFloat(
+                    String(priceRaw).replace(/[^0-9.]/g, ""),
+                  );
+                  if (!isNaN(parsed)) {
+                    price = Math.round(parsed * 100);
+                    break;
+                  }
+                }
+              } catch {}
+            }
+            if (!price) {
+              const priceMeta =
+                getMeta("product:price:amount") ??
+                getMeta("twitter:data1") ??
+                null;
+              if (priceMeta) {
+                const parsed = parseFloat(priceMeta.replace(/[^0-9.]/g, ""));
+                if (!isNaN(parsed)) price = Math.round(parsed * 100);
+              }
+            }
+
+            const retailerMap: Record<string, string> = {
+              "amazon.co.uk": "Amazon",
+              "amazon.com": "Amazon",
+              "johnlewis.com": "John Lewis",
+              "etsy.com": "Etsy",
+              "ikea.com": "IKEA",
+              "anthropologie.com": "Anthropologie",
+              "crateandbarrel.com": "Crate & Barrel",
+              "wayfair.com": "Wayfair",
+              "notonthehighstreet.com": "Not On The High Street",
+            };
+            const productHostname = new URL(productUrl).hostname.replace(
+              "www.",
+              "",
+            );
+            const retailer =
+              siteName ??
+              retailerMap[productHostname] ??
+              productHostname.split(".")[0].charAt(0).toUpperCase() +
+                productHostname.split(".")[0].slice(1);
+
+            return {
+              url: productUrl,
+              title,
+              imageUrl,
+              description,
+              price,
+              retailer,
+              productUrl,
+            };
+          } catch {
+            return { url: productUrl, error: "Could not scrape this URL" };
+          }
+        }),
+      );
+
+      return {
+        sourceUrl: url,
+        retailer: hostname,
+        found: productUrls.length,
+        items: results.map((r) =>
+          r.status === "fulfilled"
+            ? r.value
+            : { url: "", error: "Unknown error" },
+        ),
+      };
+    },
+    {
+      body: t.Object({ url: t.String() }),
     },
   )
 

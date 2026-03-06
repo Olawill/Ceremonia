@@ -7,6 +7,7 @@ import {
   LinkIcon,
   Loader2Icon,
   PlusIcon,
+  StoreIcon,
   Trash2Icon,
   XIcon,
 } from "lucide-react";
@@ -17,6 +18,7 @@ import { Field, Input, Textarea } from "@/components/ui/FormPrimitives";
 import { useApi } from "@/hooks/useApi";
 import { useToast } from "@/hooks/useToast";
 
+import { usePlan } from "@/hooks/usePlan";
 import type { WeddingConfig } from "@/types/wedding";
 
 interface RegistryItem {
@@ -64,10 +66,11 @@ const RETAILER_SUGGESTIONS = [
   "Other",
 ];
 
-type AddMode = "idle" | "manual" | "link" | "bulk";
+type AddMode = "idle" | "manual" | "link" | "bulk" | "browse";
 
 export function RegistryEditor({ config }: Props) {
   const { api } = useApi();
+  const { plan } = usePlan();
   const { toast, handleApiError } = useToast();
   const [items, setItems] = useState<RegistryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,6 +87,12 @@ export function RegistryEditor({ config }: Props) {
   // Scraped results awaiting confirmation
   const [scrapedItems, setScrapedItems] = useState<ScrapedItem[]>([]);
   const [addingAll, setAddingAll] = useState(false);
+
+  // Page browse (Agency)
+  const [browseUrl, setBrowseUrl] = useState("");
+  const [browsing, setBrowsing] = useState(false);
+  const [browseError, setBrowseError] = useState<string | null>(null);
+  const [browseRetailer, setBrowseRetailer] = useState<string | null>(null);
 
   // Manual form
   const [newItem, setNewItem] = useState({
@@ -113,8 +122,13 @@ export function RegistryEditor({ config }: Props) {
 
   const scrapeUrls = async (urls: string[]) => {
     setScraping(true);
-    const { data } = await api.registry.scrape.post({ urls });
+    const { data, error } = await api.registry.scrape.post({ urls });
     setScraping(false);
+
+    if (error) {
+      handleApiError(error, "Failed to fetch product details");
+      return;
+    }
     if (!data) return;
 
     const results: ScrapedItem[] = (data as ScrapedItem[]).map((item) => ({
@@ -135,6 +149,49 @@ export function RegistryEditor({ config }: Props) {
     setSingleUrl("");
   };
 
+  const handleBrowsePage = async () => {
+    if (!browseUrl.trim()) return;
+    setBrowsing(true);
+    setBrowseError(null);
+    try {
+      const { data, error } = await api.registry["scrape-page"].post({
+        url: browseUrl.trim(),
+      });
+      if (error) {
+        setBrowseError(
+          error.value?.message ?? "Could not import from that page.",
+        );
+        setBrowsing(false);
+        return;
+      }
+      if (data) {
+        const d = data as {
+          sourceUrl: string;
+          retailer: string;
+          found: number;
+          items: ScrapedItem[];
+        };
+        setBrowseRetailer(d.retailer);
+        const results: ScrapedItem[] = d.items.map((item) => ({
+          ...item,
+          editTitle: item.title ?? "",
+          editPrice: item.price ? (item.price / 100).toFixed(2) : "",
+          editCategory: "",
+          editQuantity: "1",
+          selected: !item.error,
+        }));
+        setScrapedItems(results);
+        setAddMode("idle");
+        setBrowseUrl("");
+      }
+    } catch {
+      setBrowseError(
+        "Something went wrong. Try individual product URLs instead.",
+      );
+    }
+    setBrowsing(false);
+  };
+
   const handleBulkScrape = async () => {
     const urls = bulkUrls
       .split("\n")
@@ -152,7 +209,7 @@ export function RegistryEditor({ config }: Props) {
     setAddingAll(true);
     const selected = scrapedItems.filter((i) => i.selected && !i.error);
 
-    await Promise.all(
+    const results = await Promise.allSettled(
       selected.map((item) =>
         api.registry({ weddingId: config.id! }).post({
           title: item.editTitle || item.title || "Gift",
@@ -169,12 +226,19 @@ export function RegistryEditor({ config }: Props) {
       ),
     );
 
+    const failed = results.filter((r) => r.status === "rejected").length;
+    const succeeded = results.filter((r) => r.status === "fulfilled").length;
+
+    if (failed > 0)
+      toast.error(`${failed} item${failed !== 1 ? "s" : ""} failed to add.`);
+    if (succeeded > 0)
+      toast.success(
+        `Added ${succeeded} item${succeeded !== 1 ? "s" : ""} to registry`,
+      );
+
     setScrapedItems([]);
     setAddingAll(false);
     await fetchItems();
-    toast.success(
-      `Added ${selected.length} item${selected.length !== 1 ? "s" : ""} to registry`,
-    );
   };
 
   // ── Manual add ───────────────────────────────────────────────────
@@ -333,6 +397,11 @@ export function RegistryEditor({ config }: Props) {
                 <p className="font-label text-[10px] tracking-[0.4em] uppercase text-dash-gold/70">
                   Review {scrapedItems.filter((i) => i.selected).length} items
                 </p>
+                {browseRetailer && (
+                  <span className="font-label text-[8px] tracking-widest uppercase text-dash-gold/50 ml-2!">
+                    from {browseRetailer}
+                  </span>
+                )}
                 <button
                   onClick={() => setScrapedItems([])}
                   className="text-dash-text/30 hover:text-dash-text/60 transition-colors"
@@ -514,43 +583,136 @@ export function RegistryEditor({ config }: Props) {
 
           {/* ── Add mode selector ── */}
           {addMode === "idle" && scrapedItems.length === 0 && (
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                onClick={() => setAddMode("link")}
-                className="py-3! rounded-xl font-label text-[10px] tracking-[0.3em] uppercase transition-all border flex flex-col items-center gap-1.5"
-                style={{
-                  borderColor: "#D4AF3740",
-                  color: "#D4AF37",
-                  borderStyle: "dashed",
-                }}
+            <div className="space-y-2!">
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => setAddMode("link")}
+                  className="py-3! rounded-xl font-label text-[10px] tracking-[0.3em] uppercase transition-all border flex flex-col items-center gap-1.5 cursor-pointer"
+                  style={{
+                    borderColor: "#D4AF3740",
+                    color: "#D4AF37",
+                    borderStyle: "dashed",
+                  }}
+                >
+                  <LinkIcon className="size-3.5" />
+                  Paste Link
+                </button>
+                <button
+                  onClick={() => setAddMode("bulk")}
+                  className="py-3! rounded-xl font-label text-[10px] tracking-[0.3em] uppercase transition-all border flex flex-col items-center gap-1.5 cursor-pointer"
+                  style={{
+                    borderColor: "#D4AF3740",
+                    color: "#D4AF37",
+                    borderStyle: "dashed",
+                  }}
+                >
+                  <LinkIcon className="size-3.5" />
+                  Bulk Links
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => setAddMode("manual")}
+                  className="py-3! rounded-xl font-label text-[10px] tracking-[0.3em] uppercase transition-all border flex flex-col items-center gap-1.5 cursor-pointer"
+                  style={{
+                    borderColor: "#D4AF3740",
+                    color: "#D4AF37",
+                    borderStyle: "dashed",
+                  }}
+                >
+                  <PlusIcon className="size-3.5" />
+                  Manual
+                </button>
+                <button
+                  onClick={() => setAddMode("browse")}
+                  disabled={plan !== "agency"}
+                  className="py-3! rounded-xl font-label text-[10px] tracking-[0.3em] uppercase transition-all border flex flex-col items-center gap-1.5 relative overflow-hidden cursor-pointer disabled:cursor-not-allowed"
+                  style={{
+                    borderColor: "#D4AF3760",
+                    color: "#D4AF37",
+                    borderStyle: "solid",
+                    background: "#D4AF3708",
+                  }}
+                >
+                  <StoreIcon className="size-3.5" />
+                  Import Page
+                  <span
+                    className="absolute top-1 right-1 font-label text-[7px] tracking-widest uppercase px-1.5! py-0.5! rounded-full"
+                    style={{ background: "#D4AF3720", color: "#D4AF37" }}
+                  >
+                    Agency
+                  </span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ── Browse / import from retailer page (Agency) ── */}
+          {addMode === "browse" && (
+            <div
+              className="p-4! rounded-xl space-y-3!"
+              style={{ background: "#D4AF3705", border: "1px solid #D4AF3740" }}
+            >
+              <div className="flex items-center justify-between">
+                <p className="font-label font-bold text-[10px] tracking-[0.4em] uppercase text-dash-gold/70">
+                  Import from Retailer Page
+                </p>
+                <span
+                  className="font-label text-[8px] tracking-widest uppercase px-2! py-0.5! rounded-full"
+                  style={{ background: "#D4AF3720", color: "#D4AF37" }}
+                >
+                  Agency
+                </span>
+              </div>
+              <p className="font-display italic text-sm text-dash-text/50">
+                Paste a search results, category, or wishlist page URL. We'll
+                find all products on it automatically.
+              </p>
+              <Field
+                label="Page URL"
+                hint="e.g. amazon.co.uk/s?k=wedding+gifts or johnlewis.com/c/kitchen"
               >
-                <LinkIcon className="size-3.5" />
-                Paste Link
-              </button>
-              <button
-                onClick={() => setAddMode("bulk")}
-                className="py-3! rounded-xl font-label text-[10px] tracking-[0.3em] uppercase transition-all border flex flex-col items-center gap-1.5"
-                style={{
-                  borderColor: "#D4AF3740",
-                  color: "#D4AF37",
-                  borderStyle: "dashed",
-                }}
-              >
-                <LinkIcon className="size-3.5" />
-                Bulk Links
-              </button>
-              <button
-                onClick={() => setAddMode("manual")}
-                className="py-3! rounded-xl font-label text-[10px] tracking-[0.3em] uppercase transition-all border flex flex-col items-center gap-1.5"
-                style={{
-                  borderColor: "#D4AF3740",
-                  color: "#D4AF37",
-                  borderStyle: "dashed",
-                }}
-              >
-                <PlusIcon className="size-3.5" />
-                Manual
-              </button>
+                <Input
+                  value={browseUrl}
+                  onChange={(e) => {
+                    setBrowseUrl(e.target.value);
+                    setBrowseError(null);
+                  }}
+                  placeholder="https://www.amazon.co.uk/s?k=kitchen+gifts"
+                  autoFocus
+                />
+              </Field>
+              {browseError && (
+                <p className="font-display italic text-xs text-red-400/80">
+                  {browseError}
+                </p>
+              )}
+              <div className="flex gap-2">
+                <button
+                  onClick={handleBrowsePage}
+                  disabled={!browseUrl.trim() || browsing}
+                  className="flex-1 py-3! rounded-xl font-label text-xs font-semibold tracking-[0.4em] uppercase transition-all dash-btn-primary disabled:opacity-40 flex items-center justify-center gap-2"
+                >
+                  {browsing ? (
+                    <>
+                      <Loader2Icon className="size-3.5 animate-spin" /> Scanning
+                      page…
+                    </>
+                  ) : (
+                    "Find Products"
+                  )}
+                </button>
+                <button
+                  onClick={() => {
+                    setAddMode("idle");
+                    setBrowseUrl("");
+                    setBrowseError(null);
+                  }}
+                  className="px-4! py-3! rounded-xl font-label font-semibold text-xs tracking-[0.4em] uppercase border border-dash-border text-dash-text/80 hover:text-dash-text transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           )}
 

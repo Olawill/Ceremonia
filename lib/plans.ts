@@ -17,6 +17,8 @@ export interface PlanFeatures {
   customDomain: boolean; // Pro+
   whitLabel: boolean; // Agency
   apiAccess: boolean; // Agency
+  registryItemLimit: number; // Infinity = unlimited
+  registryScraper: boolean; // URL scraping feature
 }
 
 export const PLAN_FEATURES: Record<Plan, PlanFeatures> = {
@@ -35,6 +37,8 @@ export const PLAN_FEATURES: Record<Plan, PlanFeatures> = {
     customDomain: false,
     whitLabel: false,
     apiAccess: false,
+    registryItemLimit: 10,
+    registryScraper: false,
   },
   starter: {
     maxWeddings: 1,
@@ -51,6 +55,8 @@ export const PLAN_FEATURES: Record<Plan, PlanFeatures> = {
     customDomain: false,
     whitLabel: false,
     apiAccess: false,
+    registryItemLimit: 30,
+    registryScraper: true,
   },
   pro: {
     maxWeddings: 5,
@@ -67,6 +73,8 @@ export const PLAN_FEATURES: Record<Plan, PlanFeatures> = {
     customDomain: true,
     whitLabel: false,
     apiAccess: false,
+    registryItemLimit: Infinity,
+    registryScraper: true,
   },
   agency: {
     maxWeddings: Infinity,
@@ -83,6 +91,8 @@ export const PLAN_FEATURES: Record<Plan, PlanFeatures> = {
     customDomain: true,
     whitLabel: true,
     apiAccess: true,
+    registryItemLimit: Infinity,
+    registryScraper: true,
   },
 };
 
