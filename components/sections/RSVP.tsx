@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import gsap from "gsap";
+import posthog from "posthog-js";
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -82,10 +83,18 @@ export function RSVP({
           // Toast: error.value.message
         }
 
+        posthog.captureException(error, { event_name: "rsvp_submission_failed" });
         console.error("RSVP failed", error);
         return;
       }
     }
+
+    posthog.capture("rsvp_submitted", {
+      wedding_id: weddingId,
+      attendance: data.attendance,
+      guests: data.attendance === "yes" ? (data.guests ? Number(data.guests) : 1) : 0,
+      has_dietary_requirements: !!data.dietary,
+    });
 
     setSubmittedName(data.name);
     setSubmittedAttendance(data.attendance);

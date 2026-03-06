@@ -51,24 +51,24 @@ export default async function DashboardPage() {
             <Link
               key={w.id}
               href={`/app/editor/${w.slug}`}
-              className="rounded-2xl p-8 border transition-all hover:border-[#D4AF3740] group"
+              className="rounded-2xl p-8! border transition-all hover:border-[#D4AF3740] group"
               style={{ borderColor: "#D4AF3718", background: "#D4AF3705" }}
             >
               <p
-                className="font-display font-light mb-1"
+                className="font-display font-light mb-1!"
                 style={{ fontSize: "clamp(18px,2.5vw,24px)", color: "#F5F0E8" }}
               >
                 {w.bride} <span style={{ color: "#D4AF37" }}>&</span> {w.groom}
               </p>
               <p
-                className="font-label text-xs tracking-widest mb-4"
+                className="font-label text-xs tracking-widest mb-4!"
                 style={{ color: "#D4AF3760" }}
               >
                 {w.slug}.ceremonia.app
               </p>
               <div className="flex gap-3">
                 <span
-                  className="font-label text-[10px] tracking-widest uppercase px-3 py-1 rounded-full"
+                  className="font-label text-[10px] tracking-widest uppercase px-3! py-1! rounded-full"
                   style={{
                     background: w.published ? "#D4AF3715" : "#ffffff08",
                     color: w.published ? "#D4AF37" : "#F5F0E840",
@@ -78,7 +78,7 @@ export default async function DashboardPage() {
                   {w.published ? "Live" : "Draft"}
                 </span>
                 <span
-                  className="font-label text-[10px] tracking-widest uppercase px-3 py-1 rounded-full"
+                  className="font-label text-[10px] tracking-widest uppercase px-3! py-1! rounded-full"
                   style={{
                     background: "#ffffff08",
                     color: "#F5F0E840",

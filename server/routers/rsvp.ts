@@ -144,6 +144,25 @@ export const rsvpRouter = new Elysia({ prefix: "/rsvp" })
       if (!query.weddingId)
         return status(400, { message: "weddingId required" });
 
+      // Verify the requesting user owns this wedding and is on Pro+
+      const [wedding] = await db
+        .select({ userId: weddings.userId })
+        .from(weddings)
+        .where(eq(weddings.id, query.weddingId))
+        .limit(1);
+
+      if (wedding?.userId) {
+        const [owner] = await db
+          .select({ plan: users.plan })
+          .from(users)
+          .where(eq(users.id, wedding.userId))
+          .limit(1);
+
+        if (!PLAN_FEATURES[owner?.plan ?? "free"].csvExport) {
+          return status(403, { message: "CSV export requires the Pro plan." });
+        }
+      }
+
       const rows = await db
         .select()
         .from(rsvps)

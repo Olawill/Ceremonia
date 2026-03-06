@@ -1,11 +1,13 @@
 import bearer from "@elysiajs/bearer";
-import { and, eq } from "drizzle-orm";
+import { and, count, eq } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 
 import { db } from "@/db";
-import { weddings } from "@/db/schema";
+import { users, weddings } from "@/db/schema";
 
 import { hashPassword } from "@/lib/password";
+import { PLAN_FEATURES } from "@/lib/plans";
+
 import { getAuthUserId } from "@/server/auth";
 
 // Zod-compatible Elysia schema for a VenueEvent
@@ -87,6 +89,25 @@ export const weddingsRouter = new Elysia({ prefix: "/weddings" })
       const userId = await getAuthUserId(bearer);
       if (!userId) return status(401, { message: "Unauthorized" });
 
+      const [owner] = await db
+        .select({ plan: users.plan })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+
+      const plan = owner?.plan ?? "free";
+      const features = PLAN_FEATURES[plan];
+      const weddingCount = await db
+        .select({ count: count() })
+        .from(weddings)
+        .where(eq(weddings.userId, userId));
+
+      if ((weddingCount[0]?.count ?? 0) >= features.maxWeddings) {
+        return status(403, {
+          message: `Your ${plan} plan allows a maximum of ${features.maxWeddings} wedding(s). Please upgrade.`,
+        });
+      }
+
       // Enforce slug uniqueness — derive from names
       const slug = `${body.bride}-${body.groom}`
         .toLowerCase()
@@ -98,10 +119,8 @@ export const weddingsRouter = new Elysia({ prefix: "/weddings" })
         .from(weddings)
         .where(eq(weddings.slug, slug))
         .limit(1);
-      console.log({ existing });
 
       const finalSlug = existing ? `${slug}-${Date.now()}` : slug;
-      console.log({ finalSlug });
 
       let created;
       try {
@@ -114,7 +133,6 @@ export const weddingsRouter = new Elysia({ prefix: "/weddings" })
             password: body.password ? hashPassword(body.password) : null,
           })
           .returning();
-        console.log({ created });
       } catch (e) {
         console.error("INSERT ERROR:", e);
         return status(500, { message: String(e) });
@@ -131,6 +149,30 @@ export const weddingsRouter = new Elysia({ prefix: "/weddings" })
     async ({ params, body, bearer, status }) => {
       const userId = await getAuthUserId(bearer);
       if (!userId) return status(401, { message: "Unauthorized" });
+
+      // Fetch owner plan for field-level gating
+      const [owner] = await db
+        .select({ plan: users.plan })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+
+      const features = PLAN_FEATURES[owner?.plan ?? "free"];
+
+      // Block plan-gated fields from being saved by lower-tier users
+      if (body.customDomain && !features.customDomain) {
+        return status(403, { message: "Custom domains require the Pro plan." });
+      }
+      if (body.passwordProtected && !features.passwordProtection) {
+        return status(403, {
+          message: "Password protection requires the Pro plan.",
+        });
+      }
+      if (body.audioUrl && !features.customAudio) {
+        return status(403, {
+          message: "Custom audio requires the Starter plan.",
+        });
+      }
 
       const [updated] = await db
         .update(weddings)

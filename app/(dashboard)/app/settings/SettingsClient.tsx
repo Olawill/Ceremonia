@@ -2,6 +2,7 @@
 
 import { useClerk } from "@clerk/nextjs";
 import { LogOutIcon, Trash2Icon, UserIcon } from "lucide-react";
+import posthog from "posthog-js";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -36,9 +37,12 @@ export function SettingsClient({
     setDeleting(true);
     try {
       await api.settings.account.delete();
+      posthog.capture("account_deleted", { plan });
+      posthog.reset();
       await signOut();
       router.push("/");
-    } catch {
+    } catch (err) {
+      posthog.captureException(err, { event_name: "account_deletion_failed" });
       setDeleting(false);
     }
   };
@@ -122,7 +126,11 @@ export function SettingsClient({
           Sign out of your Ceremonia account on this device.
         </p>
         <button
-          onClick={() => signOut(() => router.push("/"))}
+          onClick={() => {
+            posthog.capture("user_signed_out");
+            posthog.reset();
+            signOut(() => router.push("/"));
+          }}
           className="flex items-center gap-2 font-label text-[11px] font-semibold tracking-[0.3em] uppercase px-5! py-2.5! rounded-full border border-dash-border-md text-dash-text/90 hover:text-dash-text hover:border-dash-border-hi transition-colors"
         >
           <LogOutIcon className="size-3.5" /> Sign out
@@ -169,6 +177,7 @@ function BrandNameForm({ initialBrandName }: { initialBrandName?: string }) {
   const handleSave = async () => {
     setSaving(true);
     await api.settings.patch({ brandName: value });
+    posthog.capture("brand_name_updated", { brand_name: value });
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);

@@ -2,6 +2,7 @@
 
 import clsx from "clsx";
 import { ArrowRightIcon, Loader2Icon, StarIcon } from "lucide-react";
+import posthog from "posthog-js";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -135,6 +136,17 @@ export function BillingClient({
     mode: "subscription" | "payment",
   ) => {
     setLoading(priceId);
+    const tier = TIERS.find(
+      (t) =>
+        ("pricingMonthly" in t && t.pricingMonthly?.priceId === priceId) ||
+        ("pricingOnce" in t && t.pricingOnce?.priceId === priceId),
+    );
+    posthog.capture("checkout_initiated", {
+      price_id: priceId,
+      mode,
+      plan: tier?.plan ?? "unknown",
+      current_plan: activePlan,
+    });
     try {
       const { data, error } = await api.billing.checkout.post({
         priceId,
@@ -142,18 +154,21 @@ export function BillingClient({
       });
       if (error || !data?.url) throw new Error("Checkout failed");
       router.push(data.url);
-    } catch {
+    } catch (err) {
+      posthog.captureException(err, { event_name: "checkout_failed" });
       setLoading(null);
     }
   };
 
   const handlePortal = async () => {
     setLoading("portal");
+    posthog.capture("billing_portal_opened", { current_plan: activePlan });
     try {
       const { data, error } = await api.billing.portal.post({});
       if (error || !data?.url) throw new Error("Portal failed");
       router.push(data.url);
-    } catch {
+    } catch (err) {
+      posthog.captureException(err, { event_name: "billing_portal_failed" });
       setLoading(null);
     }
   };

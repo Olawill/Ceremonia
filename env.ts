@@ -21,6 +21,8 @@ export const env = createEnv({
     NEXT_PUBLIC_STRIPE_PRICE_STARTER_ONCE: z.string().min(1),
     NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY: z.string().min(1),
     NEXT_PUBLIC_STRIPE_PRICE_AGENCY_MONTHLY: z.string().min(1),
+    NEXT_PUBLIC_POSTHOG_KEY: z.string().min(1),
+    NEXT_PUBLIC_POSTHOG_HOST: z.string().min(1),
   },
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
@@ -46,5 +48,7 @@ export const env = createEnv({
       process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY,
     NEXT_PUBLIC_STRIPE_PRICE_AGENCY_MONTHLY:
       process.env.NEXT_PUBLIC_STRIPE_PRICE_AGENCY_MONTHLY,
+    NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
+    NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
   },
 });

@@ -2,7 +2,8 @@ import { and, eq } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 
 import { db } from "@/db";
-import { customThemes } from "@/db/schema";
+import { customThemes, users } from "@/db/schema";
+import { PLAN_FEATURES } from "@/lib/plans";
 import { getAuthUserId } from "@/server/auth";
 import { bearer } from "@elysiajs/bearer";
 
@@ -43,6 +44,16 @@ export const customThemesRouter = new Elysia({ prefix: "/custom-themes" })
       const userId = await getAuthUserId(bearer);
       if (!userId) return status(401, { message: "Unauthorized" });
 
+      const [owner] = await db
+        .select({ plan: users.plan })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+
+      if (!PLAN_FEATURES[owner?.plan ?? "free"].customThemes) {
+        return status(403, { message: "Custom themes require the Pro plan." });
+      }
+
       const [created] = await db
         .insert(customThemes)
         .values({
@@ -68,6 +79,16 @@ export const customThemesRouter = new Elysia({ prefix: "/custom-themes" })
     async ({ params, body, bearer, status }) => {
       const userId = await getAuthUserId(bearer);
       if (!userId) return status(401, { message: "Unauthorized" });
+
+      const [owner] = await db
+        .select({ plan: users.plan })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+
+      if (!PLAN_FEATURES[owner?.plan ?? "free"].customThemes) {
+        return status(403, { message: "Custom themes require the Pro plan." });
+      }
 
       const [updated] = await db
         .update(customThemes)

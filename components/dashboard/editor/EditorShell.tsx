@@ -1,5 +1,6 @@
 "use client";
 
+import posthog from "posthog-js";
 import { useRouter } from "next/navigation";
 import { useCallback, useRef, useState, useTransition } from "react";
 
@@ -90,6 +91,12 @@ export function EditorShell({ initialConfig, isNew }: Props) {
         const { data, error } = await api.api.weddings.post(payload);
         if (error) throw new Error("Save failed");
         setSaveState("saved");
+        posthog.capture("wedding_created", {
+          slug: data!.slug,
+          bride: config.bride,
+          groom: config.groom,
+          theme_key: config.themeKey,
+        });
         // Navigate to the new slug so the URL is correct
         startTransition(() => router.replace(`/app/editor/${data!.slug}`));
       } else {
@@ -98,10 +105,18 @@ export function EditorShell({ initialConfig, isNew }: Props) {
           .patch(payload);
         if (error) throw new Error("Save failed");
         setSaveState("saved");
+        posthog.capture("wedding_saved", {
+          slug: config.slug,
+          published: config.published,
+          theme_key: config.themeKey,
+          rsvp_enabled: config.rsvpEnabled,
+          password_protected: config.passwordProtected,
+        });
         // Trigger ISR revalidation
         startTransition(() => router.refresh());
       }
-    } catch {
+    } catch (err) {
+      posthog.captureException(err, { event_name: "wedding_save_failed", properties: { is_new: isNew } });
       setSaveState("error");
     } finally {
       setTimeout(() => setSaveState("idle"), 2500);

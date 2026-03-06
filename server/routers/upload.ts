@@ -1,6 +1,12 @@
 import { bearer } from "@elysiajs/bearer";
 import { put } from "@vercel/blob";
+import { eq } from "drizzle-orm";
 import { Elysia, t } from "elysia";
+
+import { db } from "@/db";
+import { users } from "@/db/schema";
+
+import { PLAN_FEATURES } from "@/lib/plans";
 
 import { getAuthUserId } from "@/server/auth";
 
@@ -13,6 +19,21 @@ export const uploadRouter = new Elysia({ prefix: "/upload" })
     async ({ body, bearer, status }) => {
       const userId = await getAuthUserId(bearer);
       if (!userId) return status(401, { message: "Unauthorized" });
+
+      // Fetch plan
+      const [owner] = await db
+        .select({ plan: users.plan })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+
+      const features = PLAN_FEATURES[owner?.plan ?? "free"];
+
+      if (body.type === "audio" && !features.customAudio) {
+        return status(403, {
+          message: "Custom audio requires the Starter plan.",
+        });
+      }
 
       const { file, type } = body;
 

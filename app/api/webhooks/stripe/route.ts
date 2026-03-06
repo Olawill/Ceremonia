@@ -3,6 +3,8 @@ import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
 
+import { getPostHogClient } from "@/lib/posthog-server";
+
 import type { Plan } from "@/lib/plans";
 import { stripe } from "@/lib/stripe";
 
@@ -61,6 +63,14 @@ export async function POST(req: NextRequest) {
       await clerk.users.updateUserMetadata(userId, {
         publicMetadata: { plan },
       });
+
+      const posthog = getPostHogClient();
+      posthog.capture({
+        distinctId: userId,
+        event: "subscription_created",
+        properties: { plan, price_id: priceId, stripe_customer_id: sub.customer },
+      });
+      await posthog.shutdown();
       break;
     }
 
@@ -76,6 +86,14 @@ export async function POST(req: NextRequest) {
       await clerk.users.updateUserMetadata(userId, {
         publicMetadata: { plan: "free" },
       });
+
+      const posthog = getPostHogClient();
+      posthog.capture({
+        distinctId: userId,
+        event: "subscription_cancelled",
+        properties: { stripe_customer_id: sub.customer },
+      });
+      await posthog.shutdown();
       break;
     }
 
@@ -105,6 +123,14 @@ export async function POST(req: NextRequest) {
       await clerk.users.updateUserMetadata(userId, {
         publicMetadata: { plan },
       });
+
+      const posthog = getPostHogClient();
+      posthog.capture({
+        distinctId: userId,
+        event: "payment_completed",
+        properties: { plan, price_id: priceId, amount_total: session.amount_total, currency: session.currency },
+      });
+      await posthog.shutdown();
       break;
     }
   }
