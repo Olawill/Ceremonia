@@ -8,6 +8,8 @@ import type { Plan } from "@/lib/plans";
 
 import { SettingsClient } from "./SettingsClient";
 
+export const metadata = { title: "Settings" };
+
 export default async function SettingsPage() {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");

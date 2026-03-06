@@ -24,8 +24,35 @@ const cinzel = Cinzel({
 });
 
 export const metadata: Metadata = {
-  title: "Isabella & Alexander — Wedding Invitation",
-  description: "Join us as we celebrate our love. 12 July 2026.",
+  title: {
+    default: "Ceremonia — Beautiful Wedding Invitations",
+    template: "%s | Ceremonia",
+  },
+  description:
+    "Create cinematic, personalised wedding invitations your guests will never forget. RSVP management, custom themes, and your own subdomain.",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL ?? "https://ceremonia.app",
+  ),
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
+  openGraph: {
+    siteName: "Ceremonia",
+    type: "website",
+    locale: "en_CA",
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@ceremoniaapp",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({

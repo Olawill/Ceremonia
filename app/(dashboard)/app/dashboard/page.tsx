@@ -1,10 +1,13 @@
 import { auth } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
+import { SparklesIcon } from "lucide-react";
+import { Metadata } from "next";
 import Link from "next/link";
 
 import { db } from "@/db";
 import { weddings } from "@/db/schema";
-import { SparklesIcon } from "lucide-react";
+
+export const metadata: Metadata = { title: "My Weddings" };
 
 export default async function DashboardPage() {
   const { userId } = await auth();

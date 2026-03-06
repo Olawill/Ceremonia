@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Dark background -->
+  <rect width="32" height="32" rx="8" fill="#0F0A0A"/>
+  <!-- Outer ring -->
+  <circle cx="16" cy="16" r="13" fill="none" stroke="#D4AF37" stroke-width="1"/>
+  <!-- Inner decorative ring -->
+  <circle cx="16" cy="16" r="10" fill="none" stroke="#D4AF3750" stroke-width="0.5"/>
+  <!-- Central sparkle / diamond shape -->
+  <path d="M16 6 L17.5 14.5 L26 16 L17.5 17.5 L16 26 L14.5 17.5 L6 16 L14.5 14.5 Z" fill="#D4AF37"/>
+  <!-- Small center dot -->
+  <circle cx="16" cy="16" r="1.5" fill="#0F0A0A"/>
+</svg>

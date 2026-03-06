@@ -9,6 +9,10 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     return NextResponse.next();
   }
 
+  if (req.nextUrl.pathname.startsWith("/ingest")) {
+    return NextResponse.next();
+  }
+
   const host = req.headers.get("host") || "";
   const url = req.nextUrl.clone();
 
@@ -20,10 +24,17 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 
   let subdomain: string | null = null;
 
-  if (!isLocalhost) {
-    // e.g. host = "isabella-alexander.ceremonia.app"
+  if (isLocalhost) {
+    // dev: "demo.localhost:3000" → subdomain = "demo"
+    // "localhost:3000" → no subdomain
+    const withoutPort = host.split(":")[0]; // strip :3000
+    const parts = withoutPort.split(".");
+    if (parts.length > 1 && !["app", "www", "ceremonia"].includes(parts[0])) {
+      subdomain = parts[0];
+    }
+  } else {
+    // prod: "isabella-alexander.ceremonia.app"
     const parts = host.replace(`.${rootDomain}`, "").split(".");
-    // Only treat as wedding subdomain if it's a single-part subdomain
     if (parts.length === 1 && !["app", "www", "ceremonia"].includes(parts[0])) {
       subdomain = parts[0];
     }
@@ -53,7 +64,7 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 export const config = {
   matcher: [
     // Skip Next.js internals and all static files, unless found in search params
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/((?!_next|ingest|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
     // Always run for API routes
     "/(api|trpc)(.*)",
   ],

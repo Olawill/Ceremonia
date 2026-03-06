@@ -9,6 +9,8 @@ import { BillingClient } from "./BillingClient";
 
 import type { Plan } from "@/lib/plans";
 
+export const metadata = { title: "Billing & Plans" };
+
 export default async function BillingPage({
   searchParams,
 }: {

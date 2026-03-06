@@ -1,4 +1,14 @@
+import type { Metadata } from "next";
+
 import { Sidebar } from "@/components/dashboard/Sidebar";
+
+export const metadata: Metadata = {
+  title: {
+    default: "Dashboard",
+    template: "%s | Ceremonia Dashboard",
+  },
+  robots: { index: false, follow: false },
+};
 
 export default async function DashboardLayout({
   children,

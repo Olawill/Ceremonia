@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { and, eq } from "drizzle-orm";
+import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
 import { db } from "@/db";
@@ -18,6 +19,20 @@ import { DEMO_WEDDING_CONFIG } from "@/types/wedding";
 
 interface Props {
   params: Promise<{ slug: string }>;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  if (slug === "new") return { title: "New Wedding" };
+
+  const [wedding] = await db
+    .select({ bride: weddings.bride, groom: weddings.groom })
+    .from(weddings)
+    .where(eq(weddings.slug, slug))
+    .limit(1);
+
+  if (!wedding) return { title: "Editor" };
+  return { title: `Editing ${wedding.bride} & ${wedding.groom}` };
 }
 
 export default async function EditorPage({ params }: Props) {

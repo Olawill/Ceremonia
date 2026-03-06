@@ -1,13 +1,33 @@
 import { auth } from "@clerk/nextjs/server";
 import clsx from "clsx";
+import { eq } from "drizzle-orm";
 import { SparklesIcon, StarIcon } from "lucide-react";
+import { Metadata, Route } from "next";
 import Link from "next/link";
 
 import { db } from "@/db";
 import { users } from "@/db/schema";
+
 import { Plan, PRICING } from "@/lib/plans";
-import { eq } from "drizzle-orm";
-import { Route } from "next";
+
+export const metadata: Metadata = {
+  title: "Ceremonia — Beautiful Wedding Invitations",
+  description:
+    "Create cinematic, personalised wedding invitations your guests will never forget. RSVP management, custom themes, and your own subdomain.",
+  openGraph: {
+    title: "Ceremonia — Beautiful Wedding Invitations",
+    description:
+      "Create cinematic, personalised wedding invitations your guests will never forget.",
+    url: "https://ceremonia.app",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Ceremonia — Beautiful Wedding Invitations",
+    description:
+      "Create cinematic, personalised wedding invitations your guests will never forget.",
+  },
+};
 
 const FEATURES = [
   "Cinematic curtain reveal",

@@ -4,16 +4,20 @@ import { useState } from "react";
 
 import { DrapedCurtain } from "@/components/curtain/DrapedCurtain";
 import { VelvetCurtain } from "@/components/curtain/VelvetCurtain";
+
 import { DrapeFrame } from "@/components/effects/DrapeFrame";
 import { DustParticles } from "@/components/effects/DustParticles";
+
 import { Countdown } from "@/components/sections/Countdown";
 import { Finale } from "@/components/sections/Finale";
 import { ParallaxHero } from "@/components/sections/ParallaxHero";
 import { RSVP } from "@/components/sections/RSVP";
+import { Registry } from "@/components/sections/Registry";
 import { ScratchDate } from "@/components/sections/ScratchDate";
 import { Timeline } from "@/components/sections/Timeline";
 import { VenueDetails } from "@/components/sections/VenueDetails";
 import { WeddingMenu } from "@/components/sections/WeddingMenu";
+
 import { AudioPlayer } from "@/components/ui/AudioPlayer";
 import { ThemeSelector } from "@/components/ui/ThemeSelector";
 
@@ -26,7 +30,7 @@ import {
   VenueEvent,
   WeddingConfig,
 } from "@/types/wedding";
-import { Registry } from "./sections/Registry";
+import { useAuth } from "@clerk/nextjs";
 
 interface WeddingEngineProps {
   config?: WeddingConfig;
@@ -42,6 +46,8 @@ export function WeddingEngine({
   brandName,
 }: WeddingEngineProps) {
   const { theme } = useTheme();
+  const { sessionId } = useAuth();
+
   const [curtainOpen, setCurtainOpen] = useState(false);
   const [dateRevealed, setDateRevealed] = useState(false);
 
@@ -69,11 +75,13 @@ export function WeddingEngine({
         </div>
       )}
 
-      <ThemeSelector
-        curtainStyle={curtainStyle}
-        onCurtainChange={setCurtainStyle}
-        ownerPlan={ownerPlan}
-      />
+      {sessionId && (
+        <ThemeSelector
+          curtainStyle={curtainStyle}
+          onCurtainChange={setCurtainStyle}
+          ownerPlan={ownerPlan}
+        />
+      )}
       <AudioPlayer
         autoPlay={curtainOpen}
         src={config.audioUrl ?? "/audio/royal.mp3"}

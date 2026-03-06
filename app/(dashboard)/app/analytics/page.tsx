@@ -10,6 +10,8 @@ import { PLAN_FEATURES } from "@/lib/plans";
 
 import { AnalyticsClient } from "./AnalyticsClient";
 
+export const metadata = { title: "Analytics" };
+
 export default async function AnalyticsPage() {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");

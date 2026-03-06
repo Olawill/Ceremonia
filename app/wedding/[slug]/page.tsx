@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 
@@ -21,6 +22,73 @@ import { Plan } from "@/lib/plans";
 
 interface Props {
   params: Promise<{ slug: string }>;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+
+  // Demo slug
+  if (slug === "demo") {
+    return {
+      title: "Taiwo & Tayo — Wedding Invitation",
+      description: "Join us as we celebrate our love. 12 July 2026.",
+      robots: { index: false, follow: false },
+    };
+  }
+
+  const [wedding] = await db
+    .select({
+      bride: weddings.bride,
+      groom: weddings.groom,
+      date: weddings.date,
+      heroPhotoUrl: weddings.heroPhotoUrl,
+      slug: weddings.slug,
+    })
+    .from(weddings)
+    .where(eq(weddings.slug, slug))
+    .limit(1);
+
+  if (!wedding) {
+    return {
+      title: "Wedding Invitation",
+      robots: { index: false, follow: false },
+    };
+  }
+
+  const title = `${wedding.bride} & ${wedding.groom} — Wedding Invitation`;
+  const formattedDate = wedding.date
+    ? new Date(wedding.date).toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    : null;
+  const description = formattedDate
+    ? `You're invited to celebrate the wedding of ${wedding.bride} & ${wedding.groom} on ${formattedDate}.`
+    : `You're invited to celebrate the wedding of ${wedding.bride} & ${wedding.groom}.`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      ...(wedding.heroPhotoUrl && {
+        images: [
+          { url: wedding.heroPhotoUrl, width: 1200, height: 630, alt: title },
+        ],
+      }),
+    },
+    twitter: {
+      card: wedding.heroPhotoUrl ? "summary_large_image" : "summary",
+      title,
+      description,
+      ...(wedding.heroPhotoUrl && { images: [wedding.heroPhotoUrl] }),
+    },
+    // Don't index password-protected or unpublished invitations
+    robots: { index: true, follow: false },
+  };
 }
 
 // Next.js 15 — generateStaticParams for known weddings (ISR)

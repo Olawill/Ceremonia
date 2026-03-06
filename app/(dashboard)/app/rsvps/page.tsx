@@ -10,6 +10,8 @@ import { PLAN_FEATURES } from "@/lib/plans";
 
 import { RSVPsClient } from "./RSVPsClient";
 
+export const metadata = { title: "RSVPs" };
+
 export default async function RSVPsPage() {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
