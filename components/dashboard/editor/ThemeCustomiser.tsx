@@ -4,6 +4,8 @@ import { GlobeIcon, Loader2Icon, SaveIcon, Trash2Icon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import { useApi } from "@/hooks/useApi";
+import { useToast } from "@/hooks/useToast";
+
 import type { WeddingTheme } from "@/types/theme";
 import type { WeddingConfig } from "@/types/wedding";
 
@@ -51,6 +53,7 @@ export function ThemeCustomiser({
   ownerPlan,
 }: Props) {
   const { api } = useApi();
+  const { toast, handleApiError } = useToast();
   const [themeName, setThemeName] = useState("My Custom Theme");
   const [colors, setColors] = useState<Omit<WeddingTheme, "key" | "name">>(
     config.customTheme ?? DEFAULT_CUSTOM_THEME,
@@ -99,13 +102,16 @@ export function ThemeCustomiser({
     // Persist into wedding config so it's included in the next Save
     onChange({ customTheme: builtTheme, themeKey: "royal" });
 
-    const { data } = await api["custom-themes"].post({
+    const { data, error } = await api["custom-themes"].post({
       name: themeName,
       theme: builtTheme,
     });
 
-    if (data) {
+    if (error) {
+      handleApiError(error, "Failed to save theme");
+    } else if (data) {
       setSavedThemes((prev) => [...prev, data as SavedCustomTheme]);
+      toast.success(`Theme "${themeName}" saved`);
     }
     setSaving(false);
   };

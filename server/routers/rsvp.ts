@@ -10,6 +10,7 @@ import { RSVPNotificationEmail } from "@/emails/RSVPNotification";
 import { env } from "@/env";
 
 import { PLAN_FEATURES } from "@/lib/plans";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 const resend = new Resend(env.RESEND_API_KEY);
 
@@ -159,6 +160,13 @@ export const rsvpRouter = new Elysia({ prefix: "/rsvp" })
           .limit(1);
 
         if (!PLAN_FEATURES[owner?.plan ?? "free"].csvExport) {
+          const posthog = getPostHogClient();
+          posthog.capture({
+            distinctId: wedding.userId,
+            event: "plan_limit_hit",
+            properties: { feature: "csv_export", plan: owner?.plan },
+          });
+          await posthog.shutdown();
           return status(403, { message: "CSV export requires the Pro plan." });
         }
       }

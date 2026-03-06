@@ -12,8 +12,6 @@ import {
 } from "@/types/wedding";
 import clsx from "clsx";
 
-const WEDDING_DATE = new Date("2026-07-12T16:00:00");
-
 interface TimeLeft {
   days: number;
   hours: number;
@@ -26,8 +24,8 @@ interface CoundownProps {
   location?: VenueEvent;
 }
 
-function getTimeLeft(): TimeLeft {
-  const diff = WEDDING_DATE.getTime() - Date.now();
+function getTimeLeft(weddingDate: Date): TimeLeft {
+  const diff = weddingDate.getTime() - Date.now();
   if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
   return {
     days: Math.floor(diff / (1000 * 60 * 60 * 24)),
@@ -117,14 +115,20 @@ export function Countdown({
   location = FALLBACK_LOCATION,
 }: CoundownProps) {
   const { theme } = useTheme();
-  const [timeLeft, setTimeLeft] = useState<TimeLeft>(getTimeLeft());
   const ref = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
 
   const displayDate = date ?? DEMO_WEDDING_CONFIG.date;
+  const [year, month, day] = displayDate.split("-").map(Number);
+  // Month is 0-indexed in the Date constructor
+  const local = new Date(year, month - 1, day);
+  console.log({ displayDate, local });
+  console.log(new Date(displayDate));
+
+  const [timeLeft, setTimeLeft] = useState<TimeLeft>(getTimeLeft(local));
 
   useEffect(() => {
-    const tick = setInterval(() => setTimeLeft(getTimeLeft()), 1000);
+    const tick = setInterval(() => setTimeLeft(getTimeLeft(local)), 1000);
     return () => clearInterval(tick);
   }, []);
 

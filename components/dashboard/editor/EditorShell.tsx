@@ -1,10 +1,17 @@
 "use client";
 
-import posthog from "posthog-js";
+import {
+  AlertCircleIcon,
+  CheckIcon,
+  Loader2Icon,
+  SaveIcon,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import { useCallback, useRef, useState, useTransition } from "react";
 
 import { useApi } from "@/hooks/useApi";
+import { useToast } from "@/hooks/useToast";
 
 import type { WeddingConfig } from "@/types/wedding";
 import { DEMO_WEDDING_CONFIG } from "@/types/wedding";
@@ -12,12 +19,6 @@ import { DEMO_WEDDING_CONFIG } from "@/types/wedding";
 import { EditorSidebar } from "@/components/dashboard/editor/EditorSidebar";
 import { NewWeddingDialog } from "@/components/dashboard/editor/NewWeddingDialog";
 import { PreviewFrame } from "@/components/dashboard/editor/PreviewFrame";
-import {
-  AlertCircleIcon,
-  CheckIcon,
-  Loader2Icon,
-  SaveIcon,
-} from "lucide-react";
 
 interface Props {
   initialConfig: WeddingConfig | null;
@@ -33,6 +34,7 @@ interface NewWeddingValues {
 
 export function EditorShell({ initialConfig, isNew }: Props) {
   const api = useApi();
+  const { toast, handleApiError } = useToast();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -89,8 +91,12 @@ export function EditorShell({ initialConfig, isNew }: Props) {
 
       if (isNew) {
         const { data, error } = await api.api.weddings.post(payload);
-        if (error) throw new Error("Save failed");
+        if (error) {
+          handleApiError(error, "Failed to create wedding");
+          throw error;
+        }
         setSaveState("saved");
+        toast.success("Wedding created!");
         posthog.capture("wedding_created", {
           slug: data!.slug,
           bride: config.bride,
@@ -103,8 +109,12 @@ export function EditorShell({ initialConfig, isNew }: Props) {
         const { error } = await api.api
           .weddings({ slug: config.slug })
           .patch(payload);
-        if (error) throw new Error("Save failed");
+        if (error) {
+          handleApiError(error, "Failed to save wedding");
+          throw error;
+        }
         setSaveState("saved");
+        toast.success("Changes saved");
         posthog.capture("wedding_saved", {
           slug: config.slug,
           published: config.published,
@@ -116,7 +126,10 @@ export function EditorShell({ initialConfig, isNew }: Props) {
         startTransition(() => router.refresh());
       }
     } catch (err) {
-      posthog.captureException(err, { event_name: "wedding_save_failed", properties: { is_new: isNew } });
+      posthog.captureException(err, {
+        event_name: "wedding_save_failed",
+        properties: { is_new: isNew },
+      });
       setSaveState("error");
     } finally {
       setTimeout(() => setSaveState("idle"), 2500);

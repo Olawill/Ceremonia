@@ -4,6 +4,7 @@ import { Elysia, t } from "elysia";
 import { db } from "@/db";
 import { customThemes, users } from "@/db/schema";
 import { PLAN_FEATURES } from "@/lib/plans";
+import { getPostHogClient } from "@/lib/posthog-server";
 import { getAuthUserId } from "@/server/auth";
 import { bearer } from "@elysiajs/bearer";
 
@@ -51,6 +52,13 @@ export const customThemesRouter = new Elysia({ prefix: "/custom-themes" })
         .limit(1);
 
       if (!PLAN_FEATURES[owner?.plan ?? "free"].customThemes) {
+        const posthog = getPostHogClient();
+        posthog.capture({
+          distinctId: userId,
+          event: "plan_limit_hit",
+          properties: { feature: "custom_themes", plan: owner?.plan },
+        });
+        await posthog.shutdown();
         return status(403, { message: "Custom themes require the Pro plan." });
       }
 
@@ -87,6 +95,13 @@ export const customThemesRouter = new Elysia({ prefix: "/custom-themes" })
         .limit(1);
 
       if (!PLAN_FEATURES[owner?.plan ?? "free"].customThemes) {
+        const posthog = getPostHogClient();
+        posthog.capture({
+          distinctId: userId,
+          event: "plan_limit_hit",
+          properties: { feature: "custom_themes", plan: owner?.plan },
+        });
+        await posthog.shutdown();
         return status(403, { message: "Custom themes require the Pro plan." });
       }
 

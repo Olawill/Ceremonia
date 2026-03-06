@@ -1,8 +1,5 @@
 "use client";
 
-import { Field, Input, Textarea } from "@/components/ui/FormPrimitives";
-import { useApi } from "@/hooks/useApi";
-import type { WeddingConfig } from "@/types/wedding";
 import {
   CheckIcon,
   ExternalLinkIcon,
@@ -14,6 +11,13 @@ import {
   XIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+
+import { Field, Input, Textarea } from "@/components/ui/FormPrimitives";
+
+import { useApi } from "@/hooks/useApi";
+import { useToast } from "@/hooks/useToast";
+
+import type { WeddingConfig } from "@/types/wedding";
 
 interface RegistryItem {
   id: string;
@@ -64,6 +68,7 @@ type AddMode = "idle" | "manual" | "link" | "bulk";
 
 export function RegistryEditor({ config }: Props) {
   const { api } = useApi();
+  const { toast, handleApiError } = useToast();
   const [items, setItems] = useState<RegistryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
@@ -167,6 +172,9 @@ export function RegistryEditor({ config }: Props) {
     setScrapedItems([]);
     setAddingAll(false);
     await fetchItems();
+    toast.success(
+      `Added ${selected.length} item${selected.length !== 1 ? "s" : ""} to registry`,
+    );
   };
 
   // ── Manual add ───────────────────────────────────────────────────
@@ -198,6 +206,7 @@ export function RegistryEditor({ config }: Props) {
         imageUrl: "",
       });
       setAddMode("idle");
+      toast.success("Item added to registry.");
       await fetchItems();
     }
     setSavingNew(false);
@@ -205,7 +214,12 @@ export function RegistryEditor({ config }: Props) {
 
   const handleDelete = async (itemId: string) => {
     setSavingId(itemId);
-    await api.registry.item({ itemId }).delete();
+    const { error } = await api.registry.item({ itemId }).delete();
+    if (error) {
+      handleApiError(error, "Failed to remove item");
+      setSavingId(null);
+      return;
+    }
     setItems((prev) => prev.filter((i) => i.id !== itemId));
     setSavingId(null);
   };

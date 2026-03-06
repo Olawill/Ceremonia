@@ -2,6 +2,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
 import type { Metadata } from "next";
 import { Cinzel, Cormorant_Garamond } from "next/font/google";
+import { Toaster } from "sonner";
 
 import { ThemeProvider } from "@/lib/ThemeContext";
 
@@ -40,6 +41,20 @@ export default function RootLayout({
         <body className={`${cormorant.variable} ${cinzel.variable}`}>
           <QueryProvider>
             <ThemeProvider>{children}</ThemeProvider>
+            <Toaster
+              position="bottom-right"
+              richColors
+              toastOptions={{
+                style: {
+                  background: "#0F0A0A",
+                  border: "1px solid #D4AF3730",
+                  color: "#F5F0E8",
+                  fontFamily: "var(--font-label)",
+                  fontSize: "11px",
+                  letterSpacing: "0.05em",
+                },
+              }}
+            />
           </QueryProvider>
         </body>
       </html>

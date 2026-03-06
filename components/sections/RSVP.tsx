@@ -8,6 +8,8 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { useApi } from "@/hooks/useApi";
+import { useToast } from "@/hooks/useToast";
+
 import { useTheme } from "@/lib/ThemeContext";
 import { fireConfetti } from "@/lib/confetti";
 import { formattedDeadlineDate } from "@/lib/helper";
@@ -36,6 +38,7 @@ export function RSVP({
 }: RSVPProps) {
   const { theme } = useTheme();
   const api = useApi();
+  const { handleApiError } = useToast();
   const [submitted, setSubmitted] = useState(false);
   const [submittedName, setSubmittedName] = useState("");
   const [submittedAttendance, setSubmittedAttendance] = useState("");
@@ -69,21 +72,11 @@ export function RSVP({
       });
 
       if (error) {
-        // TODO: Add toast
+        handleApiError(error);
 
-        if (error.status === 403) {
-          // Toast: error.value
-        }
-
-        if (error.status === 404) {
-          // Toast: error.value
-        }
-
-        if (error.status === 422) {
-          // Toast: error.value.message
-        }
-
-        posthog.captureException(error, { event_name: "rsvp_submission_failed" });
+        posthog.captureException(error, {
+          event_name: "rsvp_submission_failed",
+        });
         console.error("RSVP failed", error);
         return;
       }
@@ -92,7 +85,8 @@ export function RSVP({
     posthog.capture("rsvp_submitted", {
       wedding_id: weddingId,
       attendance: data.attendance,
-      guests: data.attendance === "yes" ? (data.guests ? Number(data.guests) : 1) : 0,
+      guests:
+        data.attendance === "yes" ? (data.guests ? Number(data.guests) : 1) : 0,
       has_dietary_requirements: !!data.dietary,
     });
 

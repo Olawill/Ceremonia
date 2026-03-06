@@ -8,6 +8,7 @@ import { users } from "@/db/schema";
 
 import { PLAN_FEATURES } from "@/lib/plans";
 
+import { getPostHogClient } from "@/lib/posthog-server";
 import { getAuthUserId } from "@/server/auth";
 
 export const uploadRouter = new Elysia({ prefix: "/upload" })
@@ -30,6 +31,13 @@ export const uploadRouter = new Elysia({ prefix: "/upload" })
       const features = PLAN_FEATURES[owner?.plan ?? "free"];
 
       if (body.type === "audio" && !features.customAudio) {
+        const posthog = getPostHogClient();
+        posthog.capture({
+          distinctId: userId,
+          event: "plan_limit_hit",
+          properties: { feature: "custom_audio", plan: owner?.plan },
+        });
+        await posthog.shutdown();
         return status(403, {
           message: "Custom audio requires the Starter plan.",
         });

@@ -8,6 +8,7 @@ import { users, weddings } from "@/db/schema";
 import { hashPassword } from "@/lib/password";
 import { PLAN_FEATURES } from "@/lib/plans";
 
+import { getPostHogClient } from "@/lib/posthog-server";
 import { getAuthUserId } from "@/server/auth";
 
 // Zod-compatible Elysia schema for a VenueEvent
@@ -97,12 +98,23 @@ export const weddingsRouter = new Elysia({ prefix: "/weddings" })
 
       const plan = owner?.plan ?? "free";
       const features = PLAN_FEATURES[plan];
-      const weddingCount = await db
-        .select({ count: count() })
+      const [{ weddingCount }] = await db
+        .select({ weddingCount: count() })
         .from(weddings)
         .where(eq(weddings.userId, userId));
 
-      if ((weddingCount[0]?.count ?? 0) >= features.maxWeddings) {
+      if (weddingCount >= features.maxWeddings) {
+        const posthog = getPostHogClient();
+        posthog.capture({
+          distinctId: userId,
+          event: "plan_limit_hit",
+          properties: {
+            feature: "max_weddings",
+            plan,
+            limit: features.maxWeddings,
+          },
+        });
+        await posthog.shutdown();
         return status(403, {
           message: `Your ${plan} plan allows a maximum of ${features.maxWeddings} wedding(s). Please upgrade.`,
         });
@@ -161,14 +173,35 @@ export const weddingsRouter = new Elysia({ prefix: "/weddings" })
 
       // Block plan-gated fields from being saved by lower-tier users
       if (body.customDomain && !features.customDomain) {
+        const posthog = getPostHogClient();
+        posthog.capture({
+          distinctId: userId,
+          event: "plan_limit_hit",
+          properties: { feature: "custom_domain", plan: owner?.plan },
+        });
+        await posthog.shutdown();
         return status(403, { message: "Custom domains require the Pro plan." });
       }
       if (body.passwordProtected && !features.passwordProtection) {
+        const posthog = getPostHogClient();
+        posthog.capture({
+          distinctId: userId,
+          event: "plan_limit_hit",
+          properties: { feature: "password_protection", plan: owner?.plan },
+        });
+        await posthog.shutdown();
         return status(403, {
           message: "Password protection requires the Pro plan.",
         });
       }
       if (body.audioUrl && !features.customAudio) {
+        const posthog = getPostHogClient();
+        posthog.capture({
+          distinctId: userId,
+          event: "plan_limit_hit",
+          properties: { feature: "custom_audio", plan: owner?.plan },
+        });
+        await posthog.shutdown();
         return status(403, {
           message: "Custom audio requires the Starter plan.",
         });

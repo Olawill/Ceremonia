@@ -2,12 +2,13 @@
 
 import { useClerk } from "@clerk/nextjs";
 import { LogOutIcon, Trash2Icon, UserIcon } from "lucide-react";
-import posthog from "posthog-js";
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import { useState } from "react";
 
 import { useApi } from "@/hooks/useApi";
 import type { Plan } from "@/lib/plans";
+import { toast } from "sonner";
 
 interface Props {
   email: string;
@@ -44,6 +45,7 @@ export function SettingsClient({
     } catch (err) {
       posthog.captureException(err, { event_name: "account_deletion_failed" });
       setDeleting(false);
+      toast.error("Failed to delete account. Please try again.");
     }
   };
 

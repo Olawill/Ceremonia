@@ -15,6 +15,7 @@ import { useApi } from "@/hooks/useApi";
 import { PlanGate } from "@/components/ui/PlanGate";
 
 import type { WeddingConfig } from "@/types/wedding";
+import { toast } from "sonner";
 
 interface Props {
   config: WeddingConfig;
@@ -45,18 +46,35 @@ function UploadField({
   const { api } = useApi();
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handleFile = async (file: File) => {
-    setError(null);
     setUploading(true);
     try {
       const { data, error } = await api.upload.post({ file, type });
-      if (error || !data?.url)
-        throw new Error((error as any)?.message ?? "Upload failed");
+      if (error) {
+        const msg =
+          typeof error.value === "object" &&
+          error.value !== null &&
+          "message" in error.value
+            ? (error.value as { message: string }).message
+            : "Upload failed";
+        if (error.status === 403) {
+          toast.warning(msg, {
+            description: "Upgrade your plan to unlock this feature.",
+            action: {
+              label: "Upgrade",
+              onClick: () => (window.location.href = "/app/billing"),
+            },
+          });
+        } else {
+          toast.error(msg);
+        }
+        return;
+      }
+      if (!data?.url) throw new Error("Upload failed");
       onUpload(data.url);
     } catch (e: any) {
-      setError(e.message);
+      toast.error(e.message ?? "Upload failed");
     } finally {
       setUploading(false);
     }
@@ -104,9 +122,7 @@ function UploadField({
           onDrop={handleDrop}
           onClick={() => inputRef.current?.click()}
           className={clsx(
-            "flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed",
-            "border-[#D4AF3730] bg-[#D4AF3705] py-8 cursor-pointer",
-            "hover:border-[#D4AF3760] hover:bg-[#D4AF370A] transition-colors",
+            "flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#D4AF3730] bg-[#D4AF3705] py-8! cursor-pointer hover:border-[#D4AF3760] hover:bg-[#D4AF370A] transition-colors",
           )}
         >
           {uploading ? (
@@ -129,12 +145,6 @@ function UploadField({
             }}
           />
         </div>
-      )}
-
-      {error && (
-        <p className="font-label text-[10px] tracking-widest text-red-400">
-          {error}
-        </p>
       )}
     </div>
   );
