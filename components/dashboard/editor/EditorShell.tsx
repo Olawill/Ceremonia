@@ -3,12 +3,14 @@
 import {
   AlertCircleIcon,
   CheckIcon,
+  EyeIcon,
   Loader2Icon,
   SaveIcon,
+  XIcon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
-import { useCallback, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 
 import { useApi } from "@/hooks/useApi";
 import { useToast } from "@/hooks/useToast";
@@ -19,6 +21,7 @@ import { DEMO_WEDDING_CONFIG } from "@/types/wedding";
 import { EditorSidebar } from "@/components/dashboard/editor/EditorSidebar";
 import { NewWeddingDialog } from "@/components/dashboard/editor/NewWeddingDialog";
 import { PreviewFrame } from "@/components/dashboard/editor/PreviewFrame";
+import clsx from "clsx";
 
 interface Props {
   initialConfig: WeddingConfig | null;
@@ -49,6 +52,28 @@ export function EditorShell({ initialConfig, isNew }: Props) {
   >("idle");
 
   const [showDialog, setShowDialog] = useState(isNew);
+  const [previewOpen, setPreviewOpen] = useState(false);
+
+  // Prevent body scroll when preview sheet is open
+  useEffect(() => {
+    document.body.style.overflow = previewOpen ? "hidden" : "";
+
+    // When closing the preview sheet, stop any playing audio/video in the iframe
+    // by blanking then restoring the src — cleanest cross-origin safe approach
+    if (!previewOpen && previewIframeRef.current) {
+      const iframe = previewIframeRef.current;
+      const currentSrc = iframe.src;
+      iframe.src = "about:blank";
+      // Restore after a tick so the iframe remounts fresh when reopened
+      requestAnimationFrame(() => {
+        iframe.src = currentSrc;
+      });
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [previewOpen]);
 
   const updateConfig = useCallback((patch: Partial<WeddingConfig>) => {
     setConfig((prev) => ({ ...prev, ...patch }));
@@ -137,11 +162,11 @@ export function EditorShell({ initialConfig, isNew }: Props) {
   };
 
   return (
-    <div className="flex h-full overflow-hidden">
+    <div className="flex h-full overflow-hidden space-x-2!">
       {showDialog && <NewWeddingDialog onConfirm={handleNewWeddingConfirm} />}
 
       {/* Left — controls */}
-      <div className="w-[420px] shrink-0 flex flex-col border-r overflow-hidden border-[#D4AF3718]">
+      <div className="flex-1 shrink-0 flex flex-col border-r overflow-hidden border-[#D4AF3718]">
         {/* Editor header */}
         <div className="px-6! py-4! border-b flex items-center justify-between shrink-0 border-[#D4AF3718]">
           <div>
@@ -149,52 +174,61 @@ export function EditorShell({ initialConfig, isNew }: Props) {
               {config.bride || "Bride"} & {config.groom || "Groom"}
             </p>
             {!isNew && (
-              <p
-                className="font-label text-[10px] tracking-widest"
-                style={{ color: "#D4AF3760" }}
-              >
+              <p className="font-label text-[10px] text-[#D4AF3780] tracking-widest">
                 {config.slug}.ceremonia.app
               </p>
             )}
           </div>
-          <button
-            onClick={handleSave}
-            disabled={saveState === "saving"}
-            className="font-label text-[11px] tracking-[0.3em] uppercase p-2.5!
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleSave}
+              disabled={saveState === "saving"}
+              className="font-label text-[11px] tracking-[0.3em] uppercase p-2.5!
                       rounded-full border transition-all flex items-center gap-1.5"
-            style={{
-              borderColor: saveState === "error" ? "#ff4444" : "#D4AF3760",
-              color:
-                saveState === "saved"
-                  ? "#4ade80"
-                  : saveState === "error"
-                    ? "#ff4444"
-                    : "#D4AF37",
-              background: "#D4AF3710",
-              opacity: saveState === "saving" ? 0.6 : 1,
-            }}
-          >
-            {saveState === "saving" && (
-              <>
-                <Loader2Icon className="size-3.5 animate-spin" /> Saving…
-              </>
-            )}
-            {saveState === "saved" && (
-              <>
-                <CheckIcon className="size-3.5" /> Saved
-              </>
-            )}
-            {saveState === "error" && (
-              <>
-                <AlertCircleIcon className="size-3.5" /> Error
-              </>
-            )}
-            {saveState === "idle" && (
-              <>
-                <SaveIcon className="size-3.5" /> Save
-              </>
-            )}
-          </button>
+              style={{
+                borderColor: saveState === "error" ? "#ff4444" : "#D4AF3760",
+                color:
+                  saveState === "saved"
+                    ? "#4ade80"
+                    : saveState === "error"
+                      ? "#ff4444"
+                      : "#D4AF37",
+                background: "#D4AF3710",
+                opacity: saveState === "saving" ? 0.6 : 1,
+              }}
+            >
+              {saveState === "saving" && (
+                <>
+                  <Loader2Icon className="size-3.5 animate-spin" /> Saving…
+                </>
+              )}
+              {saveState === "saved" && (
+                <>
+                  <CheckIcon className="size-3.5" /> Saved
+                </>
+              )}
+              {saveState === "error" && (
+                <>
+                  <AlertCircleIcon className="size-3.5" /> Error
+                </>
+              )}
+              {saveState === "idle" && (
+                <>
+                  <SaveIcon className="size-3.5" /> Save
+                </>
+              )}
+            </button>
+
+            {/* Preview toggle — mobile only */}
+            <button
+              onClick={() => setPreviewOpen(true)}
+              className="lg:hidden font-label text-[11px] tracking-[0.3em] uppercase p-2.5! rounded-full border border-dash-border-hi text-dash-gold bg-dash-gold/10 flex items-center gap-1.5 transition-all"
+            >
+              <EyeIcon className="size-3.5" />
+              Preview
+            </button>
+          </div>
         </div>
 
         {/* Scrollable sidebar */}
@@ -207,29 +241,45 @@ export function EditorShell({ initialConfig, isNew }: Props) {
         </div>
       </div>
 
-      {/* Right — preview */}
-      <div
-        className="flex-1 flex flex-col overflow-hidden"
-        style={{ background: "#050505" }}
-      >
+      {/* Right — preview: full panel on lg+, sheet on smaller screens */}
+
+      {/* Sheet backdrop (mobile/md) */}
+      {previewOpen && (
         <div
-          className="px-6 py-3 border-b flex items-center gap-3 shrink-0"
-          style={{ borderColor: "#D4AF3718" }}
-        >
-          <span
-            className="font-label text-[12px] font-semibold tracking-widest uppercase"
-            style={{ color: "#D4AF37" }}
-          >
-            Live Preview
-          </span>
-          {isPending && (
-            <span
-              className="font-label text-[12px] font-semibold tracking-widest uppercase"
-              style={{ color: "#D4AF37" }}
-            >
-              Refreshing…
+          className="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+          onClick={() => setPreviewOpen(false)}
+        />
+      )}
+
+      {/* Preview panel */}
+      <div
+        className={clsx(
+          // Desktop: normal flex column in layout
+          "lg:flex lg:relative lg:translate-x-0 lg:flex-1 lg:flex-col lg:overflow-hidden lg:bg-[#050505]",
+          // Mobile/md: fixed sheet sliding in from right
+          "fixed inset-y-0 right-0 z-50 flex flex-col w-full max-w-2xl bg-[#050505]",
+          "border-l-2 border-dash-border-hi transition-transform duration-300",
+          previewOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0",
+        )}
+      >
+        <div className="px-6 py-3 border-b border-dash-border/10 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3">
+            <span className="font-label text-[12px] font-semibold tracking-widest uppercase text-dash-gold">
+              Live Preview
             </span>
-          )}
+            {isPending && (
+              <span className="font-label text-[12px] font-semibold tracking-widest uppercase text-dash-gold">
+                Refreshing…
+              </span>
+            )}
+          </div>
+          {/* Close button — mobile sheet only */}
+          <button
+            onClick={() => setPreviewOpen(false)}
+            className="lg:hidden flex items-center justify-center size-7 rounded-lg text-dash-text/40 hover:text-dash-gold transition-colors"
+          >
+            <XIcon className="size-4" />
+          </button>
         </div>
         <div className="flex-1 overflow-hidden">
           <PreviewFrame config={config} iframeRef={previewIframeRef} />
