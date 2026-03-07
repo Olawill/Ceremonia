@@ -155,10 +155,7 @@ export function Sidebar() {
           onClick={() => setCollapsed((c) => !c)}
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           className={clsx(
-            "flex w-full items-center gap-3 rounded-lg px-2.5 py-2",
-            "font-label text-[10px] tracking-widest uppercase",
-            "text-dash-text/30 hover:text-dash-gold/60 hover:bg-dash-gold/5",
-            "transition-all duration-150",
+            "flex w-full items-center gap-3 rounded-lg px-2.5! py-2! font-label text-[10px] tracking-widest uppercase text-dash-text/30 hover:text-dash-gold/60 hover:bg-dash-gold/5 transition-all duration-150",
             collapsed && "justify-center",
           )}
         >

@@ -54,8 +54,7 @@ export default async function DashboardPage() {
             <Link
               key={w.id}
               href={`/app/editor/${w.slug}`}
-              className="rounded-2xl p-8! border transition-all hover:border-[#D4AF3740] group"
-              style={{ borderColor: "#D4AF3718", background: "#D4AF3705" }}
+              className="rounded-2xl p-8! border transition-all border-[#D4AF3750] bg-[#D4AF3705] hover:border-[#D4AF3770] group"
             >
               <p
                 className="font-display font-light mb-1!"
@@ -65,7 +64,7 @@ export default async function DashboardPage() {
               </p>
               <p
                 className="font-label text-xs tracking-widest mb-4!"
-                style={{ color: "#D4AF3760" }}
+                style={{ color: "#D4AF3780" }}
               >
                 {w.slug}.ceremonia.app
               </p>
@@ -84,8 +83,8 @@ export default async function DashboardPage() {
                   className="font-label text-[10px] tracking-widest uppercase px-3! py-1! rounded-full"
                   style={{
                     background: "#ffffff08",
-                    color: "#F5F0E840",
-                    border: "1px solid #ffffff10",
+                    color: "#F5F0E880",
+                    border: "1px solid #ffffff40",
                   }}
                 >
                   {w.viewCount ?? 0} views
