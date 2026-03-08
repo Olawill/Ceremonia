@@ -59,6 +59,12 @@ const WeddingBodySchema = t.Object({
   accommodation: t.Optional(t.Any()),
   weddingPartyEnabled: t.Optional(t.Boolean()),
   weddingParty: t.Optional(t.Any()),
+  faqEnabled: t.Optional(t.Boolean()),
+  faq: t.Optional(t.Any()),
+  livestreamEnabled: t.Optional(t.Boolean()),
+  livestreamUrl: t.Optional(t.String()),
+  livestreamTitle: t.Optional(t.String()),
+  livestreamNote: t.Optional(t.String()),
 });
 
 export const weddingsRouter = new Elysia({ prefix: "/weddings" })

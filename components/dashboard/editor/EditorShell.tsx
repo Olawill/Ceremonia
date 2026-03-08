@@ -118,6 +118,12 @@ export function EditorShell({ initialConfig, isNew }: Props) {
         accommodation: config.accommodation,
         weddingPartyEnabled: config.weddingPartyEnabled,
         weddingParty: config.weddingParty,
+        faqEnabled: config.faqEnabled,
+        faq: config.faq,
+        livestreamEnabled: config.livestreamEnabled,
+        livestreamUrl: config.livestreamUrl,
+        livestreamTitle: config.livestreamTitle,
+        livestreamNote: config.livestreamNote,
       } satisfies Parameters<typeof api.api.weddings.post>[0];
 
       if (isNew) {

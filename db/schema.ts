@@ -47,12 +47,28 @@ export const weddings = pgTable("weddings", {
   published: boolean("published").default(false),
   registryEnabled: boolean("registry_enabled").default(true),
   guestBookEnabled: boolean("guest_book_enabled").default(false),
+  // Dress Code
   dressCodeEnabled: boolean("dress_code_enabled").default(false),
   dressCode: jsonb("dress_code"),
+
+  // Accommodation
   accommodationEnabled: boolean("accommodation_enabled").default(false),
   accommodation: jsonb("accommodation"),
+
+  // Wedding Party
   weddingPartyEnabled: boolean("wedding_party_enabled").default(false),
   weddingParty: jsonb("wedding_party"),
+
+  // FAQ
+  faqEnabled: boolean("faq_enabled").default(false),
+  faq: jsonb("faq"), // FaqItem[]
+
+  // Livestream
+  livestreamEnabled: boolean("livestream_enabled").default(false),
+  livestreamUrl: text("livestream_url"), // YouTube/Vimeo embed URL
+  livestreamTitle: text("livestream_title"), // e.g. "Watch Live"
+  livestreamNote: text("livestream_note"), // e.g. "Stream starts 30 mins before ceremony"
+
   viewCount: integer("view_count").default(0),
   notificationEmail: text("notification_email"),
   createdAt: timestamp("created_at").defaultNow(),

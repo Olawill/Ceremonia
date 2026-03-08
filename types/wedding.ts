@@ -72,6 +72,12 @@ export interface WeddingConfig {
   accommodation?: AccommodationConfig;
   weddingPartyEnabled?: boolean;
   weddingParty?: WeddingPartyMember[];
+  faqEnabled?: boolean;
+  faq?: FaqItem[];
+  livestreamEnabled?: boolean;
+  livestreamUrl?: string;
+  livestreamTitle?: string;
+  livestreamNote?: string;
 }
 
 export type DressCodeStyle =
@@ -134,6 +140,12 @@ export interface WeddingPartyMember {
   relation?: string; // e.g. "Childhood best friend"
   photoUrl?: string;
   side: "bride" | "groom" | "both";
+}
+
+export interface FaqItem {
+  id: string;
+  question: string;
+  answer: string;
 }
 
 export const FALLBACK_LOCATION: VenueEvent = {
@@ -287,4 +299,42 @@ export const DEMO_WEDDING_CONFIG: WeddingConfig = {
       side: "groom",
     },
   ],
+  faqEnabled: true,
+  faq: [
+    {
+      id: "1",
+      question: "Is there a dress code?",
+      answer:
+        "We kindly request black tie attire. Think floor-length gowns and tuxedos — we want everyone looking and feeling their most glamorous.",
+    },
+    {
+      id: "2",
+      question: "Can I bring a plus one?",
+      answer:
+        "Due to limited venue capacity, we are only able to accommodate guests listed on the invitation. We hope you understand.",
+    },
+    {
+      id: "3",
+      question: "Are children welcome?",
+      answer:
+        "While we love your little ones, our reception is an adults-only affair. We hope this gives you a chance to enjoy a rare night out!",
+    },
+    {
+      id: "4",
+      question: "What time should I arrive?",
+      answer:
+        "Please arrive at least 15 minutes before the ceremony begins at 4:00 PM. Latecomers may need to wait until after the processional to be seated.",
+    },
+    {
+      id: "5",
+      question: "Is the venue accessible?",
+      answer:
+        "Yes, the Ashford Estate is fully accessible. Please contact us directly if you have specific requirements and we will do everything we can to accommodate you.",
+    },
+  ],
+  livestreamEnabled: true,
+  livestreamUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+  livestreamTitle: "Watch Live",
+  livestreamNote:
+    "The stream will go live 30 minutes before the ceremony begins. You do not need an account to watch.",
 };

@@ -36,6 +36,13 @@
       "when": 1772940263625,
       "tag": "0004_rich_spectrum",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1772941330288,
+      "tag": "0005_living_lady_deathstrike",
+      "breakpoints": true
     }
   ]
 }

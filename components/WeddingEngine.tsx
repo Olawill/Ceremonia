@@ -16,8 +16,10 @@ import { DustParticles } from "@/components/effects/DustParticles";
 import { Accommodation } from "@/components/sections/Accommodation";
 import { Countdown } from "@/components/sections/Countdown";
 import { DressCode } from "@/components/sections/DressCode";
+import { FAQ } from "@/components/sections/FAQ";
 import { Finale } from "@/components/sections/Finale";
 import { GuestBook } from "@/components/sections/GuestBook";
+import { Livestream } from "@/components/sections/Livestream";
 import { ParallaxHero } from "@/components/sections/ParallaxHero";
 import { PhotoGallery } from "@/components/sections/PhotoGallery";
 import { RSVP } from "@/components/sections/RSVP";
@@ -193,6 +195,22 @@ export function WeddingEngine({
                           members={config.weddingParty}
                           bride={config.bride}
                           groom={config.groom}
+                        />,
+                      ]
+                    : []),
+
+                  ...(config.faqEnabled && config.faq?.length
+                    ? [<FAQ key="faq" items={config.faq} />]
+                    : []),
+
+                  ...(config.livestreamEnabled && config.livestreamUrl
+                    ? [
+                        <Livestream
+                          key="livestream"
+                          url={config.livestreamUrl}
+                          title={config.livestreamTitle}
+                          note={config.livestreamNote}
+                          date={config.date}
                         />,
                       ]
                     : []),

@@ -9,6 +9,8 @@ import { AccommodationEditor } from "@/components/dashboard/editor/Accommodation
 import { ContentEditor } from "@/components/dashboard/editor/ContentEditor";
 import { DesignPanel } from "@/components/dashboard/editor/DesignPanel";
 import { DressCodeEditor } from "@/components/dashboard/editor/DressCodeEditor";
+import { FaqEditor } from "@/components/dashboard/editor/FaqEditor";
+import { LivestreamEditor } from "@/components/dashboard/editor/LivestreamEditor";
 import { MediaUploader } from "@/components/dashboard/editor/MediaUploader";
 import { MenuEditor } from "@/components/dashboard/editor/MenuEditor";
 import { RegistryEditor } from "@/components/dashboard/editor/RegistryEditor";
@@ -27,6 +29,8 @@ const TABS = [
   { id: "dresscode", label: "Attire" },
   { id: "accommodation", label: "Stay" },
   { id: "party", label: "Party" },
+  { id: "faq", label: "FAQ" },
+  { id: "livestream", label: "Stream" },
   { id: "rsvp", label: "RSVP" },
   { id: "registry", label: "Registry" },
 ] as const;
@@ -94,6 +98,12 @@ export function EditorSidebar({ config, onChange, previewIframeRef }: Props) {
         )}
         {activeTab === "party" && (
           <WeddingPartyEditor config={config} onChange={onChange} />
+        )}
+        {activeTab === "faq" && (
+          <FaqEditor config={config} onChange={onChange} />
+        )}
+        {activeTab === "livestream" && (
+          <LivestreamEditor config={config} onChange={onChange} />
         )}
         {activeTab === "rsvp" && (
           <RSVPSettings config={config} onChange={onChange} />

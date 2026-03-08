@@ -11,11 +11,15 @@ import { PasswordGate } from "@/components/wedding/PasswordGate";
 
 import type { ThemeKey, WeddingTheme } from "@/types/theme";
 import type {
+  AccommodationConfig,
   Course,
   CurtainStyle,
+  DressCodeConfig,
+  FaqItem,
   TimelineEvent,
   VenueEvent,
   WeddingConfig,
+  WeddingPartyMember,
 } from "@/types/wedding";
 import { DEMO_WEDDING_CONFIG } from "@/types/wedding";
 
@@ -164,6 +168,18 @@ export default async function WeddingPage({ params }: Props) {
     passwordProtected: wedding.passwordProtected ?? false,
     password: wedding.password ?? undefined,
     notificationEmail: wedding.notificationEmail ?? undefined,
+    dressCodeEnabled: wedding.dressCodeEnabled ?? false,
+    dressCode: wedding.dressCode as DressCodeConfig | undefined,
+    accommodationEnabled: wedding.accommodationEnabled ?? false,
+    accommodation: wedding.accommodation as AccommodationConfig | undefined,
+    weddingPartyEnabled: wedding.weddingPartyEnabled ?? false,
+    weddingParty: wedding.weddingParty as WeddingPartyMember[] | undefined,
+    faqEnabled: wedding.faqEnabled ?? false,
+    faq: wedding.faq as FaqItem[] | undefined,
+    livestreamEnabled: wedding.livestreamEnabled ?? false,
+    livestreamUrl: wedding.livestreamUrl ?? undefined,
+    livestreamTitle: wedding.livestreamTitle ?? undefined,
+    livestreamNote: wedding.livestreamNote ?? undefined,
   };
 
   const cookieStore = await cookies();

@@ -14,6 +14,7 @@ import type {
   Course,
   CurtainStyle,
   DressCodeConfig,
+  FaqItem,
   TimelineEvent,
   VenueEvent,
   WeddingConfig,
@@ -85,6 +86,12 @@ export default async function EditorPage({ params }: Props) {
     accommodation: wedding.accommodation as AccommodationConfig | undefined,
     weddingPartyEnabled: wedding.weddingPartyEnabled ?? false,
     weddingParty: wedding.weddingParty as WeddingPartyMember[] | undefined,
+    faqEnabled: wedding.faqEnabled ?? false,
+    faq: wedding.faq as FaqItem[] | undefined,
+    livestreamEnabled: wedding.livestreamEnabled ?? false,
+    livestreamUrl: wedding.livestreamUrl ?? undefined,
+    livestreamTitle: wedding.livestreamTitle ?? undefined,
+    livestreamNote: wedding.livestreamNote ?? undefined,
   };
 
   return <EditorShell initialConfig={config} isNew={false} />;
