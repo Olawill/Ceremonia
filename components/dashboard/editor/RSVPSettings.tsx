@@ -18,6 +18,7 @@ const schema = z
     passwordProtected: z.boolean(),
     password: z.string().optional(),
     customDomain: z.string().optional(),
+    guestBookEnabled: z.boolean(),
   })
   .superRefine((data, ctx) => {
     if (
@@ -59,6 +60,7 @@ export function RSVPSettings({ config, onChange }: Props) {
 
   const passwordProtected = useWatch({ control, name: "passwordProtected" });
   const rsvpEnabled = useWatch({ control, name: "rsvpEnabled" });
+  const guestBookEnabled = useWatch({ control, name: "guestBookEnabled" });
 
   useEffect(() => {
     const { unsubscribe } = watch((values) => {
@@ -94,6 +96,21 @@ export function RSVPSettings({ config, onChange }: Props) {
             setValue("rsvpDeadline", val, { shouldValidate: true })
           }
           hasError={!!errors.rsvpDeadline}
+        />
+      </Field>
+
+      <Field label="Guest Book">
+        <Toggle
+          value={guestBookEnabled}
+          onChange={(v) => {
+            setValue("guestBookEnabled", v);
+            onChange({ guestBookEnabled: v });
+          }}
+          label={
+            guestBookEnabled
+              ? "Enabled — guests can leave messages"
+              : "Disabled"
+          }
         />
       </Field>
 

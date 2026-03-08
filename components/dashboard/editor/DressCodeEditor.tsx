@@ -1,5 +1,7 @@
 "use client";
 
+import { SectionToggle } from "@/components/dashboard/editor/SectionToggle";
+
 import type {
   DressCodeConfig,
   DressCodeStyle,
@@ -62,24 +64,13 @@ export function DressCodeEditor({ config, onChange }: Props) {
   return (
     <div className="space-y-6!">
       {/* Enable toggle */}
-      <div className="flex items-center justify-between">
-        <p className="font-label text-[12px] text-[#D4AF37] font-bold tracking-[0.5em] uppercase">
-          Dress Code
-        </p>
-        <button
-          onClick={() =>
-            onChange({ dressCodeEnabled: !config.dressCodeEnabled })
-          }
-          className="font-label text-[10px] tracking-widest uppercase px-3! py-1.5! rounded-full border transition-all cursor-pointer"
-          style={{
-            borderColor: config.dressCodeEnabled ? "#D4AF3790" : "#D4AF3730",
-            background: config.dressCodeEnabled ? "#D4AF3715" : "transparent",
-            color: config.dressCodeEnabled ? "#D4AF37" : "#D4AF3760",
-          }}
-        >
-          {config.dressCodeEnabled ? "Enabled" : "Disabled"}
-        </button>
-      </div>
+      <SectionToggle
+        label="Dress Code"
+        enabled={config.dressCodeEnabled ?? false}
+        onToggle={() =>
+          onChange({ dressCodeEnabled: !config.dressCodeEnabled })
+        }
+      />
 
       {config.dressCodeEnabled && (
         <>

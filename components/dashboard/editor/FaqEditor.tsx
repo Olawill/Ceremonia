@@ -9,7 +9,9 @@ import {
 import { nanoid } from "nanoid";
 import { useState } from "react";
 
+import { SectionToggle } from "@/components/dashboard/editor/SectionToggle";
 import { Field, Input, Textarea } from "@/components/ui/FormPrimitives";
+
 import type { FaqItem, WeddingConfig } from "@/types/wedding";
 
 interface Props {
@@ -103,25 +105,24 @@ export function FaqEditor({ config, onChange }: Props) {
   return (
     <div className="space-y-6!">
       {/* Enable toggle */}
-      <div className="flex items-center justify-between">
-        <p className="font-label text-[12px] text-[#D4AF37] font-bold tracking-[0.5em] uppercase">
-          FAQ
-        </p>
-        <button
-          onClick={() => onChange({ faqEnabled: !config.faqEnabled })}
-          className="font-label text-[10px] tracking-widest uppercase px-3! py-1.5! rounded-full border transition-all cursor-pointer"
-          style={{
-            borderColor: config.faqEnabled ? "#D4AF3790" : "#D4AF3730",
-            background: config.faqEnabled ? "#D4AF3715" : "transparent",
-            color: config.faqEnabled ? "#D4AF37" : "#D4AF3760",
-          }}
-        >
-          {config.faqEnabled ? "Enabled" : "Disabled"}
-        </button>
-      </div>
+      <SectionToggle
+        label="FAQ"
+        enabled={config.faqEnabled ?? false}
+        onToggle={() => onChange({ faqEnabled: !config.faqEnabled })}
+      />
 
       {config.faqEnabled && (
         <>
+          {items.length === 0 && (
+            <div className="rounded-xl border border-dashed py-8! flex flex-col items-center gap-2 text-[#D4AF3760]">
+              <p className="font-display italic text-sm text-[#D4AF3750]">
+                No questions yet
+              </p>
+              <p className="font-label text-[9px] tracking-widest uppercase text-[#D4AF3770]">
+                Add common guest questions below
+              </p>
+            </div>
+          )}
           <div className="space-y-3!">
             {items.map((item) => (
               <ItemEditor
@@ -135,8 +136,7 @@ export function FaqEditor({ config, onChange }: Props) {
 
           <button
             onClick={addItem}
-            className="w-full flex items-center justify-center gap-2 py-3! rounded-xl border border-dashed font-label text-[11px] tracking-[0.3em] uppercase transition-all hover:border-[#D4AF3760] cursor-pointer"
-            style={{ borderColor: "#D4AF3730", color: "#D4AF3760" }}
+            className="w-full flex items-center justify-center gap-2 py-3! rounded-xl border border-dashed font-label text-[11px] tracking-[0.3em] uppercase transition-all border-[#D4AF3760] text-[#D4AF3760] hover:text-[#D4AF3790] hover:border-[#D4AF3790] cursor-pointer"
           >
             <PlusIcon className="size-3.5" />
             Add Question

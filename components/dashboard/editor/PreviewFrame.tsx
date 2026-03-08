@@ -27,6 +27,8 @@ export function PreviewFrame({ config, iframeRef }: Props) {
     ),
   )}`;
 
+  console.log({ previewUrl });
+
   return (
     <iframe
       ref={iframeRef}

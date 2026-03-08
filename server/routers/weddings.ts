@@ -53,6 +53,7 @@ const WeddingBodySchema = t.Object({
   passwordProtected: t.Boolean(),
   password: t.Optional(t.String()),
   notificationEmail: t.Optional(t.String()),
+  guestBookEnabled: t.Optional(t.Boolean()),
   dressCodeEnabled: t.Optional(t.Boolean()),
   dressCode: t.Optional(t.Any()),
   accommodationEnabled: t.Optional(t.Boolean()),

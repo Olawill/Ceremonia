@@ -9,7 +9,9 @@ import {
 import { nanoid } from "nanoid";
 import { useState } from "react";
 
+import { SectionToggle } from "@/components/dashboard/editor/SectionToggle";
 import { Field, Input } from "@/components/ui/FormPrimitives";
+
 import type {
   WeddingConfig,
   WeddingPartyMember,
@@ -201,29 +203,26 @@ export function WeddingPartyEditor({ config, onChange }: Props) {
   return (
     <div className="space-y-6!">
       {/* Enable toggle */}
-      <div className="flex items-center justify-between">
-        <p className="font-label text-[12px] text-[#D4AF37] font-bold tracking-[0.5em] uppercase">
-          Wedding Party
-        </p>
-        <button
-          onClick={() =>
-            onChange({ weddingPartyEnabled: !config.weddingPartyEnabled })
-          }
-          className="font-label text-[10px] tracking-widest uppercase px-3 py-1.5 rounded-full border transition-all"
-          style={{
-            borderColor: config.weddingPartyEnabled ? "#D4AF3790" : "#D4AF3730",
-            background: config.weddingPartyEnabled
-              ? "#D4AF3715"
-              : "transparent",
-            color: config.weddingPartyEnabled ? "#D4AF37" : "#D4AF3760",
-          }}
-        >
-          {config.weddingPartyEnabled ? "Enabled" : "Disabled"}
-        </button>
-      </div>
-
+      <SectionToggle
+        label="Wedding Party"
+        enabled={config.weddingPartyEnabled ?? false}
+        onToggle={() =>
+          onChange({ weddingPartyEnabled: !config.weddingPartyEnabled })
+        }
+      />
       {config.weddingPartyEnabled && (
         <>
+          {members.length === 0 && (
+            <div className="rounded-xl border border-dashed py-8! flex flex-col items-center gap-2 border-[#D4AF3760]">
+              <p className="font-display italic text-sm text-[#D4AF3790]">
+                No members added yet
+              </p>
+              <p className="font-label text-[9px] tracking-widest uppercase text-[#D4AF3770]">
+                Add your bridal party below
+              </p>
+            </div>
+          )}
+
           <div className="space-y-3">
             {members.map((member) => (
               <MemberEditor
@@ -237,8 +236,7 @@ export function WeddingPartyEditor({ config, onChange }: Props) {
 
           <button
             onClick={addMember}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed font-label text-[11px] tracking-[0.3em] uppercase transition-all hover:border-[#D4AF3760]"
-            style={{ borderColor: "#D4AF3730", color: "#D4AF3760" }}
+            className="w-full flex items-center justify-center gap-2 py-3! rounded-xl border border-dashed font-label text-[11px] tracking-[0.3em] uppercase transition-all border-[#D4AF3760] text-[#D4AF3760] hover:text-[#D4AF3790] hover:border-[#D4AF3790] cursor-pointer"
           >
             <PlusIcon className="size-3.5" />
             Add Member

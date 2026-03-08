@@ -49,16 +49,16 @@ export function EditorSidebar({ config, onChange, previewIframeRef }: Props) {
   return (
     <div className="flex flex-col h-full">
       {/* Tab bar */}
-      <div className="flex flex-wrap gap-2 overflow-x-auto border-b shrink-0 text-[#D4AF3718]">
+      <div className="flex items-end gap-1 border-b border-[#D4AF3718] overflow-x-auto shrink-0 px-2! pt-2! w-full tab-strip">
         {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={clsx(
-              "flex-1 py-3.5! font-label text-[10px] font-bold tracking-[0.3em] uppercase transition-all duration-200 border-b-2",
+              "shrink-0 pb-2! px-1! font-label text-[10px] font-bold tracking-[0.3em] uppercase transition-all duration-200 border-b-2 cursor-pointer",
               activeTab === tab.id
                 ? "text-[#D4AF37] border-b-[#D4AF37]"
-                : "text-[#D4AF3780] transparent",
+                : "text-[#D4AF3780] border-b-transparent",
             )}
           >
             {tab.label}

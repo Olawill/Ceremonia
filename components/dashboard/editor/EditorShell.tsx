@@ -1,5 +1,6 @@
 "use client";
 
+import clsx from "clsx";
 import {
   AlertCircleIcon,
   CheckIcon,
@@ -21,7 +22,6 @@ import { DEMO_WEDDING_CONFIG } from "@/types/wedding";
 import { EditorSidebar } from "@/components/dashboard/editor/EditorSidebar";
 import { NewWeddingDialog } from "@/components/dashboard/editor/NewWeddingDialog";
 import { PreviewFrame } from "@/components/dashboard/editor/PreviewFrame";
-import clsx from "clsx";
 
 interface Props {
   initialConfig: WeddingConfig | null;
@@ -36,7 +36,7 @@ interface NewWeddingValues {
 }
 
 export function EditorShell({ initialConfig, isNew }: Props) {
-  const api = useApi();
+  const { api } = useApi();
   const { toast, handleApiError } = useToast();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -50,6 +50,7 @@ export function EditorShell({ initialConfig, isNew }: Props) {
   const [saveState, setSaveState] = useState<
     "idle" | "saving" | "saved" | "error"
   >("idle");
+  const [isDirty, setIsDirty] = useState(false);
 
   const [showDialog, setShowDialog] = useState(isNew);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -77,6 +78,7 @@ export function EditorShell({ initialConfig, isNew }: Props) {
 
   const updateConfig = useCallback((patch: Partial<WeddingConfig>) => {
     setConfig((prev) => ({ ...prev, ...patch }));
+    setIsDirty(true);
   }, []);
 
   const handleNewWeddingConfirm = useCallback((values: NewWeddingValues) => {
@@ -112,6 +114,7 @@ export function EditorShell({ initialConfig, isNew }: Props) {
         passwordProtected: config.passwordProtected,
         password: config.password,
         notificationEmail: config.notificationEmail,
+        guestBookEnabled: config.guestBookEnabled,
         dressCodeEnabled: config.dressCodeEnabled,
         dressCode: config.dressCode,
         accommodationEnabled: config.accommodationEnabled,
@@ -124,15 +127,16 @@ export function EditorShell({ initialConfig, isNew }: Props) {
         livestreamUrl: config.livestreamUrl,
         livestreamTitle: config.livestreamTitle,
         livestreamNote: config.livestreamNote,
-      } satisfies Parameters<typeof api.api.weddings.post>[0];
+      } satisfies Parameters<typeof api.weddings.post>[0];
 
       if (isNew) {
-        const { data, error } = await api.api.weddings.post(payload);
+        const { data, error } = await api.weddings.post(payload);
         if (error) {
           handleApiError(error, "Failed to create wedding");
           throw error;
         }
         setSaveState("saved");
+        setIsDirty(false);
         toast.success("Wedding created!");
         posthog.capture("wedding_created", {
           slug: data!.slug,
@@ -143,7 +147,7 @@ export function EditorShell({ initialConfig, isNew }: Props) {
         // Navigate to the new slug so the URL is correct
         startTransition(() => router.replace(`/app/editor/${data!.slug}`));
       } else {
-        const { error } = await api.api
+        const { error } = await api
           .weddings({ slug: config.slug })
           .patch(payload);
         if (error) {
@@ -151,6 +155,7 @@ export function EditorShell({ initialConfig, isNew }: Props) {
           throw error;
         }
         setSaveState("saved");
+        setIsDirty(false);
         toast.success("Changes saved");
         posthog.capture("wedding_saved", {
           slug: config.slug,
@@ -182,9 +187,16 @@ export function EditorShell({ initialConfig, isNew }: Props) {
         {/* Editor header */}
         <div className="px-6! py-4! border-b flex items-center justify-between shrink-0 border-[#D4AF3718]">
           <div>
-            <p className="font-display italic text-[#F5F0E8] text-xl!">
-              {config.bride || "Bride"} & {config.groom || "Groom"}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="font-display italic text-[#F5F0E8] text-xl!">
+                {config.bride || "Bride"} & {config.groom || "Groom"}
+              </p>
+              {isDirty && saveState === "idle" && (
+                <span className="font-label text-[9px] tracking-widest uppercase text-[#D4AF3790] border-[#D4AF3780]">
+                  Unsaved
+                </span>
+              )}
+            </div>
             {!isNew && (
               <p className="font-label text-[10px] text-[#D4AF3780] tracking-widest">
                 {config.slug}.ceremonia.app

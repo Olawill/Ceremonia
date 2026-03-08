@@ -2,7 +2,9 @@
 
 import { RadioIcon } from "lucide-react";
 
+import { SectionToggle } from "@/components/dashboard/editor/SectionToggle";
 import { Field, Input, Textarea } from "@/components/ui/FormPrimitives";
+
 import type { WeddingConfig } from "@/types/wedding";
 
 interface Props {
@@ -14,24 +16,13 @@ export function LivestreamEditor({ config, onChange }: Props) {
   return (
     <div className="space-y-6!">
       {/* Enable toggle */}
-      <div className="flex items-center justify-between">
-        <p className="font-label text-[12px] text-[#D4AF37] font-bold tracking-[0.5em] uppercase">
-          Livestream
-        </p>
-        <button
-          onClick={() =>
-            onChange({ livestreamEnabled: !config.livestreamEnabled })
-          }
-          className="font-label text-[10px] tracking-widest uppercase px-3! py-1.5! rounded-full border transition-all cursor-pointer"
-          style={{
-            borderColor: config.livestreamEnabled ? "#D4AF3790" : "#D4AF3730",
-            background: config.livestreamEnabled ? "#D4AF3715" : "transparent",
-            color: config.livestreamEnabled ? "#D4AF37" : "#D4AF3760",
-          }}
-        >
-          {config.livestreamEnabled ? "Enabled" : "Disabled"}
-        </button>
-      </div>
+      <SectionToggle
+        label="Livestream"
+        enabled={config.livestreamEnabled ?? false}
+        onToggle={() =>
+          onChange({ livestreamEnabled: !config.livestreamEnabled })
+        }
+      />
 
       {config.livestreamEnabled && (
         <>

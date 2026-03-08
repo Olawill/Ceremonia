@@ -9,6 +9,7 @@ import {
 import { nanoid } from "nanoid";
 import { useState } from "react";
 
+import { SectionToggle } from "@/components/dashboard/editor/SectionToggle";
 import { Field, Input, Textarea } from "@/components/ui/FormPrimitives";
 
 import type {
@@ -224,28 +225,13 @@ export function AccommodationEditor({ config, onChange }: Props) {
   return (
     <div className="space-y-6!">
       {/* Enable toggle */}
-      <div className="flex items-center justify-between">
-        <p className="font-label text-[12px] text-[#D4AF37] font-bold tracking-[0.5em] uppercase">
-          Accommodation
-        </p>
-        <button
-          onClick={() =>
-            onChange({ accommodationEnabled: !config.accommodationEnabled })
-          }
-          className="font-label text-[10px] tracking-widest uppercase px-3! py-1.5! rounded-full border transition-all cursor-pointer"
-          style={{
-            borderColor: config.accommodationEnabled
-              ? "#D4AF3790"
-              : "#D4AF3730",
-            background: config.accommodationEnabled
-              ? "#D4AF3715"
-              : "transparent",
-            color: config.accommodationEnabled ? "#D4AF37" : "#D4AF3760",
-          }}
-        >
-          {config.accommodationEnabled ? "Enabled" : "Disabled"}
-        </button>
-      </div>
+      <SectionToggle
+        label="Accommodation"
+        enabled={config.accommodationEnabled ?? false}
+        onToggle={() =>
+          onChange({ accommodationEnabled: !config.accommodationEnabled })
+        }
+      />
 
       {config.accommodationEnabled && (
         <>

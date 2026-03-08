@@ -160,6 +160,7 @@ export default async function WeddingPage({ params }: Props) {
     curtainStyle: (wedding.curtainStyle as CurtainStyle) ?? "velvet",
     audioUrl: wedding.audioUrl ?? undefined,
     heroPhotoUrl: wedding.heroPhotoUrl ?? undefined,
+    guestBookEnabled: wedding.guestBookEnabled ?? false,
     timeline: (wedding.timeline as TimelineEvent[]) ?? [],
     menuCourses: (wedding.menuCourses as Course[]) ?? [],
     rsvpEnabled: wedding.rsvpEnabled ?? true,

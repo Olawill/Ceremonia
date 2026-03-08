@@ -402,3 +402,29 @@ select option {
 .sidebar-transition {
   transition: width 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+.tab-strip {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.tab-strip:hover {
+  scrollbar-color: #d4af3740 transparent;
+}
+
+.tab-strip::-webkit-scrollbar {
+  height: 2px;
+}
+
+.tab-strip::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tab-strip::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 999px;
+}
+
+.tab-strip:hover::-webkit-scrollbar-thumb {
+  background: #d4af3740;
+}
