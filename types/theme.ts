@@ -1,4 +1,12 @@
-export type ThemeKey = "royal" | "midnight" | "forest";
+export type ThemeKey =
+  | "royal"
+  | "midnight"
+  | "forest"
+  | "blush"
+  | "slate"
+  | "desert"
+  | "celestial"
+  | "noir";
 
 export interface WeddingTheme {
   key: ThemeKey;
@@ -13,4 +21,5 @@ export interface WeddingTheme {
   bgMid: string;
   text: string;
   particle: string;
+  panelCount?: number;
 }

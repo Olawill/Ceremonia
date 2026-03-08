@@ -34,14 +34,19 @@ function PreviewInner({
   useEffect(() => {
     configRef.current = config;
   }, [config]);
+
   useEffect(() => {
     onConfigChangeRef.current = onConfigChange;
   }, [onConfigChange]);
+
   useEffect(() => {
     setCustomThemeRef.current = setCustomTheme;
   }, [setCustomTheme]);
 
   useEffect(() => {
+    // Signal to the parent editor that this page is ready to receive config
+    // window.parent.postMessage({ type: "PREVIEW_READY" }, "*");
+
     const handler = (e: MessageEvent) => {
       if (e.data?.type === "PREVIEW_CONFIG" && e.data.config) {
         const incoming: WeddingConfig = e.data.config;
@@ -65,7 +70,7 @@ function PreviewInner({
     return () => window.removeEventListener("message", handler);
   }, []); // ← empty deps, handler never re-registers
 
-  return <WeddingEngine config={config} ownerPlan={plan} />;
+  return <WeddingEngine config={config} />;
 }
 
 export function PreviewClient({ initialConfig }: Props) {

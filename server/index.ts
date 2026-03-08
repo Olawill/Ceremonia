@@ -6,6 +6,7 @@ import { env } from "@/env";
 
 import { billingRouter } from "@/server/routers/billing";
 import { customThemesRouter } from "@/server/routers/customThemes";
+import { guestbookRouter } from "@/server/routers/guestbook";
 import { registryRouter } from "@/server/routers/registry";
 import { rsvpRouter } from "@/server/routers/rsvp";
 import { settingsRouter } from "@/server/routers/settings";
@@ -21,6 +22,7 @@ export const app = new Elysia({ prefix: "/api" })
   .use(customThemesRouter)
   .use(uploadRouter)
   .use(settingsRouter)
-  .use(registryRouter);
+  .use(registryRouter)
+  .use(guestbookRouter);
 
 export type App = typeof app;

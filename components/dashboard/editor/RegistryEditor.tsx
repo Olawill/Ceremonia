@@ -18,6 +18,7 @@ import { Field, Input, Textarea } from "@/components/ui/FormPrimitives";
 import { useApi } from "@/hooks/useApi";
 import { useToast } from "@/hooks/useToast";
 
+import { PlanGate } from "@/components/ui/PlanGate";
 import { usePlan } from "@/hooks/usePlan";
 import type { WeddingConfig } from "@/types/wedding";
 
@@ -623,26 +624,30 @@ export function RegistryEditor({ config }: Props) {
                   <PlusIcon className="size-3.5" />
                   Manual
                 </button>
-                <button
-                  onClick={() => setAddMode("browse")}
-                  disabled={plan !== "agency"}
-                  className="py-3! rounded-xl font-label text-[10px] tracking-[0.3em] uppercase transition-all border flex flex-col items-center gap-1.5 relative overflow-hidden cursor-pointer disabled:cursor-not-allowed"
-                  style={{
-                    borderColor: "#D4AF3760",
-                    color: "#D4AF37",
-                    borderStyle: "solid",
-                    background: "#D4AF3708",
-                  }}
+                <PlanGate
+                  requires="agency"
+                  featureName={`Import from retailer pages`}
                 >
-                  <StoreIcon className="size-3.5" />
-                  Import Page
-                  <span
-                    className="absolute top-1 right-1 font-label text-[7px] tracking-widest uppercase px-1.5! py-0.5! rounded-full"
-                    style={{ background: "#D4AF3720", color: "#D4AF37" }}
+                  <button
+                    onClick={() => setAddMode("browse")}
+                    className="py-3! rounded-xl font-label text-[10px] w-full tracking-[0.3em] uppercase transition-all border flex flex-col items-center gap-1.5 relative overflow-hidden cursor-pointer disabled:cursor-not-allowed"
+                    style={{
+                      borderColor: "#D4AF3760",
+                      color: "#D4AF37",
+                      borderStyle: "solid",
+                      background: "#D4AF3708",
+                    }}
                   >
-                    Agency
-                  </span>
-                </button>
+                    <StoreIcon className="size-3.5" />
+                    Import Page
+                    {/* <span
+                      className="absolute top-1 right-1 font-label text-[7px] tracking-widest uppercase px-1.5! py-0.5! rounded-full"
+                      style={{ background: "#D4AF3720", color: "#D4AF37" }}
+                    >
+                      Agency
+                    </span> */}
+                  </button>
+                </PlanGate>
               </div>
             </div>
           )}

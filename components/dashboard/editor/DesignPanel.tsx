@@ -1,9 +1,12 @@
 "use client";
 
+import clsx from "clsx";
+
 import { ThemeCustomiser } from "@/components/dashboard/editor/ThemeCustomiser";
 import { PlanGate } from "@/components/ui/PlanGate";
 
 import { usePlan } from "@/hooks/usePlan";
+import { planMeetsRequirement } from "@/lib/plans";
 
 import { themes } from "@/themes";
 
@@ -17,8 +20,10 @@ interface Props {
 }
 
 const curtainStyles = [
-  { label: "velvet", isFree: true },
-  { isFree: false, label: "drape" },
+  { label: "velvet", plan: "free", name: "Velvet", emoji: "🎭" },
+  { label: "drape", plan: "starter", name: "Draped", emoji: "🪢" },
+  { label: "sheer", plan: "pro", name: "Sheer", emoji: "🕊️" },
+  { label: "cascade", plan: "pro", name: "Cascade", emoji: "🌊" },
 ] as const;
 
 export function DesignPanel({ config, onChange, previewIframeRef }: Props) {
@@ -76,52 +81,38 @@ export function DesignPanel({ config, onChange, previewIframeRef }: Props) {
         Curtain Style
       </p>
 
-      <div className="grid grid-cols-2 gap-3">
-        {curtainStyles.map(({ label, isFree }) => {
-          if (!isFree) {
-            return (
-              <PlanGate
-                key={label}
-                requires="starter"
-                featureName="Draped curtain style"
-              >
-                <button
-                  onClick={() => onChange({ curtainStyle: label })}
-                  className="py-4! rounded-xl border font-label text-[12px] font-bold! tracking-widest
-                      uppercase transition-all"
-                  style={{
-                    borderColor:
-                      config.curtainStyle === label ? "#D4AF3790" : "#D4AF3760",
-                    color:
-                      config.curtainStyle === label ? "#D4AF37" : "#D4AF3780",
-                    background:
-                      config.curtainStyle === label
-                        ? "#D4AF3710"
-                        : "transparent",
-                  }}
-                >
-                  {"🪢 Draped"}
-                </button>
-              </PlanGate>
-            );
-          }
+      <div className="grid grid-cols-2 gap-3!">
+        {curtainStyles.map(({ label, name, plan, emoji }) => {
+          const active = config.curtainStyle === label;
 
-          return (
+          const locked =
+            plan !== "free" ? !planMeetsRequirement(ownerPlan, plan) : false;
+          const btn = (
             <button
               key={label}
-              onClick={() => onChange({ curtainStyle: label })}
-              className="py-4! rounded-xl border font-label text-[12px] font-bold! tracking-widest
-                      uppercase transition-all"
-              style={{
-                borderColor:
-                  config.curtainStyle === label ? "#D4AF3790" : "#D4AF3760",
-                color: config.curtainStyle === label ? "#D4AF37" : "#D4AF3780",
-                background:
-                  config.curtainStyle === label ? "#D4AF3710" : "transparent",
-              }}
+              onClick={() => !locked && onChange({ curtainStyle: label })}
+              className={clsx(
+                "py-3! rounded-xl border font-label text-[12px] font-bold! tracking-widest uppercase transition-all w-full",
+                active
+                  ? "border-[#D4AF3790] text-[#D4AF37] bg-[#D4AF3710]"
+                  : "border-[#D4AF3740] text-[#D4AF3770] bg-transparent",
+                locked ? "cursor-default" : "cursor-pointer",
+              )}
             >
-              {label === "velvet" ? "🎭 Velvet" : "🪢 Draped"}
+              {emoji} {name}
             </button>
+          );
+
+          if (!locked) return btn;
+
+          return (
+            <PlanGate
+              key={label}
+              requires={plan}
+              featureName={`${name} curtain style`}
+            >
+              {btn}
+            </PlanGate>
           );
         })}
       </div>

@@ -18,6 +18,17 @@ export interface VenueEvent {
   sub: string; // e.g. "Grand Ballroom"
 }
 
+export const CURTAIN_STYLES = ["velvet", "drape", "sheer", "cascade"] as const;
+
+export type CurtainStyle = (typeof CURTAIN_STYLES)[number];
+
+export interface TravelItem {
+  type: "hotel" | "airport" | "tip";
+  name: string;
+  description: string;
+  link?: string;
+}
+
 export interface WeddingConfig {
   id: string;
   slug: string;
@@ -30,7 +41,7 @@ export interface WeddingConfig {
   venueDetails: VenueEvent[];
   themeKey: ThemeKey;
   customTheme?: WeddingTheme;
-  curtainStyle: "velvet" | "drape";
+  curtainStyle: CurtainStyle;
   audioUrl?: string;
   heroPhotoUrl?: string;
   timeline: TimelineEvent[];
@@ -42,6 +53,11 @@ export interface WeddingConfig {
   password?: string;
   notificationEmail?: string;
   registryEnabled?: boolean;
+  photoGalleryEnabled?: boolean;
+  galleryPhotos?: string[]; // Vercel Blob URLs
+  travelGuideEnabled?: boolean;
+  travelItems?: TravelItem[];
+  guestBookEnabled?: boolean;
 }
 
 export const FALLBACK_LOCATION: VenueEvent = {

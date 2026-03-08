@@ -46,6 +46,7 @@ export const weddings = pgTable("weddings", {
   password: text("password"),
   published: boolean("published").default(false),
   registryEnabled: boolean("registry_enabled").default(true),
+  guestBookEnabled: boolean("guest_book_enabled").default(false),
   viewCount: integer("view_count").default(0),
   notificationEmail: text("notification_email"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -61,6 +62,16 @@ export const rsvps = pgTable("rsvps", {
   guests: integer("guests").default(1),
   dietary: text("dietary"),
   message: text("message"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const guestbook = pgTable("guestbook", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  weddingId: uuid("wedding_id")
+    .references(() => weddings.id, { onDelete: "cascade" })
+    .notNull(),
+  name: text("name").notNull(),
+  message: text("message").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -124,6 +135,7 @@ export const weddingsRelations = relations(weddings, ({ one, many }) => ({
   rsvps: many(rsvps),
   registryItems: many(registryItems),
   registryClaims: many(registryClaims),
+  guestbook: many(guestbook),
 }));
 
 export const rsvpsRelations = relations(rsvps, ({ one }) => ({
@@ -158,6 +170,13 @@ export const registryClaimsRelations = relations(registryClaims, ({ one }) => ({
   }),
   wedding: one(weddings, {
     fields: [registryClaims.weddingId],
+    references: [weddings.id],
+  }),
+}));
+
+export const guestbookRelations = relations(guestbook, ({ one }) => ({
+  wedding: one(weddings, {
+    fields: [guestbook.weddingId],
     references: [weddings.id],
   }),
 }));

@@ -12,13 +12,12 @@ import { PasswordGate } from "@/components/wedding/PasswordGate";
 import type { ThemeKey, WeddingTheme } from "@/types/theme";
 import type {
   Course,
+  CurtainStyle,
   TimelineEvent,
   VenueEvent,
   WeddingConfig,
 } from "@/types/wedding";
 import { DEMO_WEDDING_CONFIG } from "@/types/wedding";
-
-import { Plan } from "@/lib/plans";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -154,7 +153,7 @@ export default async function WeddingPage({ params }: Props) {
     ],
     themeKey: (wedding.themeKey as ThemeKey) ?? "royal",
     customTheme: wedding.customTheme as WeddingTheme | undefined,
-    curtainStyle: (wedding.curtainStyle as "velvet" | "drape") ?? "velvet",
+    curtainStyle: (wedding.curtainStyle as CurtainStyle) ?? "velvet",
     audioUrl: wedding.audioUrl ?? undefined,
     heroPhotoUrl: wedding.heroPhotoUrl ?? undefined,
     timeline: (wedding.timeline as TimelineEvent[]) ?? [],
@@ -181,7 +180,6 @@ export default async function WeddingPage({ params }: Props) {
     <WeddingEngine
       config={config}
       showWatermark={showWatermark}
-      ownerPlan={(owner?.plan ?? "free") as Plan}
       brandName={owner?.brandName ?? undefined}
     />
   );

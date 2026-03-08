@@ -11,6 +11,7 @@ import { EditorShell } from "@/components/dashboard/editor/EditorShell";
 import type { ThemeKey, WeddingTheme } from "@/types/theme";
 import type {
   Course,
+  CurtainStyle,
   TimelineEvent,
   VenueEvent,
   WeddingConfig,
@@ -66,7 +67,7 @@ export default async function EditorPage({ params }: Props) {
       DEMO_WEDDING_CONFIG.venueDetails,
     themeKey: (wedding.themeKey as ThemeKey) ?? "royal",
     customTheme: wedding.customTheme as WeddingTheme | undefined,
-    curtainStyle: (wedding.curtainStyle as "velvet" | "drape") ?? "velvet",
+    curtainStyle: (wedding.curtainStyle as CurtainStyle) ?? "velvet",
     audioUrl: wedding.audioUrl ?? undefined,
     heroPhotoUrl: wedding.heroPhotoUrl ?? undefined,
     timeline: (wedding.timeline as TimelineEvent[]) ?? [],

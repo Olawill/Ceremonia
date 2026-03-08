@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 
+import { CascadeCurtain } from "@/components/curtain/CascadeCurtain";
 import { DrapedCurtain } from "@/components/curtain/DrapedCurtain";
+import { SheerCurtain } from "@/components/curtain/SheerCurtain";
 import { VelvetCurtain } from "@/components/curtain/VelvetCurtain";
 
 import { DrapeFrame } from "@/components/effects/DrapeFrame";
@@ -10,48 +12,46 @@ import { DustParticles } from "@/components/effects/DustParticles";
 
 import { Countdown } from "@/components/sections/Countdown";
 import { Finale } from "@/components/sections/Finale";
+import { GuestBook } from "@/components/sections/GuestBook";
 import { ParallaxHero } from "@/components/sections/ParallaxHero";
+import { PhotoGallery } from "@/components/sections/PhotoGallery";
 import { RSVP } from "@/components/sections/RSVP";
 import { Registry } from "@/components/sections/Registry";
 import { ScratchDate } from "@/components/sections/ScratchDate";
 import { Timeline } from "@/components/sections/Timeline";
+import { TravelGuide } from "@/components/sections/TravelGuide";
 import { VenueDetails } from "@/components/sections/VenueDetails";
 import { WeddingMenu } from "@/components/sections/WeddingMenu";
 
 import { AudioPlayer } from "@/components/ui/AudioPlayer";
-import { ThemeSelector } from "@/components/ui/ThemeSelector";
 
 import { useTheme } from "@/lib/ThemeContext";
-import { Plan } from "@/lib/plans";
 
 import {
+  CurtainStyle,
   DEMO_WEDDING_CONFIG,
   FALLBACK_LOCATION,
   VenueEvent,
   WeddingConfig,
 } from "@/types/wedding";
-import { useAuth } from "@clerk/nextjs";
 
 interface WeddingEngineProps {
   config?: WeddingConfig;
   showWatermark?: boolean;
-  ownerPlan?: Plan;
   brandName?: string;
 }
 
 export function WeddingEngine({
   config = DEMO_WEDDING_CONFIG,
   showWatermark,
-  ownerPlan = "free",
   brandName,
 }: WeddingEngineProps) {
   const { theme } = useTheme();
-  const { sessionId } = useAuth();
 
   const [curtainOpen, setCurtainOpen] = useState(false);
   const [dateRevealed, setDateRevealed] = useState(false);
 
-  const [curtainStyle, setCurtainStyle] = useState<"velvet" | "drape">(
+  const [curtainStyle, setCurtainStyle] = useState<CurtainStyle>(
     config.curtainStyle ?? "velvet",
   );
 
@@ -75,13 +75,6 @@ export function WeddingEngine({
         </div>
       )}
 
-      {sessionId && (
-        <ThemeSelector
-          curtainStyle={curtainStyle}
-          onCurtainChange={setCurtainStyle}
-          ownerPlan={ownerPlan}
-        />
-      )}
       <AudioPlayer
         autoPlay={curtainOpen}
         src={config.audioUrl ?? "/audio/royal.mp3"}
@@ -91,10 +84,16 @@ export function WeddingEngine({
       {curtainOpen && curtainStyle === "drape" && <DrapeFrame />}
 
       {/* Curtain – removed from DOM once open */}
-      {curtainStyle === "velvet" ? (
+      {curtainStyle === "velvet" && (
         <VelvetCurtain onOpen={handleCurtainOpen} />
-      ) : (
-        <DrapedCurtain onOpen={handleCurtainOpen} />
+      )}
+      {curtainStyle === "drape" && <DrapedCurtain onOpen={handleCurtainOpen} />}
+      {curtainStyle === "sheer" && <SheerCurtain onOpen={handleCurtainOpen} />}
+      {curtainStyle === "cascade" && (
+        <CascadeCurtain
+          onOpen={handleCurtainOpen}
+          panelCount={config.customTheme?.panelCount ?? 5}
+        />
       )}
 
       {/* Scrollable Main content – revealed after curtain opens */}
@@ -143,7 +142,27 @@ export function WeddingEngine({
                     location={location}
                   />,
                   <Timeline key="timeline" events={config.timeline} />,
+                  ...(config.photoGalleryEnabled && config.galleryPhotos?.length
+                    ? [
+                        <PhotoGallery
+                          key="gallery"
+                          photos={config.galleryPhotos}
+                        />,
+                      ]
+                    : []),
+
                   <VenueDetails key="venue" details={config.venueDetails} />,
+
+                  ...(config.travelGuideEnabled && config.travelItems?.length
+                    ? [
+                        <TravelGuide
+                          key="travel"
+                          items={config.travelItems}
+                          city={location.value ?? ""}
+                        />,
+                      ]
+                    : []),
+
                   <WeddingMenu key="menu" courses={config.menuCourses} />,
                   <RSVP
                     key="rsvp"
@@ -154,6 +173,17 @@ export function WeddingEngine({
                   ...(config.registryEnabled
                     ? [<Registry key="registry" weddingSlug={config.slug} />]
                     : []),
+
+                  ...(config.guestBookEnabled
+                    ? [
+                        <GuestBook
+                          key="guestbook"
+                          weddingId={config.id ?? ""}
+                          enabled={config.guestBookEnabled}
+                        />,
+                      ]
+                    : []),
+
                   <Finale
                     key="finale"
                     bride={config.bride}

@@ -8,6 +8,7 @@ export interface PlanFeatures {
   customAudio: boolean; // Starter+
   allBuiltInThemes: boolean; // Starter+
   bothCurtainStyles: boolean; // Starter+
+  proCurtainStyles: boolean; // Pro+ (sheer, cascade)
   watermark: boolean; // free only
   unlimitedRsvps: boolean; // Starter+
   rsvpEmails: boolean; // Starter+
@@ -28,6 +29,7 @@ export const PLAN_FEATURES: Record<Plan, PlanFeatures> = {
     customAudio: false,
     allBuiltInThemes: false,
     bothCurtainStyles: false,
+    proCurtainStyles: false,
     watermark: true,
     unlimitedRsvps: false,
     rsvpEmails: false,
@@ -46,6 +48,7 @@ export const PLAN_FEATURES: Record<Plan, PlanFeatures> = {
     customAudio: true,
     allBuiltInThemes: true,
     bothCurtainStyles: true,
+    proCurtainStyles: false,
     watermark: false,
     unlimitedRsvps: true,
     rsvpEmails: true,
@@ -64,6 +67,7 @@ export const PLAN_FEATURES: Record<Plan, PlanFeatures> = {
     customAudio: true,
     allBuiltInThemes: true,
     bothCurtainStyles: true,
+    proCurtainStyles: true,
     watermark: false,
     unlimitedRsvps: true,
     rsvpEmails: true,
@@ -82,6 +86,7 @@ export const PLAN_FEATURES: Record<Plan, PlanFeatures> = {
     customAudio: true,
     allBuiltInThemes: true,
     bothCurtainStyles: true,
+    proCurtainStyles: true,
     watermark: false,
     unlimitedRsvps: true,
     rsvpEmails: true,

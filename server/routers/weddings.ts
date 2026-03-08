@@ -10,6 +10,7 @@ import { PLAN_FEATURES } from "@/lib/plans";
 
 import { getPostHogClient } from "@/lib/posthog-server";
 import { getAuthUserId } from "@/server/auth";
+import { CURTAIN_STYLES } from "@/types/wedding";
 
 // Zod-compatible Elysia schema for a VenueEvent
 const VenueEventSchema = t.Object({
@@ -30,6 +31,8 @@ const CourseSchema = t.Object({
   items: t.Array(t.String()),
 });
 
+const CurtainStyleSchema = t.UnionEnum(CURTAIN_STYLES);
+
 const WeddingBodySchema = t.Object({
   bride: t.String({ minLength: 1 }),
   groom: t.String({ minLength: 1 }),
@@ -39,7 +42,7 @@ const WeddingBodySchema = t.Object({
   date: t.String(),
   venueDetails: t.Array(VenueEventSchema),
   themeKey: t.String(),
-  curtainStyle: t.Union([t.Literal("velvet"), t.Literal("drape")]),
+  curtainStyle: CurtainStyleSchema,
   audioUrl: t.Optional(t.String()),
   heroPhotoUrl: t.Optional(t.String()),
   timeline: t.Array(TimelineEventSchema),

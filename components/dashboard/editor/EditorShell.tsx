@@ -264,7 +264,7 @@ export function EditorShell({ initialConfig, isNew }: Props) {
       >
         <div className="px-6 py-3 border-b border-dash-border/10 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <span className="font-label text-[12px] font-semibold tracking-widest uppercase text-dash-gold">
+            <span className="font-label text-[12px] pl-2! font-semibold tracking-widest uppercase text-dash-gold">
               Live Preview
             </span>
             {isPending && (

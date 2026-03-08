@@ -6,18 +6,18 @@ A cinematic, interactive wedding invitation built with Next.js 15, TypeScript, T
 
 ## Features
 
-| Feature | Details |
-|---|---|
-| 🎭 Red Velvet Curtain | Opens **on click** only. GSAP-powered sweep with fold textures & gold trim. |
-| ✨ Dust Particles | Floating gold particles on a fixed canvas overlay. |
-| 🗓 Scratch-to-Reveal | Canvas scratchcard reveals wedding date with confetti burst. |
-| 📜 Timeline | Scroll-triggered GSAP animations for each story milestone. |
-| 🏛 Venue Details | Intersection Observer fade-in cards. |
-| 💌 RSVP | Form with GSAP modal + CSS confetti on submit. |
-| 🎆 Finale | ScrollTrigger confetti waves on scroll-into-view. |
-| 🎵 Audio Player | Background orchestral audio toggle (bottom-right). Drop your MP3 in `/public/audio/royal.mp3`. |
-| 🎨 Themes | **Royal Crimson**, **Midnight Navy**, **Enchanted Forest** — live-switchable via UI or env var. |
-| 📐 Parallax | Scroll-driven parallax on the hero section. |
+| Feature               | Details                                                                                         |
+| --------------------- | ----------------------------------------------------------------------------------------------- |
+| 🎭 Red Velvet Curtain | Opens **on click** only. GSAP-powered sweep with fold textures & gold trim.                     |
+| ✨ Dust Particles     | Floating gold particles on a fixed canvas overlay.                                              |
+| 🗓 Scratch-to-Reveal  | Canvas scratchcard reveals wedding date with confetti burst.                                    |
+| 📜 Timeline           | Scroll-triggered GSAP animations for each story milestone.                                      |
+| 🏛 Venue Details      | Intersection Observer fade-in cards.                                                            |
+| 💌 RSVP               | Form with GSAP modal + CSS confetti on submit.                                                  |
+| 🎆 Finale             | ScrollTrigger confetti waves on scroll-into-view.                                               |
+| 🎵 Audio Player       | Background orchestral audio toggle (bottom-right). Drop your MP3 in `/public/audio/royal.mp3`.  |
+| 🎨 Themes             | **Royal Crimson**, **Midnight Navy**, **Enchanted Forest** — live-switchable via UI or env var. |
+| 📐 Parallax           | Scroll-driven parallax on the hero section.                                                     |
 
 ---
 
@@ -63,8 +63,7 @@ wedding-invitation/
 │   │   ├── RSVP.tsx
 │   │   └── Finale.tsx
 │   └── ui/
-│       ├── ThemeSelector.tsx
-│       └── AudioPlayer.tsx
+│       ├── AudioPlayer.tsx
 │
 ├── lib/
 │   ├── ThemeContext.tsx      # React context for theme
@@ -86,15 +85,18 @@ wedding-invitation/
 ## Selecting a Theme
 
 ### Option A — Runtime (UI)
+
 Click the **◈ THEME** button (top-right) to switch live.
 
 ### Option B — Build-time (env var)
+
 ```bash
 # .env.local
 NEXT_PUBLIC_WEDDING_THEME=midnight   # royal | midnight | forest
 ```
 
 ### Adding a new theme
+
 1. Add an entry to `themes/index.ts`.
 2. Add a `[data-theme="yourtheme"]` block in `app/globals.css`.
 3. Add it to `ThemeKey` in `types/theme.ts`.
