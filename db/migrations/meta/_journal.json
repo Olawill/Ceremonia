@@ -29,6 +29,13 @@
       "when": 1772939005606,
       "tag": "0003_bumpy_clea",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1772940263625,
+      "tag": "0004_rich_spectrum",
+      "breakpoints": true
     }
   ]
 }

@@ -114,6 +114,10 @@ export function EditorShell({ initialConfig, isNew }: Props) {
         notificationEmail: config.notificationEmail,
         dressCodeEnabled: config.dressCodeEnabled,
         dressCode: config.dressCode,
+        accommodationEnabled: config.accommodationEnabled,
+        accommodation: config.accommodation,
+        weddingPartyEnabled: config.weddingPartyEnabled,
+        weddingParty: config.weddingParty,
       } satisfies Parameters<typeof api.api.weddings.post>[0];
 
       if (isNew) {

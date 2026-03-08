@@ -70,7 +70,7 @@ export function DressCodeEditor({ config, onChange }: Props) {
           onClick={() =>
             onChange({ dressCodeEnabled: !config.dressCodeEnabled })
           }
-          className="font-label text-[10px] tracking-widest uppercase px-3! py-1.5! rounded-full border transition-all"
+          className="font-label text-[10px] tracking-widest uppercase px-3! py-1.5! rounded-full border transition-all cursor-pointer"
           style={{
             borderColor: config.dressCodeEnabled ? "#D4AF3790" : "#D4AF3730",
             background: config.dressCodeEnabled ? "#D4AF3715" : "transparent",
@@ -89,11 +89,11 @@ export function DressCodeEditor({ config, onChange }: Props) {
               <button
                 key={value}
                 onClick={() => update({ style: value })}
-                className="flex items-center gap-2 px-3! py-2.5! rounded-xl border font-display italic text-sm transition-all text-left"
+                className="flex items-center gap-2 px-3! py-2.5! rounded-xl border font-display italic text-sm transition-all text-left cursor-pointer"
                 style={{
                   borderColor: dc.style === value ? "#D4AF3790" : "#D4AF3720",
                   background: dc.style === value ? "#D4AF3712" : "transparent",
-                  color: dc.style === value ? "#D4AF37" : "#F5F0E880",
+                  color: dc.style === value ? "#D4AF37" : "#F5F0E890",
                 }}
               >
                 <span>{icon}</span> {label}
@@ -105,7 +105,7 @@ export function DressCodeEditor({ config, onChange }: Props) {
 
           {/* Custom title */}
           <div className="space-y-1.5!">
-            <label className="font-label text-[10px] tracking-[0.4em] uppercase text-[#D4AF3780]">
+            <label className="font-label text-[10px] tracking-[0.4em] uppercase text-[#D4AF3790]">
               Custom Title (optional)
             </label>
             <input
@@ -113,13 +113,13 @@ export function DressCodeEditor({ config, onChange }: Props) {
               value={dc.title ?? ""}
               onChange={(e) => update({ title: e.target.value || undefined })}
               placeholder="e.g. Dress to Impress"
-              className="w-full bg-[#F5F0E808] border border-[#D4AF3720] rounded-lg px-3 py-2 font-display italic text-sm text-[#F5F0E8] outline-none focus:border-[#D4AF3740] placeholder:text-[#F5F0E830]"
+              className="w-full bg-[#F5F0E808] border border-[#D4AF3720] rounded-lg px-3! py-2! font-display italic text-sm text-[#F5F0E8] outline-none focus:border-[#D4AF3740] placeholder:text-[#F5F0E830]"
             />
           </div>
 
           {/* Description */}
           <div className="space-y-1.5!">
-            <label className="font-label text-[10px] tracking-[0.4em] uppercase text-[#D4AF3780]">
+            <label className="font-label text-[10px] tracking-[0.4em] uppercase text-[#D4AF3790]">
               Description
             </label>
             <textarea
@@ -133,7 +133,7 @@ export function DressCodeEditor({ config, onChange }: Props) {
 
           {/* Suggested palette */}
           <div className="space-y-2!">
-            <label className="font-label text-[10px] tracking-[0.4em] uppercase text-[#D4AF3780]">
+            <label className="font-label text-[10px] tracking-[0.4em] uppercase text-[#D4AF3790]">
               Suggested Palette
             </label>
             <div className="flex flex-wrap gap-2">
@@ -157,7 +157,7 @@ export function DressCodeEditor({ config, onChange }: Props) {
               ))}
               <button
                 onClick={() => addColour("colourPalette")}
-                className="px-3! py-1.5! rounded-lg border border-dashed border-[#D4AF3730] text-[#D4AF3760] font-label text-[10px] tracking-widest hover:border-[#D4AF3760] transition-all"
+                className="px-3! py-1.5! rounded-lg border border-dashed border-[#D4AF3730] text-[#D4AF3760] font-label text-[10px] tracking-widest hover:border-[#D4AF3760] transition-all cursor-pointer"
               >
                 + Add
               </button>
@@ -166,7 +166,7 @@ export function DressCodeEditor({ config, onChange }: Props) {
 
           {/* Avoid colours */}
           <div className="space-y-2!">
-            <label className="font-label text-[10px] tracking-[0.4em] uppercase text-[#D4AF3780]">
+            <label className="font-label text-[10px] tracking-[0.4em] uppercase text-[#D4AF3790]">
               Colours to Avoid
             </label>
             <div className="flex flex-wrap gap-2">
@@ -190,7 +190,7 @@ export function DressCodeEditor({ config, onChange }: Props) {
               ))}
               <button
                 onClick={() => addColour("avoidColours")}
-                className="px-3! py-1.5! rounded-lg border border-dashed border-[#D4AF3730] text-[#D4AF3760] font-label text-[10px] tracking-widest hover:border-[#D4AF3760] transition-all"
+                className="px-3! py-1.5! rounded-lg border border-dashed border-[#D4AF3730] text-[#D4AF3760] font-label text-[10px] tracking-widest hover:border-[#D4AF3760] transition-all cursor-pointer"
               >
                 + Add
               </button>
@@ -199,7 +199,7 @@ export function DressCodeEditor({ config, onChange }: Props) {
 
           {/* Notes */}
           <div className="space-y-1.5!">
-            <label className="font-label text-[10px] tracking-[0.4em] uppercase text-[#D4AF3780]">
+            <label className="font-label text-[10px] tracking-[0.4em] uppercase text-[#D4AF3790]">
               Extra Notes
             </label>
             <textarea

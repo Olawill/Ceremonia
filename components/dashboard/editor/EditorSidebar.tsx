@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import type { WeddingConfig } from "@/types/wedding";
 
+import { AccommodationEditor } from "@/components/dashboard/editor/AccommodationEditor";
 import { ContentEditor } from "@/components/dashboard/editor/ContentEditor";
 import { DesignPanel } from "@/components/dashboard/editor/DesignPanel";
 import { DressCodeEditor } from "@/components/dashboard/editor/DressCodeEditor";
@@ -14,6 +15,7 @@ import { RegistryEditor } from "@/components/dashboard/editor/RegistryEditor";
 import { RSVPSettings } from "@/components/dashboard/editor/RSVPSettings";
 import { TimelineEditor } from "@/components/dashboard/editor/TimelineEditor";
 import { VenueEditor } from "@/components/dashboard/editor/VenueEditor";
+import { WeddingPartyEditor } from "@/components/dashboard/editor/WeddingPartyEditor";
 
 const TABS = [
   { id: "design", label: "Design" },
@@ -23,6 +25,8 @@ const TABS = [
   { id: "menu", label: "Menu" },
   { id: "media", label: "Media" },
   { id: "dresscode", label: "Attire" },
+  { id: "accommodation", label: "Stay" },
+  { id: "party", label: "Party" },
   { id: "rsvp", label: "RSVP" },
   { id: "registry", label: "Registry" },
 ] as const;
@@ -84,6 +88,12 @@ export function EditorSidebar({ config, onChange, previewIframeRef }: Props) {
         )}
         {activeTab === "dresscode" && (
           <DressCodeEditor config={config} onChange={onChange} />
+        )}
+        {activeTab === "accommodation" && (
+          <AccommodationEditor config={config} onChange={onChange} />
+        )}
+        {activeTab === "party" && (
+          <WeddingPartyEditor config={config} onChange={onChange} />
         )}
         {activeTab === "rsvp" && (
           <RSVPSettings config={config} onChange={onChange} />

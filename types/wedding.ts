@@ -68,6 +68,10 @@ export interface WeddingConfig {
   guestBookEnabled?: boolean;
   dressCode?: DressCodeConfig;
   dressCodeEnabled?: boolean;
+  accommodationEnabled?: boolean;
+  accommodation?: AccommodationConfig;
+  weddingPartyEnabled?: boolean;
+  weddingParty?: WeddingPartyMember[];
 }
 
 export type DressCodeStyle =
@@ -86,6 +90,50 @@ export interface DressCodeConfig {
   colourPalette?: string[]; // suggested hex colours guests should wear
   avoidColours?: string[]; // colours to avoid (e.g. white, ivory)
   notes?: string; // extra notes e.g. "Heels not recommended — outdoor venue"
+}
+
+export interface AccommodationOption {
+  id: string;
+  name: string;
+  description?: string;
+  address?: string;
+  distanceFromVenue?: string; // e.g. "5 min walk"
+  pricePerNight?: string; // e.g. "£180/night"
+  bookingDeadline?: string; // ISO date string
+  bookingUrl?: string;
+  phone?: string;
+  stars?: 1 | 2 | 3 | 4 | 5;
+  blockCode?: string; // group booking code
+  imageUrl?: string;
+}
+
+export interface AccommodationConfig {
+  intro?: string; // e.g. "We've reserved a room block at the following hotels"
+  options: AccommodationOption[];
+}
+
+export type WeddingPartyRole =
+  | "maid-of-honour"
+  | "best-man"
+  | "bridesmaid"
+  | "groomsman"
+  | "flower-girl"
+  | "ring-bearer"
+  | "usher"
+  | "mother-of-bride"
+  | "father-of-bride"
+  | "mother-of-groom"
+  | "father-of-groom"
+  | "custom";
+
+export interface WeddingPartyMember {
+  id: string;
+  name: string;
+  role: WeddingPartyRole;
+  customRole?: string; // used when role === "custom"
+  relation?: string; // e.g. "Childhood best friend"
+  photoUrl?: string;
+  side: "bride" | "groom" | "both";
 }
 
 export const FALLBACK_LOCATION: VenueEvent = {
@@ -178,4 +226,65 @@ export const DEMO_WEDDING_CONFIG: WeddingConfig = {
     avoidColours: ["#ffffff", "#f5f0e8"],
     notes: "The ceremony is outdoors — stilettos may sink into the lawn.",
   },
+  accommodationEnabled: true,
+  accommodation: {
+    intro:
+      "We have arranged preferential rates at the following hotels. Please book before the deadline to secure the group rate.",
+    options: [
+      {
+        id: "1",
+        name: "The Grand Ashford",
+        description: "Our wedding venue hotel — the most convenient option.",
+        address: "1 Ashford Lane, Tuscany, Italy",
+        distanceFromVenue: "On-site",
+        pricePerNight: "£220/night",
+        bookingDeadline: "2026-05-01",
+        bookingUrl: "https://example.com",
+        stars: 5,
+        blockCode: "WEDDING2026",
+      },
+      {
+        id: "2",
+        name: "Villa Rosso",
+        description: "A charming boutique hotel in the village.",
+        address: "Via Roma 12, Tuscany, Italy",
+        distanceFromVenue: "10 min drive",
+        pricePerNight: "£140/night",
+        bookingDeadline: "2026-05-15",
+        bookingUrl: "https://example.com",
+        stars: 4,
+      },
+    ],
+  },
+  weddingPartyEnabled: true,
+  weddingParty: [
+    {
+      id: "1",
+      name: "Sophia Clarke",
+      role: "maid-of-honour",
+      relation: "Childhood best friend",
+      side: "bride",
+    },
+    {
+      id: "2",
+      name: "James Okafor",
+      role: "best-man",
+      relation: "University roommate",
+      side: "groom",
+    },
+    {
+      id: "3",
+      name: "Amara Diallo",
+      role: "bridesmaid",
+      relation: "Sister",
+      side: "bride",
+    },
+    {
+      id: "4",
+      name: "Daniel Park",
+      role: "groomsman",
+      relation: "Cousin",
+      side: "groom",
+    },
+  ],
 };

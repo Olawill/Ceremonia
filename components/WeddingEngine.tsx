@@ -13,6 +13,7 @@ import { VelvetCurtain } from "@/components/curtain/VelvetCurtain";
 import { DrapeFrame } from "@/components/effects/DrapeFrame";
 import { DustParticles } from "@/components/effects/DustParticles";
 
+import { Accommodation } from "@/components/sections/Accommodation";
 import { Countdown } from "@/components/sections/Countdown";
 import { DressCode } from "@/components/sections/DressCode";
 import { Finale } from "@/components/sections/Finale";
@@ -26,6 +27,7 @@ import { Timeline } from "@/components/sections/Timeline";
 import { TravelGuide } from "@/components/sections/TravelGuide";
 import { VenueDetails } from "@/components/sections/VenueDetails";
 import { WeddingMenu } from "@/components/sections/WeddingMenu";
+import { WeddingParty } from "@/components/sections/WeddingParty";
 
 import { AudioPlayer } from "@/components/ui/AudioPlayer";
 
@@ -170,6 +172,27 @@ export function WeddingEngine({
                         <DressCode
                           key="dresscode"
                           dressCode={config.dressCode}
+                        />,
+                      ]
+                    : []),
+
+                  ...(config.accommodationEnabled &&
+                  config.accommodation?.options.length
+                    ? [
+                        <Accommodation
+                          key="accommodation"
+                          accommodation={config.accommodation}
+                        />,
+                      ]
+                    : []),
+
+                  ...(config.weddingPartyEnabled && config.weddingParty?.length
+                    ? [
+                        <WeddingParty
+                          key="weddingparty"
+                          members={config.weddingParty}
+                          bride={config.bride}
+                          groom={config.groom}
                         />,
                       ]
                     : []),

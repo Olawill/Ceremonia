@@ -10,12 +10,14 @@ import { EditorShell } from "@/components/dashboard/editor/EditorShell";
 
 import type { ThemeKey, WeddingTheme } from "@/types/theme";
 import type {
+  AccommodationConfig,
   Course,
   CurtainStyle,
   DressCodeConfig,
   TimelineEvent,
   VenueEvent,
   WeddingConfig,
+  WeddingPartyMember,
 } from "@/types/wedding";
 import { DEMO_WEDDING_CONFIG } from "@/types/wedding";
 
@@ -79,6 +81,10 @@ export default async function EditorPage({ params }: Props) {
     passwordProtected: wedding.passwordProtected ?? false,
     dressCodeEnabled: wedding.dressCodeEnabled ?? false,
     dressCode: wedding.dressCode as DressCodeConfig | undefined,
+    accommodationEnabled: wedding.accommodationEnabled ?? false,
+    accommodation: wedding.accommodation as AccommodationConfig | undefined,
+    weddingPartyEnabled: wedding.weddingPartyEnabled ?? false,
+    weddingParty: wedding.weddingParty as WeddingPartyMember[] | undefined,
   };
 
   return <EditorShell initialConfig={config} isNew={false} />;
