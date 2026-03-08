@@ -47,6 +47,7 @@ const DEFAULT_CUSTOM_THEME: Omit<WeddingTheme, "key" | "name"> = {
 };
 
 const PANEL_COUNT_OPTIONS = [3, 4, 5, 6, 7, 8] as const;
+const BLADE_COUNT_OPTIONS = [2, 4, 6, 8, 10, 12] as const;
 
 export function ThemeCustomiser({
   config,
@@ -212,6 +213,48 @@ export function ThemeCustomiser({
                           ...DEFAULT_CUSTOM_THEME,
                         }),
                         panelCount: n,
+                      },
+                    })
+                  }
+                  className="flex-1 py-2! rounded-lg border font-label text-[11px] tracking-widest transition-all"
+                  style={{
+                    borderColor: active ? "#D4AF3790" : "#D4AF3760",
+                    background: active ? "#D4AF3715" : "transparent",
+                    color: active ? "#D4AF37" : "#D4AF3780",
+                  }}
+                >
+                  {n}
+                </button>
+              );
+            })}
+          </div>
+          <div className="h-px bg-linear-to-r from-transparent via-[#D4AF3720] to-transparent" />
+        </>
+      )}
+
+      {/* Panel count — cascade only */}
+      {config.curtainStyle === "iris" && (
+        <>
+          <p className="font-label text-[10px] font-bold tracking-[0.4em] uppercase text-[#D4AF37]">
+            Blade Count
+          </p>
+          <div className="flex gap-2">
+            {BLADE_COUNT_OPTIONS.map((n) => {
+              const active =
+                config.customTheme?.bladeCount === n ||
+                (!config.customTheme?.bladeCount && n === 8);
+              return (
+                <button
+                  key={n}
+                  onClick={() =>
+                    onChange({
+                      customTheme: {
+                        ...(config.customTheme ?? {
+                          key: "royal",
+                          name: "custom",
+                          ...DEFAULT_CUSTOM_THEME,
+                        }),
+                        bladeCount: n,
                       },
                     })
                   }

@@ -6,7 +6,12 @@ export type ThemeKey =
   | "slate"
   | "desert"
   | "celestial"
-  | "noir";
+  | "noir"
+  | "ivory"
+  | "sakura"
+  | "obsidian"
+  | "terracotta"
+  | "sage";
 
 export interface WeddingTheme {
   key: ThemeKey;
@@ -22,4 +27,5 @@ export interface WeddingTheme {
   text: string;
   particle: string;
   panelCount?: number;
+  bladeCount?: number;
 }

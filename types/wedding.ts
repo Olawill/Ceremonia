@@ -18,7 +18,15 @@ export interface VenueEvent {
   sub: string; // e.g. "Grand Ballroom"
 }
 
-export const CURTAIN_STYLES = ["velvet", "drape", "sheer", "cascade"] as const;
+export const CURTAIN_STYLES = [
+  "velvet",
+  "drape",
+  "sheer",
+  "cascade",
+  "iris",
+  "split",
+  "veil",
+] as const;
 
 export type CurtainStyle = (typeof CURTAIN_STYLES)[number];
 

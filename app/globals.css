@@ -97,6 +97,66 @@
   --particle: rgba(200, 168, 112, 0.35);
 }
 
+[data-theme="ivory"] {
+  --curtain: #c8b89a;
+  --curtain-dark: #a89878;
+  --curtain-sheen: #e8d8c0;
+  --gold: #b8960c;
+  --gold-light: #d4b030;
+  --bg: #0f0e0c;
+  --bg-mid: #1a180f;
+  --text: #fdf8f0;
+  --particle: rgba(184, 150, 12, 0.3);
+}
+
+[data-theme="sakura"] {
+  --curtain: #c4788a;
+  --curtain-dark: #8b4a58;
+  --curtain-sheen: #e8a0b0;
+  --gold: #c8906a;
+  --gold-light: #e8b090;
+  --bg: #0d0809;
+  --bg-mid: #1a0f12;
+  --text: #fff0f3;
+  --particle: rgba(200, 144, 106, 0.35);
+}
+
+[data-theme="obsidian"] {
+  --curtain: #0a0a1a;
+  --curtain-dark: #050510;
+  --curtain-sheen: #1a1a40;
+  --gold: #4488ff;
+  --gold-light: #88bbff;
+  --bg: #020208;
+  --bg-mid: #05050f;
+  --text: #e8f0ff;
+  --particle: rgba(68, 136, 255, 0.4);
+}
+
+[data-theme="terracotta"] {
+  --curtain: #8b4a2a;
+  --curtain-dark: #5a2a10;
+  --curtain-sheen: #c07040;
+  --gold: #d4884a;
+  --gold-light: #f0a870;
+  --bg: #0c0804;
+  --bg-mid: #1a1008;
+  --text: #fff5ec;
+  --particle: rgba(212, 136, 74, 0.35);
+}
+
+[data-theme="sage"] {
+  --curtain: #4a6050;
+  --curtain-dark: #2a3a30;
+  --curtain-sheen: #708870;
+  --gold: #a8b8a8;
+  --gold-light: #c8d8c8;
+  --bg: #07090a;
+  --bg-mid: #0f1412;
+  --text: #f0f5f0;
+  --particle: rgba(168, 184, 168, 0.35);
+}
+
 @theme {
   --color-curtain: var(--curtain);
   --color-curtain-dark: var(--curtain-dark);

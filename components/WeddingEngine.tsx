@@ -34,6 +34,9 @@ import {
   VenueEvent,
   WeddingConfig,
 } from "@/types/wedding";
+import { IrisCurtain } from "./curtain/IrisCurtain";
+import { SplitCurtain } from "./curtain/SplitCurtain";
+import { VeilCurtain } from "./curtain/VeilCurtain";
 
 interface WeddingEngineProps {
   config?: WeddingConfig;
@@ -95,6 +98,14 @@ export function WeddingEngine({
           panelCount={config.customTheme?.panelCount ?? 5}
         />
       )}
+      {curtainStyle === "iris" && (
+        <IrisCurtain
+          onOpen={handleCurtainOpen}
+          bladeCount={config.customTheme?.bladeCount ?? 8}
+        />
+      )}
+      {curtainStyle === "split" && <SplitCurtain onOpen={handleCurtainOpen} />}
+      {curtainStyle === "veil" && <VeilCurtain onOpen={handleCurtainOpen} />}
 
       {/* Scrollable Main content – revealed after curtain opens */}
       {curtainOpen && (

@@ -24,6 +24,9 @@ const curtainStyles = [
   { label: "drape", plan: "starter", name: "Draped", emoji: "🪢" },
   { label: "sheer", plan: "pro", name: "Sheer", emoji: "🕊️" },
   { label: "cascade", plan: "pro", name: "Cascade", emoji: "🌊" },
+  { label: "iris", plan: "pro", name: "Iris", emoji: "🌸" },
+  { label: "split", plan: "starter", name: "Split", emoji: "✂️" },
+  { label: "veil", plan: "starter", name: "Veil", emoji: "🤍" },
 ] as const;
 
 export function DesignPanel({ config, onChange, previewIframeRef }: Props) {
