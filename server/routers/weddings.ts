@@ -53,6 +53,8 @@ const WeddingBodySchema = t.Object({
   passwordProtected: t.Boolean(),
   password: t.Optional(t.String()),
   notificationEmail: t.Optional(t.String()),
+  dressCodeEnabled: t.Optional(t.Boolean()),
+  dressCode: t.Optional(t.Any()),
 });
 
 export const weddingsRouter = new Elysia({ prefix: "/weddings" })
@@ -146,6 +148,8 @@ export const weddingsRouter = new Elysia({ prefix: "/weddings" })
             slug: finalSlug,
             userId,
             password: body.password ? hashPassword(body.password) : null,
+            dressCodeEnabled: body.dressCodeEnabled,
+            dressCode: body.dressCode,
           })
           .returning();
       } catch (e) {
@@ -219,6 +223,8 @@ export const weddingsRouter = new Elysia({ prefix: "/weddings" })
           ...(body.customDomain !== undefined
             ? { customDomain: body.customDomain || null }
             : {}),
+          dressCodeEnabled: body.dressCodeEnabled,
+          dressCode: body.dressCode,
         })
         .where(and(eq(weddings.slug, params.slug), eq(weddings.userId, userId)))
         .returning();

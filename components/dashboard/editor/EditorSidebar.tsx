@@ -1,18 +1,19 @@
 "use client";
 
+import clsx from "clsx";
 import { useState } from "react";
 
 import type { WeddingConfig } from "@/types/wedding";
 
 import { ContentEditor } from "@/components/dashboard/editor/ContentEditor";
 import { DesignPanel } from "@/components/dashboard/editor/DesignPanel";
+import { DressCodeEditor } from "@/components/dashboard/editor/DressCodeEditor";
+import { MediaUploader } from "@/components/dashboard/editor/MediaUploader";
 import { MenuEditor } from "@/components/dashboard/editor/MenuEditor";
+import { RegistryEditor } from "@/components/dashboard/editor/RegistryEditor";
 import { RSVPSettings } from "@/components/dashboard/editor/RSVPSettings";
 import { TimelineEditor } from "@/components/dashboard/editor/TimelineEditor";
 import { VenueEditor } from "@/components/dashboard/editor/VenueEditor";
-import clsx from "clsx";
-import { MediaUploader } from "./MediaUploader";
-import { RegistryEditor } from "./RegistryEditor";
 
 const TABS = [
   { id: "design", label: "Design" },
@@ -21,6 +22,7 @@ const TABS = [
   { id: "timeline", label: "Timeline" },
   { id: "menu", label: "Menu" },
   { id: "media", label: "Media" },
+  { id: "dresscode", label: "Attire" },
   { id: "rsvp", label: "RSVP" },
   { id: "registry", label: "Registry" },
 ] as const;
@@ -79,6 +81,9 @@ export function EditorSidebar({ config, onChange, previewIframeRef }: Props) {
         )}
         {activeTab === "media" && (
           <MediaUploader config={config} onChange={onChange} />
+        )}
+        {activeTab === "dresscode" && (
+          <DressCodeEditor config={config} onChange={onChange} />
         )}
         {activeTab === "rsvp" && (
           <RSVPSettings config={config} onChange={onChange} />

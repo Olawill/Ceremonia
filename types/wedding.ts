@@ -66,6 +66,26 @@ export interface WeddingConfig {
   travelGuideEnabled?: boolean;
   travelItems?: TravelItem[];
   guestBookEnabled?: boolean;
+  dressCode?: DressCodeConfig;
+  dressCodeEnabled?: boolean;
+}
+
+export type DressCodeStyle =
+  | "black-tie"
+  | "black-tie-optional"
+  | "cocktail"
+  | "smart-casual"
+  | "garden-party"
+  | "beach-formal"
+  | "casual";
+
+export interface DressCodeConfig {
+  style: DressCodeStyle;
+  title?: string; // override e.g. "Dress to Impress"
+  description?: string; // free-text guidance
+  colourPalette?: string[]; // suggested hex colours guests should wear
+  avoidColours?: string[]; // colours to avoid (e.g. white, ivory)
+  notes?: string; // extra notes e.g. "Heels not recommended — outdoor venue"
 }
 
 export const FALLBACK_LOCATION: VenueEvent = {
@@ -148,4 +168,14 @@ export const DEMO_WEDDING_CONFIG: WeddingConfig = {
   passwordProtected: false,
   password: undefined,
   notificationEmail: undefined,
+  registryEnabled: true,
+  guestBookEnabled: true,
+  dressCodeEnabled: true,
+  dressCode: {
+    style: "black-tie",
+    description: "We invite you to dress in your finest evening wear.",
+    colourPalette: ["#1a1a2e", "#2d4a3e", "#8b6914"],
+    avoidColours: ["#ffffff", "#f5f0e8"],
+    notes: "The ceremony is outdoors — stilettos may sink into the lawn.",
+  },
 };

@@ -112,6 +112,8 @@ export function EditorShell({ initialConfig, isNew }: Props) {
         passwordProtected: config.passwordProtected,
         password: config.password,
         notificationEmail: config.notificationEmail,
+        dressCodeEnabled: config.dressCodeEnabled,
+        dressCode: config.dressCode,
       } satisfies Parameters<typeof api.api.weddings.post>[0];
 
       if (isNew) {

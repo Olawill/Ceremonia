@@ -12,6 +12,7 @@ import type { ThemeKey, WeddingTheme } from "@/types/theme";
 import type {
   Course,
   CurtainStyle,
+  DressCodeConfig,
   TimelineEvent,
   VenueEvent,
   WeddingConfig,
@@ -76,6 +77,8 @@ export default async function EditorPage({ params }: Props) {
     rsvpDeadline: wedding.rsvpDeadline ?? undefined,
     published: wedding.published ?? false,
     passwordProtected: wedding.passwordProtected ?? false,
+    dressCodeEnabled: wedding.dressCodeEnabled ?? false,
+    dressCode: wedding.dressCode as DressCodeConfig | undefined,
   };
 
   return <EditorShell initialConfig={config} isNew={false} />;

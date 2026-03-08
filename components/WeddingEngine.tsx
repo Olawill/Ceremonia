@@ -4,13 +4,17 @@ import { useState } from "react";
 
 import { CascadeCurtain } from "@/components/curtain/CascadeCurtain";
 import { DrapedCurtain } from "@/components/curtain/DrapedCurtain";
+import { IrisCurtain } from "@/components/curtain/IrisCurtain";
 import { SheerCurtain } from "@/components/curtain/SheerCurtain";
+import { SplitCurtain } from "@/components/curtain/SplitCurtain";
+import { VeilCurtain } from "@/components/curtain/VeilCurtain";
 import { VelvetCurtain } from "@/components/curtain/VelvetCurtain";
 
 import { DrapeFrame } from "@/components/effects/DrapeFrame";
 import { DustParticles } from "@/components/effects/DustParticles";
 
 import { Countdown } from "@/components/sections/Countdown";
+import { DressCode } from "@/components/sections/DressCode";
 import { Finale } from "@/components/sections/Finale";
 import { GuestBook } from "@/components/sections/GuestBook";
 import { ParallaxHero } from "@/components/sections/ParallaxHero";
@@ -34,9 +38,6 @@ import {
   VenueEvent,
   WeddingConfig,
 } from "@/types/wedding";
-import { IrisCurtain } from "./curtain/IrisCurtain";
-import { SplitCurtain } from "./curtain/SplitCurtain";
-import { VeilCurtain } from "./curtain/VeilCurtain";
 
 interface WeddingEngineProps {
   config?: WeddingConfig;
@@ -163,6 +164,15 @@ export function WeddingEngine({
                     : []),
 
                   <VenueDetails key="venue" details={config.venueDetails} />,
+
+                  ...(config.dressCodeEnabled && config.dressCode
+                    ? [
+                        <DressCode
+                          key="dresscode"
+                          dressCode={config.dressCode}
+                        />,
+                      ]
+                    : []),
 
                   ...(config.travelGuideEnabled && config.travelItems?.length
                     ? [

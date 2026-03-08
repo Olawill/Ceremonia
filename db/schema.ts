@@ -47,6 +47,8 @@ export const weddings = pgTable("weddings", {
   published: boolean("published").default(false),
   registryEnabled: boolean("registry_enabled").default(true),
   guestBookEnabled: boolean("guest_book_enabled").default(false),
+  dressCodeEnabled: boolean("dress_code_enabled").default(false),
+  dressCode: jsonb("dress_code"),
   viewCount: integer("view_count").default(0),
   notificationEmail: text("notification_email"),
   createdAt: timestamp("created_at").defaultNow(),
