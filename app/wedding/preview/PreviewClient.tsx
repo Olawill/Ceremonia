@@ -1,5 +1,7 @@
 "use client";
 
+import gsap from "gsap";
+import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 import { useEffect, useRef, useState } from "react";
 
 import { WeddingEngine } from "@/components/WeddingEngine";
@@ -31,6 +33,8 @@ function PreviewInner({
   const onConfigChangeRef = useRef(onConfigChange);
   const setCustomThemeRef = useRef(setCustomTheme);
   const setThemeKeyRef = useRef(setThemeKey);
+
+  gsap.registerPlugin(ScrollToPlugin);
 
   useEffect(() => {
     configRef.current = config;
@@ -65,6 +69,22 @@ function PreviewInner({
           // Built-in theme selected — clear custom, switch theme key
           setThemeKeyRef.current(incoming.themeKey ?? "royal");
         }
+      }
+
+      if (e.data?.type === "SCROLL_TO" && typeof e.data.index === "number") {
+        const main = document.querySelector(
+          "[data-scroll-container]",
+        ) as HTMLElement | null;
+        if (!main) return;
+        const sections = main.querySelectorAll("[data-section]");
+        const target = sections[e.data.index] as HTMLElement | null;
+        if (!target) return;
+        gsap.to(main, {
+          scrollTo: { y: target, autoKill: false },
+          duration: 1.2,
+          ease: "power3.inOut",
+        });
+        return;
       }
 
       if (e.data?.type === "THEME_UPDATE" && e.data.theme) {

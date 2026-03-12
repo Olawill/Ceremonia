@@ -94,7 +94,6 @@ export default async function EditorPage({ params }: Props) {
     livestreamTitle: wedding.livestreamTitle ?? undefined,
     livestreamNote: wedding.livestreamNote ?? undefined,
   };
-  console.log(config.dressCodeEnabled);
 
   return <EditorShell initialConfig={config} isNew={false} />;
 }

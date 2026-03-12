@@ -60,8 +60,6 @@ export function DressCode({ dressCode }: Props) {
 
   const meta = STYLE_META[dressCode.style];
 
-  console.log({ dressCode });
-
   useEffect(() => {
     if (!contentRef.current) return;
     const els = contentRef.current.querySelectorAll(".dc-animate");
