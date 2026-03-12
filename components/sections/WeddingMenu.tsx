@@ -995,14 +995,14 @@ export function WeddingMenu({ courses }: WeddingMenuProps) {
   return (
     <section
       ref={ref}
-      className="min-h-screen flex flex-col items-center justify-center gap-4 py-24 px-5"
+      className="min-h-screen flex flex-col items-center justify-center gap-4 py-24! px-5!"
       style={{
         background: `radial-gradient(ellipse at 60% 40%, ${theme.curtain}20 0%, ${theme.bg} 65%)`,
       }}
     >
       {/* Heading */}
       <div
-        className="text-center space-y-4 transition-all duration-1000"
+        className="text-center space-y-4! transition-all duration-1000"
         style={{
           opacity: visible ? 1 : 0,
           transform: visible ? "translateY(0)" : "translateY(40px)",
@@ -1054,7 +1054,7 @@ export function WeddingMenu({ courses }: WeddingMenuProps) {
 
       {/* Menu card */}
       <div
-        className="w-full max-w-2xl rounded-2xl p-8 md:p-12 transition-all duration-1000 delay-300"
+        className="w-full max-w-2xl rounded-2xl p-8! md:p-12! transition-all duration-1000 delay-300"
         style={{
           opacity: visible ? 1 : 0,
           transform: visible ? "translateY(0)" : "translateY(30px)",
@@ -1065,7 +1065,7 @@ export function WeddingMenu({ courses }: WeddingMenuProps) {
         }}
       >
         {/* Top ornament */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-8!">
           <span
             style={{ color: theme.gold, fontSize: 22, letterSpacing: "0.5em" }}
           >
@@ -1085,7 +1085,7 @@ export function WeddingMenu({ courses }: WeddingMenuProps) {
               }}
             >
               {/* Course label */}
-              <div className="flex items-center gap-4 mb-3">
+              <div className="flex items-center gap-4 mb-3!">
                 <div
                   className="flex-1 h-px"
                   style={{
@@ -1107,7 +1107,7 @@ export function WeddingMenu({ courses }: WeddingMenuProps) {
               </div>
 
               {/* Dishes */}
-              <div className="space-y-2 text-center">
+              <div className="space-y-2! text-center">
                 {c.items.map((item) => (
                   <p
                     key={item}
@@ -1127,7 +1127,7 @@ export function WeddingMenu({ courses }: WeddingMenuProps) {
         </div>
 
         {/* Bottom ornament */}
-        <div className="text-center mt-8 space-y-3">
+        <div className="text-center mt-8! space-y-3!">
           <span
             style={{ color: theme.gold, fontSize: 22, letterSpacing: "0.5em" }}
           >

@@ -588,7 +588,7 @@ export function Finale({
   return (
     <section
       ref={sectionRef}
-      className="min-h-screen flex flex-col items-center justify-center text-center px-6 py-20 relative overflow-hidden"
+      className="min-h-screen flex flex-col items-center justify-center text-center px-6! py-20! relative overflow-hidden"
       style={{
         background: `radial-gradient(ellipse at center, ${theme.curtain}28 0%, ${theme.bg} 70%)`,
       }}
@@ -617,7 +617,7 @@ export function Finale({
         }}
       />
 
-      <div ref={contentRef} className="relative z-10 space-y-6">
+      <div ref={contentRef} className="relative z-10 space-y-6!">
         {/* Bride & Groom SVG */}
         <div className="py-4">
           <BrideGroomSVG

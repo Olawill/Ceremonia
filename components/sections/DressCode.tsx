@@ -60,6 +60,8 @@ export function DressCode({ dressCode }: Props) {
 
   const meta = STYLE_META[dressCode.style];
 
+  console.log({ dressCode });
+
   useEffect(() => {
     if (!contentRef.current) return;
     const els = contentRef.current.querySelectorAll(".dc-animate");
@@ -83,7 +85,7 @@ export function DressCode({ dressCode }: Props) {
   return (
     <section
       ref={sectionRef}
-      className="min-h-screen flex flex-col items-center justify-center px-8 py-24 gap-12"
+      className="min-h-screen flex flex-col items-center justify-center px-8! py-24! gap-12"
       style={{ background: theme.bg }}
     >
       <div
@@ -100,7 +102,7 @@ export function DressCode({ dressCode }: Props) {
 
         {/* Main style card */}
         <div
-          className="dc-animate w-full flex flex-col items-center gap-4 py-12 px-8 rounded-2xl border"
+          className="dc-animate w-full flex flex-col items-center gap-4 py-12! px-8! rounded-2xl border"
           style={{
             borderColor: `${theme.gold}30`,
             background: `${theme.gold}05`,
@@ -121,7 +123,7 @@ export function DressCode({ dressCode }: Props) {
           </p>
           {dressCode.description && (
             <p
-              className="font-display text-base text-center max-w-md mt-2"
+              className="font-display text-base text-center max-w-md mt-2!"
               style={{ color: `${theme.text}70` }}
             >
               {dressCode.description}
@@ -193,7 +195,7 @@ export function DressCode({ dressCode }: Props) {
         {/* Notes */}
         {dressCode.notes && (
           <div
-            className="dc-animate w-full flex items-start gap-3 px-6 py-4 rounded-xl border"
+            className="dc-animate w-full flex items-start gap-3 px-6! py-4! rounded-xl border"
             style={{
               borderColor: `${theme.gold}20`,
               background: `${theme.gold}08`,

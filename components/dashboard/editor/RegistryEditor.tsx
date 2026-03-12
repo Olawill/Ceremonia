@@ -18,6 +18,7 @@ import { Field, Input, Textarea } from "@/components/ui/FormPrimitives";
 import { useApi } from "@/hooks/useApi";
 import { useToast } from "@/hooks/useToast";
 
+import { formatPrice } from "@/components/sections/Registry";
 import { PlanGate } from "@/components/ui/PlanGate";
 import { usePlan } from "@/hooks/usePlan";
 import type { WeddingConfig } from "@/types/wedding";
@@ -325,7 +326,7 @@ export function RegistryEditor({ config }: Props) {
                 className="p-4! rounded-xl flex items-start gap-3"
                 style={{
                   background: "#D4AF3708",
-                  border: "1px solid #D4AF3720",
+                  border: "1px solid #D4AF3760",
                 }}
               >
                 {item.imageUrl && (
@@ -339,15 +340,15 @@ export function RegistryEditor({ config }: Props) {
                   <p className="font-display font-semibold text-sm text-dash-text truncate">
                     {item.title}
                   </p>
-                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                  <div className="flex items-center gap-2 mt-0.5! flex-wrap">
                     {item.retailer && (
-                      <span className="font-label text-[9px] tracking-widest uppercase text-dash-gold/60">
+                      <span className="font-label text-[9px] tracking-widest uppercase text-dash-gold/80">
                         {item.retailer}
                       </span>
                     )}
                     {item.price && (
-                      <span className="font-display text-xs text-dash-gold/80">
-                        £{(item.price / 100).toFixed(2)}
+                      <span className="font-display text-[14px] text-dash-gold/90">
+                        {formatPrice(item.price, true)}
                       </span>
                     )}
                     {!!item.purchasedCount && (
@@ -356,7 +357,7 @@ export function RegistryEditor({ config }: Props) {
                       </span>
                     )}
                     {!!item.reservedCount && (
-                      <span className="font-label text-[9px] tracking-widest uppercase text-dash-gold/50">
+                      <span className="font-label text-[9px] tracking-widest uppercase text-dash-gold/70">
                         {item.reservedCount} reserved
                       </span>
                     )}
@@ -366,8 +367,7 @@ export function RegistryEditor({ config }: Props) {
                       href={item.productUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 font-label text-[9px] tracking-widest uppercase mt-1 hover:text-dash-gold/80 transition-colors"
-                      style={{ color: "#D4AF3750" }}
+                      className="inline-flex items-center gap-1 font-label text-[11px] tracking-widest uppercase mt-1 hover:text-dash-gold/90 text-[#D4AF3770] transition-colors"
                     >
                       <ExternalLinkIcon className="size-2.5" /> View product
                     </a>
@@ -376,7 +376,7 @@ export function RegistryEditor({ config }: Props) {
                 <button
                   onClick={() => handleDelete(item.id)}
                   disabled={savingId === item.id}
-                  className="shrink-0 p-1.5 rounded-lg hover:bg-red-500/10 text-dash-text/20 hover:text-red-400 transition-colors"
+                  className="shrink-0 cursor-pointer p-1.5 rounded-lg hover:bg-red-500/10 text-dash-text/60 hover:text-red-400 transition-colors"
                 >
                   {savingId === item.id ? (
                     <Loader2Icon className="size-3.5 animate-spin" />

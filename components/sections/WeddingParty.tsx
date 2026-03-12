@@ -39,7 +39,7 @@ function MemberCard({ member }: { member: WeddingPartyMember }) {
 
   return (
     <div
-      className="wp-card flex flex-col items-center gap-3 p-6 rounded-2xl border"
+      className="wp-card flex flex-col items-center gap-3 p-6! rounded-2xl border"
       style={{
         borderColor: `${theme.gold}20`,
         background: `${theme.gold}04`,
@@ -86,7 +86,7 @@ function MemberCard({ member }: { member: WeddingPartyMember }) {
         </p>
         {member.relation && (
           <p
-            className="font-display italic text-sm mt-1"
+            className="font-display italic text-sm mt-1!"
             style={{ color: `${theme.text}60` }}
           >
             {member.relation}
@@ -132,7 +132,7 @@ export function WeddingParty({ members, bride, groom }: Props) {
 
   return (
     <section
-      className="min-h-screen flex flex-col items-center justify-center px-8 py-24 gap-14"
+      className="min-h-screen flex flex-col items-center justify-center px-8! py-24! gap-14"
       style={{ background: theme.bg }}
     >
       <div className="flex flex-col items-center gap-3">

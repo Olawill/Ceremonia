@@ -41,7 +41,7 @@ export function ParallaxHero({
         mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-[30px]",
       )}
       style={{
-        background: heroPhotoUrl
+        backgroundImage: heroPhotoUrl
           ? `linear-gradient(to bottom, rgba(0,0,0,0.55), rgba(0,0,0,0.75)), url(${heroPhotoUrl})`
           : `radial-gradient(ellipse at 50% ${30 - scrollY * 0.015}%, var(--theme-curtain)50 0%, var(--theme-bg) 70%)`,
         backgroundSize: heroPhotoUrl ? "cover" : undefined,

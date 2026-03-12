@@ -20,7 +20,9 @@ export function DatePicker({
   placeholder = "Select a date",
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
+  const [openAbove, setOpenAbove] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const parsed = value ? parse(value, "yyyy-MM-dd", new Date()) : undefined;
   const selected = parsed && isValid(parsed) ? parsed : undefined;
@@ -36,12 +38,25 @@ export function DatePicker({
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  // Measure available space when opening
+  const handleOpen = () => {
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      // calendar is ~320px tall
+      setOpenAbove(spaceBelow < 340 && spaceAbove > spaceBelow);
+    }
+    setOpen((o) => !o);
+  };
+
   return (
     <div ref={ref} className="relative">
       {/* Trigger */}
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        ref={triggerRef}
+        onClick={handleOpen}
         className={clsx(
           "dash-input w-full flex items-center justify-between text-left cursor-pointer",
           hasError && "has-error",
@@ -55,7 +70,10 @@ export function DatePicker({
       {/* Popover */}
       {open && (
         <div
-          className="absolute top-full left-0 mt-2 z-50 rounded-xl border border-dash-border bg-dash-surface shadow-2xl p-3!"
+          className={clsx(
+            "absolute left-0 z-50 rounded-xl border border-dash-border bg-dash-surface shadow-2xl p-3!",
+            openAbove ? "bottom-full mb-2" : "top-full mt-2",
+          )}
           style={{ minWidth: "280px" }}
         >
           <DayPicker

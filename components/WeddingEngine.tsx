@@ -36,7 +36,6 @@ import { AudioPlayer } from "@/components/ui/AudioPlayer";
 import { useTheme } from "@/lib/ThemeContext";
 
 import {
-  CurtainStyle,
   DEMO_WEDDING_CONFIG,
   FALLBACK_LOCATION,
   VenueEvent,
@@ -59,9 +58,7 @@ export function WeddingEngine({
   const [curtainOpen, setCurtainOpen] = useState(false);
   const [dateRevealed, setDateRevealed] = useState(false);
 
-  const [curtainStyle, setCurtainStyle] = useState<CurtainStyle>(
-    config.curtainStyle ?? "velvet",
-  );
+  const curtainStyle = config.curtainStyle ?? "velvet";
 
   const handleCurtainOpen = () => setCurtainOpen(true);
 
@@ -74,7 +71,6 @@ export function WeddingEngine({
     <>
       {/* Always-visible overlays */}
       <DustParticles />
-
       {showWatermark && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
           <p className="font-label text-[10px] tracking-[0.4em] uppercase px-4 py-2 rounded-full bg-black/60 text-[#D4AF3760] backdrop-blur-sm">
@@ -82,14 +78,12 @@ export function WeddingEngine({
           </p>
         </div>
       )}
-
       <AudioPlayer
         autoPlay={curtainOpen}
         src={config.audioUrl ?? "/audio/royal.mp3"}
       />
-
       {/* Drape frame – fixed peek-through frame shown on every page when drape style active */}
-      {curtainOpen && curtainStyle === "drape" && <DrapeFrame />}
+      {curtainStyle === "drape" && <DrapeFrame />}
 
       {/* Curtain – removed from DOM once open */}
       {curtainStyle === "velvet" && (
@@ -111,167 +105,157 @@ export function WeddingEngine({
       )}
       {curtainStyle === "split" && <SplitCurtain onOpen={handleCurtainOpen} />}
       {curtainStyle === "veil" && <VeilCurtain onOpen={handleCurtainOpen} />}
-
       {/* Scrollable Main content – revealed after curtain opens */}
-      {curtainOpen && (
-        /*
-         * scroll-snap-type: y mandatory
-         * Each section is a snap point so you can't see the section
-         * above or below – the viewport snaps cleanly between them.
-         */
-        <main
-          data-scroll-container
-          className="relative overflow-x-hidden"
-          style={{
-            background: theme.bg,
-            color: theme.text,
-            // Scroll snap container
-            height: "100vh",
-            overflowY: "scroll",
-            scrollSnapType: "y mandatory",
-            scrollBehavior: "smooth",
-          }}
-        >
-          {/* Each section wrapper enforces full-viewport snap alignment */}
-          {[
-            <ParallaxHero
-              key="hero"
-              bride={config.bride}
-              groom={config.groom}
-              tagLine={config.tagLine}
-              heroPhotoUrl={config.heroPhotoUrl}
-            />,
 
-            // ScratchDate locks scroll until revealed
-            <ScratchDate
-              key="scratch"
-              date={config.date}
-              onRevealed={() => setDateRevealed(true)}
-            />,
+      <main
+        data-scroll-container
+        className="relative overflow-x-hidden"
+        style={{
+          // background: theme.bg,
+          color: theme.text,
+          height: "100vh",
+          overflowY: curtainOpen ? "scroll" : "hidden",
+          scrollSnapType: "y mandatory",
+          scrollBehavior: "smooth",
+          visibility: curtainOpen ? "visible" : "hidden",
+          pointerEvents: curtainOpen ? "auto" : "none",
+        }}
+      >
+        {/* Each section wrapper enforces full-viewport snap alignment */}
+        {[
+          <ParallaxHero
+            key="hero"
+            bride={config.bride}
+            groom={config.groom}
+            tagLine={config.tagLine}
+            heroPhotoUrl={config.heroPhotoUrl}
+          />,
 
-            // These sections only mount after the date is revealed
-            ...(dateRevealed
-              ? [
-                  <Countdown
-                    key="countdown"
-                    date={config.date}
-                    location={location}
-                  />,
-                  <Timeline key="timeline" events={config.timeline} />,
-                  ...(config.photoGalleryEnabled && config.galleryPhotos?.length
-                    ? [
-                        <PhotoGallery
-                          key="gallery"
-                          photos={config.galleryPhotos}
-                        />,
-                      ]
-                    : []),
+          // ScratchDate locks scroll until revealed
+          <ScratchDate
+            key="scratch"
+            date={config.date}
+            onRevealed={() => setDateRevealed(true)}
+          />,
 
-                  <VenueDetails key="venue" details={config.venueDetails} />,
+          // These sections only mount after the date is revealed
+          ...(dateRevealed
+            ? [
+                <Countdown
+                  key="countdown"
+                  date={config.date}
+                  location={location}
+                />,
+                <Timeline key="timeline" events={config.timeline} />,
+                ...(config.photoGalleryEnabled && config.galleryPhotos?.length
+                  ? [
+                      <PhotoGallery
+                        key="gallery"
+                        photos={config.galleryPhotos}
+                      />,
+                    ]
+                  : []),
 
-                  ...(config.dressCodeEnabled && config.dressCode
-                    ? [
-                        <DressCode
-                          key="dresscode"
-                          dressCode={config.dressCode}
-                        />,
-                      ]
-                    : []),
+                <VenueDetails key="venue" details={config.venueDetails} />,
 
-                  ...(config.accommodationEnabled &&
-                  config.accommodation?.options.length
-                    ? [
-                        <Accommodation
-                          key="accommodation"
-                          accommodation={config.accommodation}
-                        />,
-                      ]
-                    : []),
+                ...(config.dressCodeEnabled && config.dressCode
+                  ? [<DressCode key="dresscode" dressCode={config.dressCode} />]
+                  : []),
 
-                  ...(config.weddingPartyEnabled && config.weddingParty?.length
-                    ? [
-                        <WeddingParty
-                          key="weddingparty"
-                          members={config.weddingParty}
-                          bride={config.bride}
-                          groom={config.groom}
-                        />,
-                      ]
-                    : []),
+                ...(config.accommodationEnabled &&
+                config.accommodation?.options.length
+                  ? [
+                      <Accommodation
+                        key="accommodation"
+                        accommodation={config.accommodation}
+                      />,
+                    ]
+                  : []),
 
-                  ...(config.faqEnabled && config.faq?.length
-                    ? [<FAQ key="faq" items={config.faq} />]
-                    : []),
+                ...(config.weddingPartyEnabled && config.weddingParty?.length
+                  ? [
+                      <WeddingParty
+                        key="weddingparty"
+                        members={config.weddingParty}
+                        bride={config.bride}
+                        groom={config.groom}
+                      />,
+                    ]
+                  : []),
 
-                  ...(config.livestreamEnabled && config.livestreamUrl
-                    ? [
-                        <Livestream
-                          key="livestream"
-                          url={config.livestreamUrl}
-                          title={config.livestreamTitle}
-                          note={config.livestreamNote}
-                          date={config.date}
-                        />,
-                      ]
-                    : []),
+                ...(config.faqEnabled && config.faq?.length
+                  ? [<FAQ key="faq" items={config.faq} />]
+                  : []),
 
-                  ...(config.travelGuideEnabled && config.travelItems?.length
-                    ? [
-                        <TravelGuide
-                          key="travel"
-                          items={config.travelItems}
-                          city={location.value ?? ""}
-                        />,
-                      ]
-                    : []),
+                ...(config.livestreamEnabled && config.livestreamUrl
+                  ? [
+                      <Livestream
+                        key="livestream"
+                        url={config.livestreamUrl}
+                        title={config.livestreamTitle}
+                        note={config.livestreamNote}
+                        date={config.date}
+                      />,
+                    ]
+                  : []),
 
-                  <WeddingMenu key="menu" courses={config.menuCourses} />,
-                  <RSVP
-                    key="rsvp"
-                    weddingId={config.id}
-                    enabled={config.rsvpEnabled}
-                    rsvpDeadline={config.rsvpDeadline}
-                  />,
-                  ...(config.registryEnabled
-                    ? [<Registry key="registry" weddingSlug={config.slug} />]
-                    : []),
+                ...(config.travelGuideEnabled && config.travelItems?.length
+                  ? [
+                      <TravelGuide
+                        key="travel"
+                        items={config.travelItems}
+                        city={location.value ?? ""}
+                      />,
+                    ]
+                  : []),
 
-                  ...(config.guestBookEnabled
-                    ? [
-                        <GuestBook
-                          key="guestbook"
-                          weddingId={config.id ?? ""}
-                          enabled={config.guestBookEnabled}
-                        />,
-                      ]
-                    : []),
+                <WeddingMenu key="menu" courses={config.menuCourses} />,
+                <RSVP
+                  key="rsvp"
+                  weddingId={config.id}
+                  enabled={config.rsvpEnabled}
+                  rsvpDeadline={config.rsvpDeadline}
+                />,
+                ...(config.registryEnabled
+                  ? [<Registry key="registry" weddingSlug={config.slug} />]
+                  : []),
 
-                  <Finale
-                    key="finale"
-                    bride={config.bride}
-                    groom={config.groom}
-                    finaleTagLine={config.finaleTagLine}
-                    date={config.date}
-                  />,
-                ]
-              : []),
-          ].map((section, i) => (
-            <div
-              key={i}
-              style={{
-                scrollSnapAlign: "start",
-                scrollSnapStop: "always",
-                minHeight: "100vh",
-                // Padding to keep content below the drape valance when drape is active
-                paddingTop:
-                  curtainStyle === "drape" ? "clamp(140px, 24vh, 280px)" : 0,
-              }}
-            >
-              {section}
-            </div>
-          ))}
-        </main>
-      )}
+                ...(config.guestBookEnabled
+                  ? [
+                      <GuestBook
+                        key="guestbook"
+                        weddingId={config.id ?? ""}
+                        enabled={config.guestBookEnabled}
+                      />,
+                    ]
+                  : []),
+
+                <Finale
+                  key="finale"
+                  bride={config.bride}
+                  groom={config.groom}
+                  finaleTagLine={config.finaleTagLine}
+                  date={config.date}
+                />,
+              ]
+            : []),
+        ].map((section, i) => (
+          <div
+            key={i}
+            style={{
+              scrollSnapAlign: "start",
+              scrollSnapStop: "always",
+              minHeight: "100vh",
+              background: i % 2 === 0 ? theme.bg : theme.bgMid,
+              // Padding to keep content below the drape valance when drape is active
+              paddingTop:
+                curtainStyle === "drape" ? "clamp(140px, 24vh, 280px)" : 0,
+            }}
+          >
+            {section}
+          </div>
+        ))}
+      </main>
     </>
   );
 }

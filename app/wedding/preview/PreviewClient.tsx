@@ -24,12 +24,13 @@ function PreviewInner({
   onConfigChange: (c: WeddingConfig) => void;
 }) {
   const { plan } = usePlan();
-  const { setCustomTheme } = useTheme();
+  const { setCustomTheme, setThemeKey } = useTheme();
 
   // Use refs so the handler never goes stale and the effect never re-runs
   const configRef = useRef(config);
   const onConfigChangeRef = useRef(onConfigChange);
   const setCustomThemeRef = useRef(setCustomTheme);
+  const setThemeKeyRef = useRef(setThemeKey);
 
   useEffect(() => {
     configRef.current = config;
@@ -44,8 +45,12 @@ function PreviewInner({
   }, [setCustomTheme]);
 
   useEffect(() => {
+    setThemeKeyRef.current = setThemeKey;
+  }, [setThemeKey]);
+
+  useEffect(() => {
     // Signal to the parent editor that this page is ready to receive config
-    // window.parent.postMessage({ type: "PREVIEW_READY" }, "*");
+    window.parent.postMessage({ type: "PREVIEW_READY" }, "*");
 
     const handler = (e: MessageEvent) => {
       if (e.data?.type === "PREVIEW_CONFIG" && e.data.config) {
@@ -54,7 +59,11 @@ function PreviewInner({
         // Re-apply custom theme if present — PREVIEW_CONFIG fires after every
         // config change and would otherwise reset the live colour edits
         if (incoming.customTheme) {
+          // Custom theme — apply it directly to ThemeContext
           setCustomThemeRef.current(incoming.customTheme);
+        } else {
+          // Built-in theme selected — clear custom, switch theme key
+          setThemeKeyRef.current(incoming.themeKey ?? "royal");
         }
       }
 

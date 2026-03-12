@@ -82,7 +82,7 @@ export function DressCodeEditor({ config, onChange }: Props) {
                 onClick={() => update({ style: value })}
                 className="flex items-center gap-2 px-3! py-2.5! rounded-xl border font-display italic text-sm transition-all text-left cursor-pointer"
                 style={{
-                  borderColor: dc.style === value ? "#D4AF3790" : "#D4AF3720",
+                  borderColor: dc.style === value ? "#D4AF3790" : "#D4AF3740",
                   background: dc.style === value ? "#D4AF3712" : "transparent",
                   color: dc.style === value ? "#D4AF37" : "#F5F0E890",
                 }}
@@ -96,7 +96,7 @@ export function DressCodeEditor({ config, onChange }: Props) {
 
           {/* Custom title */}
           <div className="space-y-1.5!">
-            <label className="font-label text-[10px] tracking-[0.4em] uppercase text-[#D4AF3790]">
+            <label className="font-label font-semibold text-[10px] tracking-[0.4em] uppercase text-[#D4AF3790]">
               Custom Title (optional)
             </label>
             <input
@@ -104,13 +104,13 @@ export function DressCodeEditor({ config, onChange }: Props) {
               value={dc.title ?? ""}
               onChange={(e) => update({ title: e.target.value || undefined })}
               placeholder="e.g. Dress to Impress"
-              className="w-full bg-[#F5F0E808] border border-[#D4AF3720] rounded-lg px-3! py-2! font-display italic text-sm text-[#F5F0E8] outline-none focus:border-[#D4AF3740] placeholder:text-[#F5F0E830]"
+              className="w-full bg-[#F5F0E808] border border-[#D4AF3760] rounded-lg px-3! py-2! font-display italic text-sm text-[#F5F0E8] outline-none focus:border-[#D4AF3780] placeholder:text-[#F5F0E830]"
             />
           </div>
 
           {/* Description */}
           <div className="space-y-1.5!">
-            <label className="font-label text-[10px] tracking-[0.4em] uppercase text-[#D4AF3790]">
+            <label className="font-label font-semibold text-[10px] tracking-[0.4em] uppercase text-[#D4AF3790]">
               Description
             </label>
             <textarea
@@ -118,62 +118,82 @@ export function DressCodeEditor({ config, onChange }: Props) {
               onChange={(e) => update({ description: e.target.value })}
               placeholder="We invite you to dress in your finest…"
               rows={3}
-              className="w-full bg-[#F5F0E808] border border-[#D4AF3720] rounded-lg px-3! py-2! font-display italic text-sm text-[#F5F0E8] outline-none focus:border-[#D4AF3740] placeholder:text-[#F5F0E830] resize-none"
+              className="w-full bg-[#F5F0E808] border border-[#D4AF3760] rounded-lg px-3! py-2! font-display italic text-sm text-[#F5F0E8] outline-none focus:border-[#D4AF3780] placeholder:text-[#F5F0E830] resize-none"
             />
           </div>
 
           {/* Suggested palette */}
           <div className="space-y-2!">
-            <label className="font-label text-[10px] tracking-[0.4em] uppercase text-[#D4AF3790]">
+            <label className="font-label font-semibold text-[10px] tracking-[0.4em] uppercase text-[#D4AF3790]">
               Suggested Palette
             </label>
             <div className="flex flex-wrap gap-2">
               {(dc.colourPalette ?? []).map((c, i) => (
-                <div key={i} className="flex items-center gap-1.5">
+                <div key={i} className="relative group">
+                  <div
+                    className="size-9 rounded-lg border border-[#D4AF3730] cursor-pointer shrink-0"
+                    style={{ background: c }}
+                    onClick={() =>
+                      document.getElementById(`palette-color-${i}`)?.click()
+                    }
+                  />
                   <input
+                    id={`palette-color-${i}`}
                     type="color"
                     value={c}
                     onChange={(e) =>
                       updateColour("colourPalette", i, e.target.value)
                     }
-                    className="w-8 h-8 rounded cursor-pointer border-0 bg-transparent p-0"
+                    className="sr-only"
                   />
+                  {/* Remove — appears on hover */}
                   <button
                     onClick={() => removeColour("colourPalette", i)}
-                    className="text-[#D4AF3760] hover:text-[#D4AF37] text-xs"
+                    className="absolute -top-1.5 -right-1.5 size-4 rounded-full bg-[#0A0A0A] border border-[#D4AF3760] text-[#D4AF3770] hover:text-dash-error hover:border-[#ff6b6b90] transition-all flex items-center justify-center opacity-0 group-hover:opacity-100 text-[9px] cursor-pointer"
                   >
                     ✕
                   </button>
                 </div>
               ))}
+
+              {/* Add swatch */}
               <button
                 onClick={() => addColour("colourPalette")}
-                className="px-3! py-1.5! rounded-lg border border-dashed border-[#D4AF3730] text-[#D4AF3760] font-label text-[10px] tracking-widest hover:border-[#D4AF3760] transition-all cursor-pointer"
+                className="size-9 rounded-lg border border-dashed border-[#D4AF3780] text-[#D4AF3770] hover:border-[#D4AF37] hover:text-[#D4AF3790] transition-all flex items-center justify-center text-lg leading-none cursor-pointer"
               >
-                + Add
+                +
               </button>
             </div>
           </div>
 
           {/* Avoid colours */}
           <div className="space-y-2!">
-            <label className="font-label text-[10px] tracking-[0.4em] uppercase text-[#D4AF3790]">
+            <label className="font-label font-semibold text-[10px] tracking-[0.4em] uppercase text-[#D4AF3790]">
               Colours to Avoid
             </label>
             <div className="flex flex-wrap gap-2">
               {(dc.avoidColours ?? []).map((c, i) => (
-                <div key={i} className="flex items-center gap-1.5">
+                <div key={i} className="relative group">
+                  <div
+                    className="size-9 rounded-lg border border-[#D4AF3770] cursor-pointer shrink-0"
+                    style={{ background: c }}
+                    onClick={() =>
+                      document.getElementById(`palette-color-${i}`)?.click()
+                    }
+                  />
                   <input
+                    id={`palette-color-${i}`}
                     type="color"
                     value={c}
                     onChange={(e) =>
-                      updateColour("avoidColours", i, e.target.value)
+                      updateColour("colourPalette", i, e.target.value)
                     }
-                    className="w-8 h-8 rounded cursor-pointer border-0 bg-transparent p-0"
+                    className="sr-only"
                   />
+                  {/* Remove — appears on hover */}
                   <button
-                    onClick={() => removeColour("avoidColours", i)}
-                    className="text-[#D4AF3760] hover:text-[#D4AF37] text-xs"
+                    onClick={() => removeColour("colourPalette", i)}
+                    className="absolute -top-1.5 -right-1.5 size-4 rounded-full bg-[#0A0A0A] border border-[#D4AF3760] text-[#D4AF3770] hover:text-dash-error hover:border-[#ff6b6b90] transition-all flex items-center justify-center opacity-0 group-hover:opacity-100 text-[9px] cursor-pointer"
                   >
                     ✕
                   </button>
@@ -181,16 +201,16 @@ export function DressCodeEditor({ config, onChange }: Props) {
               ))}
               <button
                 onClick={() => addColour("avoidColours")}
-                className="px-3! py-1.5! rounded-lg border border-dashed border-[#D4AF3730] text-[#D4AF3760] font-label text-[10px] tracking-widest hover:border-[#D4AF3760] transition-all cursor-pointer"
+                className="size-9 rounded-lg border border-dashed border-[#D4AF3780] text-[#D4AF3770] hover:border-[#D4AF37] hover:text-[#D4AF3790] transition-all flex items-center justify-center text-lg leading-none cursor-pointer"
               >
-                + Add
+                +
               </button>
             </div>
           </div>
 
           {/* Notes */}
           <div className="space-y-1.5!">
-            <label className="font-label text-[10px] tracking-[0.4em] uppercase text-[#D4AF3790]">
+            <label className="font-label font-semibold text-[10px] tracking-[0.4em] uppercase text-[#D4AF3790]">
               Extra Notes
             </label>
             <textarea
@@ -198,7 +218,7 @@ export function DressCodeEditor({ config, onChange }: Props) {
               onChange={(e) => update({ notes: e.target.value })}
               placeholder="e.g. Heels not recommended — outdoor venue"
               rows={2}
-              className="w-full bg-[#F5F0E808] border border-[#D4AF3720] rounded-lg px-3! py-2! font-display italic text-sm text-[#F5F0E8] outline-none focus:border-[#D4AF3740] placeholder:text-[#F5F0E830] resize-none"
+              className="w-full bg-[#F5F0E808] border border-[#D4AF3760] rounded-lg px-3! py-2! font-display italic text-sm text-[#F5F0E8] outline-none focus:border-[#D4AF3780] placeholder:text-[#F5F0E830] resize-none"
             />
           </div>
         </>

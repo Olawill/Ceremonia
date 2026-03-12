@@ -76,13 +76,13 @@ export function Timeline({ events }: TimelineProps) {
   return (
     <section
       ref={sectionRef}
-      className="min-h-screen flex flex-col items-center justify-center gap-20 py-32 px-5"
+      className="min-h-screen flex flex-col items-center justify-center gap-20 py-32! px-5!"
       style={{
         background: `linear-gradient(180deg, ${theme.bg} 0%, ${theme.bgMid} 50%, ${theme.bg} 100%)`,
       }}
     >
       {/* Heading */}
-      <div className="text-center space-y-4">
+      <div className="text-center space-y-4!">
         <p
           className="font-label uppercase tracking-[0.5em] text-[14px] font-semibold"
           style={{ color: `${theme.gold}70` }}
@@ -117,7 +117,7 @@ export function Timeline({ events }: TimelineProps) {
             <div
               key={ev.year}
               className={clsx(
-                "timeline-item relative flex items-center gap-10 mb-20",
+                "timeline-item relative flex items-center gap-10 mb-20!",
                 isLeft ? "flex-row" : "flex-row-reverse",
               )}
             >
@@ -130,10 +130,10 @@ export function Timeline({ events }: TimelineProps) {
                   isLeft ? "text-right" : "text-left",
                 )}
               >
-                <p className="font-label font-bold text-[13px] tracking-[0.4em] mb-2 text-(--theme-gold) opacity-80">
+                <p className="font-label font-bold text-[13px] tracking-[0.4em] mb-2! text-(--theme-gold) opacity-80">
                   {ev.year}
                 </p>
-                <h3 className="font-display font-light mb-2 text-[clamp(18px,3vw,26px)] text-(--theme-text) tracking-[0.05em]">
+                <h3 className="font-display font-light mb-2! text-[clamp(18px,3vw,26px)] text-(--theme-text) tracking-[0.05em]">
                   {ev.title}
                 </h3>
                 <p className="font-display italic leading-relaxed text-base text-(--theme-text) opacity-75">

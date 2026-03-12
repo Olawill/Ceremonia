@@ -567,13 +567,13 @@ export function VenueDetails({ details = DEFAULT_DETAILS }: VenueDetailsProps) {
   return (
     <section
       ref={ref}
-      className="min-h-screen flex flex-col items-center justify-center gap-16 py-20 px-5"
+      className="min-h-screen flex flex-col items-center justify-center gap-16 py-20! px-5!"
       style={{
         background: `linear-gradient(180deg, ${theme.bgMid}, ${theme.bg})`,
       }}
     >
       <div
-        className="text-center space-y-4 transition-all duration-1000"
+        className="text-center space-y-4! transition-all duration-1000"
         style={{
           opacity: visible ? 1 : 0,
           transform: visible ? "translateY(0)" : "translateY(40px)",
@@ -617,7 +617,7 @@ export function VenueDetails({ details = DEFAULT_DETAILS }: VenueDetailsProps) {
         {(details ?? DEFAULT_DETAILS).map((d, i) => (
           <div
             key={d.label}
-            className="rounded-xl px-10 py-8 text-center transition-all"
+            className="rounded-xl px-10! py-8! text-center transition-all"
             style={{
               background: `linear-gradient(135deg, ${theme.curtain}15, transparent)`,
               border: `1px solid ${theme.gold}25`,
@@ -630,13 +630,13 @@ export function VenueDetails({ details = DEFAULT_DETAILS }: VenueDetailsProps) {
             }}
           >
             <p
-              className="font-label text-[16px] font-bold tracking-[0.4em] mb-3"
+              className="font-label text-[16px] font-bold tracking-[0.4em] mb-3!"
               style={{ color: `${theme.gold}65` }}
             >
               {d.label}
             </p>
             <p
-              className="font-display text-4xl mb-1.5"
+              className="font-display text-4xl mb-1.5!"
               style={{ color: theme.gold }}
             >
               {d.value}

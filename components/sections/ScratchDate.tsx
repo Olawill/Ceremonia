@@ -122,7 +122,7 @@ export function ScratchDate({
       }
       const pct = (transparent / (W * H)) * 100;
       setProgress(Math.min(pct, 100));
-      if (pct > 85) handleReveal();
+      if (pct > 95) handleReveal();
     };
 
     canvas.addEventListener("mousedown", (e) => {
@@ -209,7 +209,7 @@ export function ScratchDate({
         </div>
 
         {/* Progress bar */}
-        {!revealed && progress < 85 && (
+        {!revealed && progress < 95 && (
           <div className="mt-3 space-y-1.5">
             <div className="h-0.5 rounded-full overflow-hidden mt-2 bg-(--theme-gold) opacity-20">
               <div

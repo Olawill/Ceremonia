@@ -34,11 +34,11 @@ interface Props {
   weddingSlug: string;
 }
 
-function formatPrice(pence: number) {
-  return new Intl.NumberFormat("en-GB", {
+export function formatPrice(pence: number, fraction: boolean = false) {
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "GBP",
-    minimumFractionDigits: 0,
+    currency: "USD",
+    minimumFractionDigits: fraction ? 2 : 0,
   }).format(pence / 100);
 }
 
@@ -147,12 +147,12 @@ export function Registry({ weddingSlug }: Props) {
   const categories = [...new Set(items.map((i) => i.category ?? "General"))];
 
   return (
-    <section className="py-24 px-6" style={{ background: theme.bgMid }}>
+    <section className="py-24! px-6!" style={{ background: theme.bgMid }}>
       <div className="max-w-4xl mx-auto">
         {/* Heading */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-16!">
           <p
-            className="font-label text-xs tracking-[0.5em] uppercase mb-3"
+            className="font-label text-xs tracking-[0.5em] uppercase mb-3!"
             style={{ color: `${theme.gold}90` }}
           >
             Wedding Registry
@@ -164,11 +164,11 @@ export function Registry({ weddingSlug }: Props) {
             Gift Ideas
           </h2>
           <div
-            className="mx-auto mt-4 h-px w-16"
+            className="mx-auto mt-4! h-px w-16"
             style={{ background: `${theme.gold}40` }}
           />
           <p
-            className="font-display italic text-sm mt-4 max-w-md mx-auto"
+            className="font-display italic text-sm mt-4! max-w-md mx-auto"
             style={{ color: `${theme.text}80` }}
           >
             Your presence is the greatest gift of all. For those who wish to
@@ -179,14 +179,14 @@ export function Registry({ weddingSlug }: Props) {
         {/* Name prompt (shown once, persists for session) */}
         {!guestName && (
           <div
-            className="mb-10 p-5 rounded-2xl border text-center"
+            className="mb-10 p-5! rounded-2xl border text-center"
             style={{
               borderColor: `${theme.gold}20`,
               background: `${theme.gold}08`,
             }}
           >
             <p
-              className="font-display italic text-sm mb-3"
+              className="font-display italic text-sm mb-3!"
               style={{ color: theme.text }}
             >
               Enter your name so the couple knows who's gifting what
@@ -197,7 +197,7 @@ export function Registry({ weddingSlug }: Props) {
                 placeholder="Your name"
                 value={guestName}
                 onChange={(e) => setGuestName(e.target.value)}
-                className="flex-1 px-4 py-2 rounded-lg text-sm font-display outline-none"
+                className="flex-1 px-4! py-2! rounded-lg text-sm font-display outline-none"
                 style={{
                   background: `${theme.bg}`,
                   border: `1px solid ${theme.gold}30`,
@@ -211,7 +211,7 @@ export function Registry({ weddingSlug }: Props) {
               {namePromptFor && (
                 <button
                   onClick={() => handleClaim(namePromptFor)}
-                  className="px-4 py-2 rounded-lg text-sm font-label tracking-widest uppercase transition-all"
+                  className="px-4! py-2! rounded-lg text-sm font-label tracking-widest uppercase transition-all"
                   style={{
                     background: `${theme.gold}20`,
                     color: theme.gold,
@@ -227,10 +227,10 @@ export function Registry({ weddingSlug }: Props) {
 
         {/* Items by category */}
         {categories.map((cat) => (
-          <div key={cat} className="mb-12">
+          <div key={cat} className="mb-12!">
             {categories.length > 1 && (
               <p
-                className="font-label text-[10px] tracking-[0.5em] uppercase mb-5"
+                className="font-label text-[10px] tracking-[0.5em] uppercase mb-5!"
                 style={{ color: `${theme.gold}60` }}
               >
                 {cat}
@@ -278,7 +278,7 @@ export function Registry({ weddingSlug }: Props) {
                         </div>
                       )}
 
-                      <div className="p-4 flex flex-col gap-2 flex-1">
+                      <div className="p-4! flex flex-col gap-2 flex-1">
                         {/* Title & retailer */}
                         <div>
                           <p
@@ -289,7 +289,7 @@ export function Registry({ weddingSlug }: Props) {
                           </p>
                           {item.retailer && (
                             <p
-                              className="font-label text-[10px] tracking-widest uppercase mt-0.5"
+                              className="font-label text-[10px] tracking-widest uppercase mt-0.5!"
                               style={{ color: `${theme.gold}70` }}
                             >
                               {item.retailer}
@@ -332,14 +332,14 @@ export function Registry({ weddingSlug }: Props) {
                           </span>
                         ) : null}
 
-                        <div className="flex gap-2 mt-auto pt-2">
+                        <div className="flex gap-2 mt-auto pt-2!">
                           {/* External link */}
                           {item.productUrl && (
                             <a
                               href={item.productUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="flex-1 py-2 rounded-xl text-xs font-label tracking-[0.3em] uppercase text-center transition-all flex items-center justify-center gap-1.5"
+                              className="flex-1 py-2! rounded-xl text-xs font-label tracking-[0.3em] uppercase text-center transition-all flex items-center justify-center gap-1.5"
                               style={{
                                 border: `1px solid ${theme.gold}30`,
                                 color: `${theme.gold}80`,
@@ -357,7 +357,7 @@ export function Registry({ weddingSlug }: Props) {
                                 <button
                                   onClick={() => handleConfirmPurchase(item.id)}
                                   disabled={confirmingId === item.id}
-                                  className="py-2 rounded-xl text-xs font-label tracking-[0.3em] uppercase transition-all flex items-center justify-center gap-1.5"
+                                  className="py-2! rounded-xl text-xs font-label tracking-[0.3em] uppercase transition-all flex items-center justify-center gap-1.5"
                                   style={{
                                     background: `${theme.gold}18`,
                                     border: `1px solid ${theme.gold}50`,
@@ -371,7 +371,7 @@ export function Registry({ weddingSlug }: Props) {
                                 </button>
                                 <button
                                   onClick={() => handleUnclaim(item.id)}
-                                  className="py-1 text-[10px] font-label tracking-wider uppercase text-center transition-colors"
+                                  className="py-1! text-[10px] font-label tracking-wider uppercase text-center transition-colors"
                                   style={{ color: `${theme.text}30` }}
                                 >
                                   Release
@@ -383,7 +383,7 @@ export function Registry({ weddingSlug }: Props) {
                                 disabled={
                                   fullyReserved || claimingId === item.id
                                 }
-                                className="flex-1 py-2 rounded-xl text-xs font-label tracking-[0.3em] uppercase transition-all"
+                                className="flex-1 py-2! rounded-xl text-xs font-label tracking-[0.3em] uppercase transition-all"
                                 style={
                                   fullyReserved
                                     ? {

@@ -6,6 +6,7 @@ import {
   CheckIcon,
   EyeIcon,
   Loader2Icon,
+  RefreshCwIcon,
   SaveIcon,
   XIcon,
 } from "lucide-react";
@@ -286,7 +287,7 @@ export function EditorShell({ initialConfig, isNew }: Props) {
           previewOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0",
         )}
       >
-        <div className="px-6 py-3 border-b border-dash-border/10 flex items-center justify-between shrink-0">
+        <div className="px-6! py-1! border-b border-dash-border/10 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <span className="font-label text-[12px] pl-2! font-semibold tracking-widest uppercase text-dash-gold">
               Live Preview
@@ -297,13 +298,41 @@ export function EditorShell({ initialConfig, isNew }: Props) {
               </span>
             )}
           </div>
-          {/* Close button — mobile sheet only */}
-          <button
-            onClick={() => setPreviewOpen(false)}
-            className="lg:hidden flex items-center justify-center size-7 rounded-lg text-dash-text/40 hover:text-dash-gold transition-colors"
-          >
-            <XIcon className="size-4" />
-          </button>
+
+          <div className="flex items-center gap-2">
+            {/* Reset preview — reopens curtain from scratch with current config */}
+            <button
+              onClick={() => {
+                const iframe = previewIframeRef.current;
+                if (!iframe) return;
+                iframe.src = `/wedding/preview?initial=${encodeURIComponent(
+                  btoa(
+                    Array.from(new TextEncoder().encode(JSON.stringify(config)))
+                      .map((b) => String.fromCharCode(b))
+                      .join(""),
+                  ),
+                )}`;
+              }}
+              className="flex items-center gap-1.5 font-label text-[9px] tracking-[0.3em] uppercase px-2.5! py-1.5! rounded-lg border transition-all hover:border-[#D4AF37] cursor-pointer"
+              style={{
+                borderColor: "#D4AF3780",
+                color: "#D4AF3780",
+                background: "transparent",
+              }}
+              title="Restart the curtain from scratch"
+            >
+              <RefreshCwIcon className="size-3" />
+              Reset
+            </button>
+
+            {/* Close button — mobile sheet only */}
+            <button
+              onClick={() => setPreviewOpen(false)}
+              className="lg:hidden flex items-center justify-center size-7 rounded-lg text-dash-text/40 hover:text-dash-gold transition-colors cursor-pointer"
+            >
+              <XIcon className="size-4" />
+            </button>
+          </div>
         </div>
         <div className="flex-1 overflow-hidden">
           <PreviewFrame config={config} iframeRef={previewIframeRef} />

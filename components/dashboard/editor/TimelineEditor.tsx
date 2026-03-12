@@ -1,14 +1,112 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
+import { PlusIcon, XIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 
 import type { TimelineEvent, WeddingConfig } from "@/types/wedding";
 
 import { Field, Input, Textarea } from "@/components/ui/FormPrimitives";
-import { PlusIcon, XIcon } from "lucide-react";
+
+const WEDDING_ICONS = [
+  "✦",
+  "❧",
+  "♡",
+  "💍",
+  "💒",
+  "🌹",
+  "🌸",
+  "🕊️",
+  "✨",
+  "🎶",
+  "🥂",
+  "💐",
+  "🍾",
+  "🎂",
+  "💫",
+  "⭐",
+  "🌙",
+  "☀️",
+  "🕯️",
+  "📜",
+  "🎀",
+  "🌿",
+  "🍃",
+  "🌾",
+  "🦋",
+  "👑",
+  "💎",
+  "🪷",
+  "🫶",
+  "🤍",
+];
+
+function IconPicker({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node))
+        setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="dash-input w-full flex items-center justify-between cursor-pointer"
+      >
+        <span className="text-lg">{value || "✦"}</span>
+        <span
+          className="font-label text-[9px] tracking-widest uppercase"
+          style={{ color: "#D4AF3760" }}
+        >
+          Pick
+        </span>
+      </button>
+
+      {open && (
+        <div
+          className="absolute top-full mt-2 left-0 z-50 rounded-xl border border-[#D4AF3720] bg-[#0F0A0A] shadow-2xl p-2"
+          style={{ minWidth: "200px" }}
+        >
+          <div className="grid grid-cols-6 gap-1">
+            {WEDDING_ICONS.map((icon) => (
+              <button
+                key={icon}
+                type="button"
+                onClick={() => {
+                  onChange(icon);
+                  setOpen(false);
+                }}
+                className="flex items-center justify-center rounded-lg p-2 text-lg transition-all hover:bg-[#D4AF3715] cursor-pointer"
+                style={{
+                  background: value === icon ? "#D4AF3720" : "transparent",
+                  outline: value === icon ? "1px solid #D4AF3740" : "none",
+                }}
+              >
+                {icon}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 const schema = z.object({
   timeline: z.array(
@@ -33,6 +131,7 @@ export function TimelineEditor({ config, onChange }: Props) {
     register,
     control,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -87,10 +186,11 @@ export function TimelineEditor({ config, onChange }: Props) {
               />
             </Field>
             <Field label="Icon" error={errors.timeline?.[i]?.icon?.message}>
-              <Input
-                {...register(`timeline.${i}.icon`)}
-                placeholder="✦"
-                hasError={!!errors.timeline?.[i]?.icon}
+              <IconPicker
+                value={watch(`timeline.${i}.icon`)}
+                onChange={(v) =>
+                  setValue(`timeline.${i}.icon`, v, { shouldValidate: true })
+                }
               />
             </Field>
             <div /> {/* spacer */}

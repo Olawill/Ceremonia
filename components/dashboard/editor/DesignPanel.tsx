@@ -6,10 +6,10 @@ import { ThemeCustomiser } from "@/components/dashboard/editor/ThemeCustomiser";
 import { PlanGate } from "@/components/ui/PlanGate";
 
 import { usePlan } from "@/hooks/usePlan";
-import { planMeetsRequirement } from "@/lib/plans";
 
 import { themes } from "@/themes";
 
+import { planMeetsRequirement } from "@/lib/plans";
 import type { ThemeKey } from "@/types/theme";
 import type { WeddingConfig } from "@/types/wedding";
 

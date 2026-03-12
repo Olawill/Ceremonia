@@ -12,6 +12,7 @@ import { useState } from "react";
 import { SectionToggle } from "@/components/dashboard/editor/SectionToggle";
 import { Field, Input } from "@/components/ui/FormPrimitives";
 
+import { ImageUploadField } from "@/components/ui/ImageUploadField";
 import type {
   WeddingConfig,
   WeddingPartyMember,
@@ -57,18 +58,18 @@ function MemberEditor({
   const [expanded, setExpanded] = useState(!member.name);
 
   return (
-    <div className="rounded-xl border border-[#D4AF3720] overflow-hidden">
+    <div className="rounded-xl border border-[#D4AF3760] overflow-hidden">
       {/* Collapsed header */}
       <div
-        className="flex items-center justify-between px-4 py-3 cursor-pointer"
+        className="flex items-center justify-between px-4! py-3! cursor-pointer"
         style={{ background: "#D4AF3708" }}
         onClick={() => setExpanded((e) => !e)}
       >
         <div className="flex flex-col">
-          <p className="font-display italic text-sm text-[#F5F0E8]">
+          <p className="font-display font-bold italic text-sm text-[#F5F0E8]">
             {member.name || "New Member"}
           </p>
-          <p className="font-label text-[9px] tracking-widest uppercase text-[#D4AF3770]">
+          <p className="font-label font-semibold text-[9px] tracking-widest uppercase text-[#D4AF3770]">
             {member.role === "custom"
               ? member.customRole || "Custom Role"
               : ROLES.find((r) => r.value === member.role)?.label}
@@ -84,7 +85,7 @@ function MemberEditor({
               e.stopPropagation();
               onDelete();
             }}
-            className="text-[#D4AF3750] hover:text-dash-error transition-colors"
+            className="text-[#D4AF3770] hover:text-dash-error transition-colors"
           >
             <Trash2Icon className="size-3.5" />
           </button>
@@ -97,7 +98,7 @@ function MemberEditor({
       </div>
 
       {expanded && (
-        <div className="px-4 py-4 space-y-3 border-t border-[#D4AF3715]">
+        <div className="px-4! py-4! space-y-3! border-t border-[#D4AF3715]">
           <Field label="Name">
             <Input
               value={member.name}
@@ -108,7 +109,7 @@ function MemberEditor({
 
           {/* Role picker */}
           <div className="flex flex-col gap-1.5">
-            <label className="font-label text-[10px] tracking-[0.4em] uppercase text-[#D4AF3780]">
+            <label className="font-label font-semibold text-[10px] tracking-[0.4em] uppercase text-[#D4AF3780]">
               Role
             </label>
             <div className="grid grid-cols-2 gap-1.5">
@@ -116,13 +117,13 @@ function MemberEditor({
                 <button
                   key={value}
                   onClick={() => onUpdate({ role: value })}
-                  className="px-2 py-2 rounded-lg border font-display italic text-xs text-left transition-all"
+                  className="px-2! py-2! rounded-lg border font-display italic text-sm text-left transition-all"
                   style={{
                     borderColor:
                       member.role === value ? "#D4AF3790" : "#D4AF3720",
                     background:
                       member.role === value ? "#D4AF3712" : "transparent",
-                    color: member.role === value ? "#D4AF37" : "#F5F0E870",
+                    color: member.role === value ? "#D4AF37" : "#F5F0E890",
                   }}
                 >
                   {label}
@@ -144,7 +145,7 @@ function MemberEditor({
 
           {/* Side */}
           <div className="flex flex-col gap-1.5">
-            <label className="font-label text-[10px] tracking-[0.4em] uppercase text-[#D4AF3780]">
+            <label className="font-label font-semibold text-[10px] tracking-[0.4em] uppercase text-[#D4AF3780]">
               Side
             </label>
             <div className="grid grid-cols-3 gap-2">
@@ -152,11 +153,11 @@ function MemberEditor({
                 <button
                   key={s}
                   onClick={() => onUpdate({ side: s })}
-                  className="py-2 rounded-lg border font-label text-[10px] tracking-widest uppercase transition-all"
+                  className="py-2! rounded-lg border font-label text-[10px] tracking-widest uppercase transition-all"
                   style={{
-                    borderColor: member.side === s ? "#D4AF3790" : "#D4AF3720",
+                    borderColor: member.side === s ? "#D4AF3790" : "#D4AF3750",
                     background: member.side === s ? "#D4AF3712" : "transparent",
-                    color: member.side === s ? "#D4AF37" : "#F5F0E870",
+                    color: member.side === s ? "#D4AF37" : "#F5F0E890",
                   }}
                 >
                   {s === "both" ? "Both" : s === "bride" ? "Bride" : "Groom"}
@@ -173,11 +174,11 @@ function MemberEditor({
             />
           </Field>
 
-          <Field label="Photo URL" hint="Direct link to a square photo">
-            <Input
-              value={member.photoUrl ?? ""}
-              onChange={(e) => onUpdate({ photoUrl: e.target.value })}
-              placeholder="https://..."
+          <Field label="Photo URL" hint="Square photo works best">
+            <ImageUploadField
+              value={member.photoUrl}
+              onChange={(url) => onUpdate({ photoUrl: url })}
+              hint="Upload or pick a photo"
             />
           </Field>
         </div>
@@ -223,7 +224,7 @@ export function WeddingPartyEditor({ config, onChange }: Props) {
             </div>
           )}
 
-          <div className="space-y-3">
+          <div className="space-y-3!">
             {members.map((member) => (
               <MemberEditor
                 key={member.id}
@@ -236,7 +237,7 @@ export function WeddingPartyEditor({ config, onChange }: Props) {
 
           <button
             onClick={addMember}
-            className="w-full flex items-center justify-center gap-2 py-3! rounded-xl border border-dashed font-label text-[11px] tracking-[0.3em] uppercase transition-all border-[#D4AF3760] text-[#D4AF3760] hover:text-[#D4AF3790] hover:border-[#D4AF3790] cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 py-3! rounded-xl border border-dashed font-label text-[11px] tracking-[0.3em] uppercase transition-all border-[#D4AF3770] text-[#D4AF3770] hover:text-[#D4AF3790] hover:border-[#D4AF3790] cursor-pointer"
           >
             <PlusIcon className="size-3.5" />
             Add Member

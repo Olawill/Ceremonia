@@ -10,6 +10,8 @@ export const env = createEnv({
     STRIPE_WEBHOOK_SECRET: z.string().min(1),
     RESEND_API_KEY: z.string().min(1),
     BLOB_READ_WRITE_TOKEN: z.string().min(1),
+    UNSPLASH_ACCESS_KEY: z.string().min(1),
+    PIXABAY_API_KEY: z.string().min(1),
   },
   client: {
     NEXT_PUBLIC_WEDDING_THEME: z.string().min(1),
@@ -32,6 +34,8 @@ export const env = createEnv({
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     BLOB_READ_WRITE_TOKEN: process.env.BLOB_READ_WRITE_TOKEN,
+    UNSPLASH_ACCESS_KEY: process.env.UNSPLASH_ACCESS_KEY,
+    PIXABAY_API_KEY: process.env.PIXABAY_API_KEY,
 
     NEXT_PUBLIC_WEDDING_THEME: process.env.NEXT_PUBLIC_WEDDING_THEME,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,

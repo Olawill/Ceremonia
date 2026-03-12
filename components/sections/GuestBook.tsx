@@ -61,9 +61,9 @@ export function GuestBook({
   };
 
   return (
-    <section className="min-h-screen flex flex-col items-center justify-center px-8 py-20 gap-10">
+    <section className="min-h-screen flex flex-col items-center justify-center px-8! py-20! gap-10">
       <p
-        className="font-label text-[11px] tracking-[0.5em] uppercase"
+        className="font-label text-[14px] font-semibold tracking-[0.5em] uppercase"
         style={{ color: theme.gold }}
       >
         Leave a Note
@@ -78,7 +78,7 @@ export function GuestBook({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Your name"
-            className="px-4 py-3 rounded-xl border bg-transparent font-display"
+            className="px-4! py-3! rounded-xl border bg-transparent font-display"
             style={{ borderColor: `${theme.gold}30`, color: theme.text }}
           />
           <textarea
@@ -86,13 +86,13 @@ export function GuestBook({
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Write a message for the couple..."
             rows={4}
-            className="px-4 py-3 rounded-xl border bg-transparent font-display resize-none"
+            className="px-4! py-3! rounded-xl border bg-transparent font-display resize-none"
             style={{ borderColor: `${theme.gold}30`, color: theme.text }}
           />
           <button
             onClick={submit}
             disabled={submitting}
-            className="py-3 rounded-xl font-label text-[11px] tracking-[0.4em] uppercase"
+            className="py-3! rounded-xl font-label text-[12px] tracking-[0.4em] uppercase"
             style={{ background: theme.gold, color: theme.bg }}
           >
             {submitting ? "Sending…" : "Sign the Book"}
@@ -108,18 +108,18 @@ export function GuestBook({
       )}
 
       {messages.length > 0 && (
-        <div className="w-full max-w-md flex flex-col gap-3 mt-4">
+        <div className="w-full max-w-md flex flex-col gap-3 mt-4!">
           {messages.slice(0, 8).map((m, i) => (
             <div
               key={i}
-              className="p-4 rounded-xl border"
+              className="p-4! rounded-xl border"
               style={{
                 borderColor: `${theme.gold}15`,
                 background: `${theme.gold}05`,
               }}
             >
               <p
-                className="font-label text-[10px] tracking-widest mb-1"
+                className="font-label text-[10px] tracking-widest mb-1!"
                 style={{ color: theme.gold }}
               >
                 {m.name}

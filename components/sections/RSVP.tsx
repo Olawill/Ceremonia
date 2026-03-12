@@ -133,7 +133,7 @@ export function RSVP({
 
   return (
     <section
-      className="min-h-screen flex flex-col items-center justify-center px-5 py-20"
+      className="min-h-screen flex flex-col items-center justify-center px-5! py-20!"
       style={{
         background: `radial-gradient(ellipse at 30% 70%, ${theme.curtain}18 0%, ${theme.bg} 60%)`,
         paddingInline: "4px",
@@ -141,7 +141,7 @@ export function RSVP({
     >
       <div className="w-full max-w-md">
         {/* Heading */}
-        <div className="text-center mb-12 space-y-3">
+        <div className="text-center mb-12! space-y-3!">
           <p
             className="font-label uppercase text-[14px] font-semibold tracking-[0.5em]"
             style={{ color: `${theme.gold}70` }}
@@ -181,7 +181,7 @@ export function RSVP({
               />
               {errors.name && (
                 <p
-                  className="font-display italic text-sm mt-1"
+                  className="font-display italic text-sm mt-1!"
                   style={{ color: `${theme.gold}80` }}
                 >
                   {errors.name.message}
@@ -202,7 +202,7 @@ export function RSVP({
               </select>
               {errors.attendance && (
                 <p
-                  className="font-display italic text-sm mt-1"
+                  className="font-display italic text-sm mt-1!"
                   style={{ color: `${theme.gold}80` }}
                 >
                   {errors.attendance.message}
@@ -236,7 +236,7 @@ export function RSVP({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="mt-2 py-4 rounded-lg font-label text-[13px] tracking-[0.4em] cursor-pointer
+              className="mt-2! py-4! rounded-lg font-label text-[13px] tracking-[0.4em] cursor-pointer
                 transition-all duration-300"
               style={{
                 border: `1px solid ${theme.gold}`,
@@ -263,17 +263,17 @@ export function RSVP({
         ) : (
           <div
             ref={modalRef}
-            className="text-center py-16 px-10 rounded-2xl"
+            className="text-center py-16! px-10! rounded-2xl"
             style={{
               background: `linear-gradient(135deg, ${theme.curtain}18, ${theme.bg}90)`,
               border: `1px solid ${theme.gold}40`,
             }}
           >
-            <div className="text-5xl mb-5" style={{ color: theme.gold }}>
+            <div className="text-5xl mb-5!" style={{ color: theme.gold }}>
               ✦
             </div>
             <h3
-              className="font-display font-light mb-3"
+              className="font-display font-light mb-3!"
               style={{ fontSize: "clamp(24px,4vw,36px)", color: theme.gold }}
             >
               {submittedAttendance === "yes"

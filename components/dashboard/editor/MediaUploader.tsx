@@ -1,21 +1,36 @@
 "use client";
 
+import { useAuth } from "@clerk/nextjs";
 import clsx from "clsx";
 import {
-  ImageIcon,
+  LinkIcon,
   Loader2Icon,
-  MusicIcon,
+  SearchIcon,
   Trash2Icon,
   UploadIcon,
+  XIcon,
 } from "lucide-react";
 import { useRef, useState } from "react";
 
-import { useApi } from "@/hooks/useApi";
-
 import { PlanGate } from "@/components/ui/PlanGate";
 
+import { useApi } from "@/hooks/useApi";
+import { useToast } from "@/hooks/useToast";
+
+import { StockPhoto } from "@/server/routers/stock";
+
+import {
+  AudioCategory,
+  getFallbackPhotos,
+  PhotoCategory,
+  STOCK_AUDIO,
+  STOCK_AUDIO_CATEGORIES,
+} from "@/types/stocks";
 import type { WeddingConfig } from "@/types/wedding";
-import { toast } from "sonner";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type Tab = "upload" | "url" | "stock";
 
 interface Props {
   config: WeddingConfig;
@@ -28,10 +43,11 @@ interface UploadFieldProps {
   accept: string;
   type: "photo" | "audio";
   value: string | undefined;
-  icon: React.ReactNode;
   onUpload: (url: string) => void;
   onClear: () => void;
 }
+
+// ─── UploadField ──────────────────────────────────────────────────────────────
 
 function UploadField({
   label,
@@ -39,14 +55,28 @@ function UploadField({
   accept,
   type,
   value,
-  icon,
   onUpload,
   onClear,
 }: UploadFieldProps) {
   const { api } = useApi();
+  const { getToken } = useAuth();
+  const { toast } = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
+  const [tab, setTab] = useState<Tab>("upload");
   const [uploading, setUploading] = useState(false);
+  const [urlInput, setUrlInput] = useState("");
+  const [previewAudio, setPreviewAudio] = useState<string | null>(null);
 
+  const [photoCategory, setPhotoCategory] = useState<PhotoCategory>("All");
+  const [audioCategory, setAudioCategory] = useState<AudioCategory>("All");
+
+  const [stockQuery, setStockQuery] = useState("wedding");
+  const [stockResults, setStockResults] = useState<StockPhoto[]>([]);
+  const [stockPage, setStockPage] = useState(1);
+  const [stockLoading, setStockLoading] = useState(false);
+  const [stockSearched, setStockSearched] = useState(false);
+
+  // ── file upload ────────────────────────────────────────────────────────────
   const handleFile = async (file: File) => {
     setUploading(true);
     try {
@@ -80,75 +110,453 @@ function UploadField({
     }
   };
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file) handleFile(file);
+  // ── url fetch → blob ───────────────────────────────────────────────────────
+  const handleUrlSubmit = async () => {
+    const url = urlInput.trim();
+    if (!url) return;
+
+    // Check url is valid
+    try {
+      new URL(url);
+    } catch {
+      toast.error("Please enter a valid URL including https://");
+      return;
+    }
+
+    if (!url.startsWith("https://") && !url.startsWith("http://")) {
+      toast.error("URL must start with http:// or https://");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const token = await getToken();
+      const res = await fetch("/api/upload/from-url", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ url, type }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        if (res.status === 403) {
+          toast.warning(data.message ?? "Upgrade required", {
+            description: "Upgrade your plan to unlock this feature.",
+            action: {
+              label: "Upgrade",
+              onClick: () => (window.location.href = "/app/billing"),
+            },
+          });
+        } else {
+          toast.error(data.message ?? "Could not fetch URL");
+        }
+        return;
+      }
+      onUpload(data.url);
+      setUrlInput("");
+    } catch {
+      toast.error("Could not fetch URL");
+    } finally {
+      setUploading(false);
+    }
   };
 
-  return (
-    <div className="space-y-2!">
-      <p className="font-label text-[11px] font-bold tracking-[0.4em] uppercase text-[#D4AF37]">
-        {label}
-      </p>
-      <p className="font-display italic text-sm font-semibold text-[#F5F0E890]">
-        {hint}
-      </p>
+  // ── stock pick → blob ──────────────────────────────────────────────────────
+  const handleStockPick = async (fullUrl: string) => {
+    setUploading(true);
+    try {
+      const token = await getToken();
+      const res = await fetch("/api/upload/from-url", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ url: fullUrl, type }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message ?? "Failed");
+      onUpload(data.url);
+    } catch (e: any) {
+      toast.error(e.message ?? "Could not use stock asset");
+    } finally {
+      setUploading(false);
+    }
+  };
 
-      {value ? (
-        // Uploaded — show preview + clear button
-        <div className="flex items-center gap-3 rounded-lg border border-[#D4AF3730] bg-[#D4AF3708] px-4 py-3">
-          <div className="text-[#D4AF37] shrink-0">{icon}</div>
+  const searchStock = async (q: string, page = 1) => {
+    setStockLoading(true);
+    setStockSearched(true);
+    try {
+      const { data, error } = await api.stock.photos.get({
+        query: { q, page: String(page) },
+      });
+      if (error) {
+        if (page === 1) setStockResults(getFallbackPhotos());
+        return;
+      }
+      const incoming: StockPhoto[] = data.photos ?? [];
+      if (incoming.length === 0 && page === 1) {
+        setStockResults(getFallbackPhotos());
+      } else if (page === 1) {
+        setStockResults(incoming);
+      } else {
+        setStockResults((prev) => [...prev, ...incoming]);
+      }
+      setStockPage(page);
+    } catch {
+      toast.error("Could not reach stock photo service");
+      if (page === 1) setStockResults(getFallbackPhotos());
+    } finally {
+      setStockLoading(false);
+    }
+  };
+
+  const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
+    { id: "upload", label: "Upload", icon: <UploadIcon className="size-3" /> },
+    { id: "url", label: "URL", icon: <LinkIcon className="size-3" /> },
+    { id: "stock", label: "Stock", icon: <SearchIcon className="size-3" /> },
+  ];
+
+  return (
+    <div className="space-y-3!">
+      {/* Header */}
+      <div>
+        <p className="font-label text-[11px] font-bold tracking-[0.4em] uppercase text-[#D4AF37]">
+          {label}
+        </p>
+        <p className="font-display italic text-sm text-[#F5F0E870] mt-0.5!">
+          {hint}
+        </p>
+      </div>
+
+      {/* Current value preview */}
+      {value && (
+        <div className="flex items-center gap-3 rounded-lg border border-[#D4AF3730] bg-[#D4AF3708] px-4! py-3!">
           {type === "photo" ? (
             <img
               src={value}
-              alt="Hero photo"
-              className="h-14 w-20 rounded object-cover"
+              alt=""
+              className="h-14 w-20 rounded object-cover shrink-0"
             />
           ) : (
-            <audio controls src={value} className="flex-1 h-8" />
+            <audio controls src={value} className="flex-1 h-8 min-w-0" />
           )}
           <button
             onClick={onClear}
-            className="ml-auto text-[#D4AF3760] hover:text-[#D4AF37] transition-colors shrink-0"
+            className="ml-auto text-[#D4AF3750] hover:text-dash-error transition-colors shrink-0"
           >
             <Trash2Icon className="size-4" />
           </button>
         </div>
-      ) : (
-        // Empty — dropzone
-        <div
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={handleDrop}
-          onClick={() => inputRef.current?.click()}
-          className={clsx(
-            "flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#D4AF3730] bg-[#D4AF3705] py-8! cursor-pointer hover:border-[#D4AF3760] hover:bg-[#D4AF370A] transition-colors",
-          )}
-        >
-          {uploading ? (
-            <Loader2Icon className="size-5 text-[#D4AF37] animate-spin" />
-          ) : (
-            <UploadIcon className="size-5 text-[#D4AF3760]" />
-          )}
-          <span className="font-label text-[10px] tracking-[0.3em] uppercase text-[#D4AF3760]">
-            {uploading ? "Uploading…" : "Click or drag to upload"}
-          </span>
-          <input
-            ref={inputRef}
-            type="file"
-            accept={accept}
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) handleFile(file);
-              e.target.value = "";
-            }}
-          />
-        </div>
       )}
+
+      {/* Tab strip */}
+      <div className="rounded-xl border border-[#D4AF3760] overflow-hidden">
+        <div className="flex border-b border-[#D4AF3740]">
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={clsx(
+                "flex-1 flex items-center justify-center gap-1.5 py-2.5! font-label font-semibold text-[9px] tracking-[0.3em] uppercase transition-all cursor-pointer",
+                tab === t.id
+                  ? "bg-[#D4AF3712] text-[#D4AF37]"
+                  : "text-[#F5F0E890] hover:text-[#F5F0E8]",
+              )}
+            >
+              {t.icon}
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="p-3!">
+          {/* ── Upload tab ── */}
+          {tab === "upload" && (
+            <div
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                const file = e.dataTransfer.files[0];
+                if (file) handleFile(file);
+              }}
+              onClick={() => inputRef.current?.click()}
+              className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-[#D4AF3730] bg-[#D4AF3705] py-7! cursor-pointer hover:border-[#D4AF3760] hover:bg-[#D4AF370A] transition-colors"
+            >
+              {uploading ? (
+                <Loader2Icon className="size-5 text-[#D4AF37] animate-spin" />
+              ) : (
+                <UploadIcon className="size-5 text-[#D4AF3760]" />
+              )}
+              <span className="font-label text-[9px] tracking-[0.3em] uppercase text-[#D4AF3760]">
+                {uploading ? "Uploading…" : "Click or drag to upload"}
+              </span>
+              <input
+                ref={inputRef}
+                type="file"
+                accept={accept}
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleFile(file);
+                  e.target.value = "";
+                }}
+              />
+            </div>
+          )}
+
+          {/* ── URL tab ── */}
+          {tab === "url" && (
+            <div className="space-y-2!">
+              <div className="relative">
+                <input
+                  type="url"
+                  value={urlInput}
+                  onChange={(e) => setUrlInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleUrlSubmit()}
+                  placeholder={
+                    type === "photo"
+                      ? "https://example.com/photo.jpg"
+                      : "https://example.com/music.mp3"
+                  }
+                  className={clsx(
+                    "dash-input w-full text-sm",
+                    urlInput && "pr-7!",
+                  )}
+                />
+
+                {urlInput && (
+                  <button
+                    onClick={() => {
+                      setUrlInput("");
+                    }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-[#D4AF3750] hover:text-[#D4AF37] transition-colors cursor-pointer"
+                    tabIndex={-1}
+                  >
+                    <XIcon className="size-3" />
+                  </button>
+                )}
+              </div>
+              <button
+                onClick={handleUrlSubmit}
+                disabled={!urlInput.trim() || uploading}
+                className="w-full py-2.5! rounded-lg font-label text-[9px] tracking-[0.3em] uppercase transition-all dash-btn-primary disabled:opacity-40 flex items-center justify-center gap-2"
+              >
+                {uploading ? (
+                  <>
+                    <Loader2Icon className="size-3 animate-spin" /> Fetching…
+                  </>
+                ) : (
+                  "Use this URL"
+                )}
+              </button>
+              <p className="font-display italic text-[11px] text-[#F5F0E840] text-center">
+                The file will be saved to your media library
+              </p>
+            </div>
+          )}
+
+          {/* ── Stock tab ── */}
+          {tab === "stock" && (
+            <div>
+              {uploading && (
+                <div className="flex items-center justify-center gap-2 py-4! text-[#D4AF37]">
+                  <Loader2Icon className="size-4 animate-spin" />
+                  <span className="font-label text-[9px] tracking-widest uppercase">
+                    Saving to library…
+                  </span>
+                </div>
+              )}
+              {!uploading && type === "photo" && (
+                <div className="space-y-2!">
+                  <div className="flex gap-1.5!">
+                    <input
+                      type="text"
+                      value={stockQuery}
+                      onChange={(e) => setStockQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") searchStock(stockQuery, 1);
+                      }}
+                      placeholder="Search wedding photos…"
+                      className="dash-input flex-1 text-xs py-1.5!"
+                    />
+                    <button
+                      onClick={() => searchStock(stockQuery, 1)}
+                      disabled={stockLoading}
+                      className="px-3! rounded-lg dash-btn-primary font-label text-[8px] tracking-[0.2em] uppercase disabled:opacity-40 flex items-center gap-1 cursor-pointer"
+                    >
+                      {stockLoading ? (
+                        <Loader2Icon className="size-3.5 animate-spin" />
+                      ) : (
+                        <SearchIcon className="size-3.5" />
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="flex gap-1 flex-wrap">
+                    {[
+                      "wedding",
+                      "ceremony",
+                      "flowers",
+                      "couple",
+                      "venue",
+                      "reception",
+                    ].map((term) => (
+                      <button
+                        key={term}
+                        onClick={() => {
+                          setStockQuery(term);
+                          searchStock(term, 1);
+                        }}
+                        className={clsx(
+                          "px-2! py-0.5! rounded font-label text-[7px] tracking-widest uppercase transition-all border cursor-pointer",
+                          stockQuery === term
+                            ? "bg-[#D4AF3720] text-[#D4AF37] border-[#D4AF3760]"
+                            : "text-[#F5F0E880] hover:text-[#F5F0E8] border-transparent",
+                        )}
+                      >
+                        {term}
+                      </button>
+                    ))}
+                  </div>
+
+                  {!stockSearched && !stockLoading && (
+                    <p className="text-center font-label text-[8px] tracking-widest uppercase text-[#F5F0E830] py-6!">
+                      Search to browse free photos
+                    </p>
+                  )}
+                  {stockSearched &&
+                    !stockLoading &&
+                    stockResults.length === 0 && (
+                      <p className="text-center font-label text-[8px] tracking-widest uppercase text-[#F5F0E830] py-6!">
+                        No results
+                      </p>
+                    )}
+
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {stockResults.map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => handleStockPick(p.full)}
+                        title={p.label}
+                        className="relative group rounded-lg overflow-hidden aspect-4/3 cursor-pointer"
+                      >
+                        <img
+                          src={p.thumb}
+                          alt={p.label}
+                          className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-end p-1.5! opacity-0 group-hover:opacity-100">
+                          <span className="font-label text-[8px] tracking-widest uppercase text-white/90 truncate">
+                            {p.label}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+
+                  {stockResults.length > 0 && (
+                    <button
+                      onClick={() => searchStock(stockQuery, stockPage + 1)}
+                      disabled={stockLoading}
+                      className="w-full py-2! rounded-lg font-label text-[9px] tracking-[0.3em] uppercase text-[#D4AF3790] hover:text-[#D4AF37] border border-[#D4AF3740] hover:border-[#D4AF3760] transition-all disabled:opacity-40 flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      {stockLoading ? (
+                        <>
+                          <Loader2Icon className="size-3.5 animate-spin" />{" "}
+                          Loading…
+                        </>
+                      ) : (
+                        "Load more"
+                      )}
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {!uploading && type === "audio" && (
+                <div className="space-y-2!">
+                  {/* Category filter */}
+                  <div className="flex gap-1 flex-wrap">
+                    {STOCK_AUDIO_CATEGORIES.map((cat) => (
+                      <button
+                        key={cat}
+                        onClick={() => setAudioCategory(cat)}
+                        className={clsx(
+                          "px-2! py-1! rounded-md font-label text-[8px] tracking-widest uppercase transition-all cursor-pointer",
+                          audioCategory === cat
+                            ? "bg-[#D4AF3720] text-[#D4AF37] border border-[#D4AF3760]"
+                            : "text-[#F5F0E880] hover:text-[#F5F0E8] border border-transparent",
+                        )}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                  {/* List */}
+                  <div className="space-y-1.5!">
+                    {STOCK_AUDIO.filter(
+                      (a) =>
+                        audioCategory === "All" || a.category === audioCategory,
+                    ).map((a) => (
+                      <div
+                        key={a.full}
+                        className={clsx(
+                          "flex items-center gap-3 rounded-lg px-3! py-2.5! border transition-all",
+                          previewAudio === a.preview
+                            ? "border-[#D4AF3760] bg-[#D4AF3710]"
+                            : "border-[#D4AF3780] bg-[#D4AF3705] hover:border-[#D4AF37]",
+                        )}
+                      >
+                        <button
+                          onClick={() =>
+                            setPreviewAudio(
+                              previewAudio === a.preview ? null : a.preview,
+                            )
+                          }
+                          className="text-[#D4AF37] shrink-0 text-base leading-none cursor-pointer"
+                        >
+                          {previewAudio === a.preview ? "⏹" : "▶"}
+                        </button>
+                        {previewAudio === a.preview && (
+                          <audio
+                            src={a.preview}
+                            autoPlay
+                            onEnded={() => setPreviewAudio(null)}
+                            className="hidden"
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <span className="font-display text-sm text-[#F5F0E890] block truncate">
+                            {a.label}
+                          </span>
+                          <span className="font-label text-[8px] tracking-widest uppercase text-[#D4AF3790]">
+                            {a.category}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => handleStockPick(a.full)}
+                          className="font-label text-[8px] tracking-[0.3em] uppercase text-[#D4AF3790] hover:text-[#D4AF37] transition-colors shrink-0 px-2! py-1! rounded border border-[#D4AF3760] hover:border-[#D4AF3780]"
+                        >
+                          Use
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
+
+// ─── MediaUploader (exported) ─────────────────────────────────────────────────
 
 export function MediaUploader({ config, onChange }: Props) {
   return (
@@ -157,21 +565,18 @@ export function MediaUploader({ config, onChange }: Props) {
         Media
       </p>
 
-      {/* Hero Photo — free feature */}
       <UploadField
         label="Hero Photo"
         hint="Shown behind the couple's names. JPG or PNG, max 10MB."
         accept="image/*"
         type="photo"
         value={config.heroPhotoUrl}
-        icon={<ImageIcon className="size-4" />}
         onUpload={(url) => onChange({ heroPhotoUrl: url })}
         onClear={() => onChange({ heroPhotoUrl: undefined })}
       />
 
       <div className="h-px bg-[#D4AF3718]" />
 
-      {/* Custom Audio — Starter+ */}
       <PlanGate requires="starter" featureName="Custom audio">
         <UploadField
           label="Background Music"
@@ -179,7 +584,6 @@ export function MediaUploader({ config, onChange }: Props) {
           accept="audio/*"
           type="audio"
           value={config.audioUrl}
-          icon={<MusicIcon className="size-4" />}
           onUpload={(url) => onChange({ audioUrl: url })}
           onClear={() => onChange({ audioUrl: undefined })}
         />

@@ -122,8 +122,6 @@ export function Countdown({
   const [year, month, day] = displayDate.split("-").map(Number);
   // Month is 0-indexed in the Date constructor
   const local = new Date(year, month - 1, day);
-  console.log({ displayDate, local });
-  console.log(new Date(displayDate));
 
   const [timeLeft, setTimeLeft] = useState<TimeLeft>(getTimeLeft(local));
 

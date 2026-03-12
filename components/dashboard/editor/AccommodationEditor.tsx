@@ -12,6 +12,8 @@ import { useState } from "react";
 import { SectionToggle } from "@/components/dashboard/editor/SectionToggle";
 import { Field, Input, Textarea } from "@/components/ui/FormPrimitives";
 
+import { DatePicker } from "@/components/ui/DatePicker";
+import { ImageUploadField } from "@/components/ui/ImageUploadField";
 import type {
   AccommodationConfig,
   AccommodationOption,
@@ -167,12 +169,10 @@ function OptionEditor({
 
           <div className="grid grid-cols-2 gap-3">
             <Field label="Booking Deadline">
-              <Input
-                type="date"
+              <DatePicker
                 value={option.bookingDeadline ?? ""}
-                onChange={({ target }) =>
-                  onUpdate({ bookingDeadline: target.value })
-                }
+                onChange={(val) => onUpdate({ bookingDeadline: val })}
+                placeholder="Select deadline date"
               />
             </Field>
             <Field label="Group Code">
@@ -192,11 +192,11 @@ function OptionEditor({
             />
           </Field>
 
-          <Field label="Image URL">
-            <Input
-              value={option.imageUrl ?? ""}
-              onChange={({ target }) => onUpdate({ imageUrl: target.value })}
-              placeholder="https://..."
+          <Field label="Hotel Photo">
+            <ImageUploadField
+              value={option.imageUrl}
+              onChange={(url) => onUpdate({ imageUrl: url })}
+              hint="Upload or pick a hotel photo"
             />
           </Field>
         </div>
@@ -263,8 +263,8 @@ export function AccommodationEditor({ config, onChange }: Props) {
 
           <button
             onClick={addOption}
-            className="w-full flex items-center justify-center gap-2 py-3! rounded-xl border border-dashed font-label text-[11px] tracking-[0.3em] uppercase transition-all hover:border-[#D4AF3760] cursor-pointer"
-            style={{ borderColor: "#D4AF3730", color: "#D4AF3760" }}
+            className="w-full flex items-center justify-center gap-2 py-3! rounded-xl border border-dashed font-label text-[11px] tracking-[0.3em] uppercase transition-all hover:border-[#D4AF37] cursor-pointer"
+            style={{ borderColor: "#D4AF3760", color: "#D4AF3780" }}
           >
             <PlusIcon className="size-3.5" />
             Add Hotel

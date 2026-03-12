@@ -37,13 +37,13 @@ function ItemEditor({
   const [expanded, setExpanded] = useState(!item.question);
 
   return (
-    <div className="rounded-xl border border-[#D4AF3720] overflow-hidden">
+    <div className="rounded-xl border border-[#D4AF3750] overflow-hidden">
       <div
         className="flex items-center justify-between px-4! py-3! cursor-pointer"
         style={{ background: "#D4AF3708" }}
         onClick={() => setExpanded((e) => !e)}
       >
-        <p className="font-display italic text-sm text-[#F5F0E8] truncate pr-4">
+        <p className="font-display font-semibold italic text-sm text-[#F5F0E8] truncate pr-4">
           {item.question || "New Question"}
         </p>
         <div className="flex items-center gap-2 shrink-0">
@@ -52,7 +52,7 @@ function ItemEditor({
               e.stopPropagation();
               onDelete();
             }}
-            className="text-[#D4AF3750] hover:text-dash-error transition-colors cursor-pointer"
+            className="text-[#D4AF3770] hover:text-dash-error transition-colors cursor-pointer"
           >
             <Trash2Icon className="size-3.5" />
           </button>
@@ -136,7 +136,7 @@ export function FaqEditor({ config, onChange }: Props) {
 
           <button
             onClick={addItem}
-            className="w-full flex items-center justify-center gap-2 py-3! rounded-xl border border-dashed font-label text-[11px] tracking-[0.3em] uppercase transition-all border-[#D4AF3760] text-[#D4AF3760] hover:text-[#D4AF3790] hover:border-[#D4AF3790] cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 py-3! rounded-xl border border-dashed font-label text-[11px] tracking-[0.3em] uppercase transition-all border-[#D4AF3770] text-[#D4AF3770] hover:text-[#D4AF3790] hover:border-[#D4AF3790] cursor-pointer"
           >
             <PlusIcon className="size-3.5" />
             Add Question

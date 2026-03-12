@@ -41,14 +41,14 @@ function FaqRow({ item, index }: { item: FaqItem; index: number }) {
     >
       <button
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-start justify-between gap-6 py-6 text-left"
+        className="w-full flex items-start justify-between gap-6 py-6! text-left"
       >
         <span
           className="font-display text-base md:text-lg tracking-wide"
           style={{ color: theme.text }}
         >
           <span
-            className="font-label text-[10px] tracking-[0.4em] mr-3 align-middle"
+            className="font-label text-[10px] tracking-[0.4em] mr-3! align-middle"
             style={{ color: `${theme.gold}60` }}
           >
             {String(index + 1).padStart(2, "0")}
@@ -57,7 +57,7 @@ function FaqRow({ item, index }: { item: FaqItem; index: number }) {
         </span>
         <ChevronDownIcon
           className={clsx(
-            "size-4 shrink-0 mt-1 transition-transform duration-300",
+            "size-4 shrink-0 mt-1! transition-transform duration-300",
             open && "rotate-180",
           )}
           style={{ color: theme.gold }}
@@ -70,7 +70,7 @@ function FaqRow({ item, index }: { item: FaqItem; index: number }) {
         style={{ height: 0, opacity: 0 }}
       >
         <p
-          className="font-display italic text-sm md:text-base pb-6 leading-relaxed"
+          className="font-display italic text-sm md:text-base pb-6! leading-relaxed"
           style={{ color: `${theme.text}70` }}
         >
           {item.answer}
@@ -108,7 +108,7 @@ export function FAQ({ items }: Props) {
 
   return (
     <section
-      className="min-h-screen flex flex-col items-center justify-center px-8 py-24 gap-12"
+      className="min-h-screen flex flex-col items-center justify-center px-8! py-24! gap-12"
       style={{ background: theme.bgMid ?? theme.bg }}
     >
       <div className="w-full max-w-2xl flex flex-col items-center gap-10">
