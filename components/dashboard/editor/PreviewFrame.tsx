@@ -20,54 +20,15 @@ function buildUrl(config: WeddingConfig): string {
   )}`;
 }
 
-function getSectionLabels(
-  config: WeddingConfig,
-): { label: string; index: number }[] {
-  const list = [
-    { label: "Opening", always: true },
-    { label: "Date Reveal", always: true },
-    { label: "Countdown", always: true },
-    { label: "Timeline", always: true },
-    {
-      label: "Gallery",
-      always: !!config.photoGalleryEnabled && !!config.galleryPhotos?.length,
-    },
-    { label: "Venue", always: true },
-    {
-      label: "Dress Code",
-      always: !!config.dressCodeEnabled && !!config.dressCode,
-    },
-    {
-      label: "Accommodation",
-      always:
-        !!config.accommodationEnabled && !!config.accommodation?.options.length,
-    },
-    {
-      label: "Wedding Party",
-      always: !!config.weddingPartyEnabled && !!config.weddingParty?.length,
-    },
-    { label: "FAQ", always: !!config.faqEnabled && !!config.faq?.length },
-    {
-      label: "Livestream",
-      always: !!config.livestreamEnabled && !!config.livestreamUrl,
-    },
-    {
-      label: "Travel",
-      always: !!config.travelGuideEnabled && !!config.travelItems?.length,
-    },
-    { label: "Menu", always: true },
-    { label: "RSVP", always: !!config.rsvpEnabled },
-    { label: "Registry", always: !!config.registryEnabled },
-    { label: "Guestbook", always: !!config.guestBookEnabled },
-    { label: "Finale", always: true },
-  ];
-  return list
-    .filter((s) => s.always)
-    .map((s, i) => ({ label: s.label, index: i }));
-}
-
 export function PreviewFrame({ config, iframeRef }: Props) {
   const [curtainOpen, setCurtainOpen] = useState(false);
+
+  // Freeze the src on first mount — never change it, use postMessage for all updates
+  const frozenSrcRef = useRef<string | null>(null);
+
+  if (frozenSrcRef.current === null) {
+    frozenSrcRef.current = buildUrl(config);
+  }
 
   // Capture the initial URL once on mount — never changes, so the iframe
   // never remounts and curtain/scratch state is preserved across edits
@@ -76,8 +37,15 @@ export function PreviewFrame({ config, iframeRef }: Props) {
   // Send config to the iframe via postMessage whenever it changes
   useEffect(() => {
     const iframe = iframeRef.current;
+    console.log(
+      "[PreviewFrame] config changed, iframe:",
+      iframe,
+      "contentWindow:",
+      iframe?.contentWindow,
+    );
     if (!iframe?.contentWindow) return;
 
+    console.log("[PreviewFrame] sending PREVIEW_CONFIG");
     iframe.contentWindow.postMessage({ type: "PREVIEW_CONFIG", config }, "*");
   }, [config]);
 
@@ -92,11 +60,15 @@ export function PreviewFrame({ config, iframeRef }: Props) {
   // When the iframe first loads, push the current config in case
   // the initial URL param was stale or too long
   const handleLoad = () => {
+    console.log("[PreviewFrame] iframe onLoad fired");
     setCurtainOpen(false);
-    iframeRef.current?.contentWindow?.postMessage(
-      { type: "PREVIEW_CONFIG", config },
-      "*",
-    );
+    setTimeout(() => {
+      console.log("[PreviewFrame] sending PREVIEW_CONFIG after load timeout");
+      iframeRef.current?.contentWindow?.postMessage(
+        { type: "PREVIEW_CONFIG", config },
+        "*",
+      );
+    }, 300);
   };
 
   // Hard reset — rebuilds URL from current config and remounts iframe
@@ -138,6 +110,7 @@ export function PreviewFrame({ config, iframeRef }: Props) {
           ref={iframeRef}
           // src={previewUrl}
           src={initialUrl.current}
+          // src={frozenSrcRef.current}
           className="w-full h-full border-0"
           title="Wedding Preview"
           onLoad={handleLoad}

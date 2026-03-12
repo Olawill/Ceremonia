@@ -6,6 +6,12 @@ interface Props {
 
 export default async function WeddingPreviewPage({ searchParams }: Props) {
   const { initial } = await searchParams;
+  console.log(
+    "[PreviewPage] initial param present:",
+    !!initial,
+    "length:",
+    initial?.length,
+  );
 
   let initialConfig = null;
   if (initial) {
@@ -14,8 +20,15 @@ export default async function WeddingPreviewPage({ searchParams }: Props) {
         c.charCodeAt(0),
       );
       initialConfig = JSON.parse(new TextDecoder().decode(bytes));
-    } catch {
+      console.log(
+        "[PreviewPage] decoded config themeKey:",
+        initialConfig?.themeKey,
+        "bride:",
+        initialConfig?.bride,
+      );
+    } catch (e) {
       // Invalid base64 — render demo
+      console.error("[PreviewPage] decode failed:", e);
     }
   }
 

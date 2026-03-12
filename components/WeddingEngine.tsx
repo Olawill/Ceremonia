@@ -51,8 +51,6 @@ export function WeddingEngine({
     }
   };
 
-  console.log({ isPreview, curtainOpen });
-
   return (
     <>
       {/* Always-visible overlays */}

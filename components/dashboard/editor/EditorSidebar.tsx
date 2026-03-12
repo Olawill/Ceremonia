@@ -5,19 +5,14 @@ import { useState } from "react";
 
 import type { WeddingConfig } from "@/types/wedding";
 
-import { AccommodationEditor } from "@/components/dashboard/editor/AccommodationEditor";
 import { ContentEditor } from "@/components/dashboard/editor/ContentEditor";
 import { DesignPanel } from "@/components/dashboard/editor/DesignPanel";
-import { DressCodeEditor } from "@/components/dashboard/editor/DressCodeEditor";
-import { FaqEditor } from "@/components/dashboard/editor/FaqEditor";
-import { LivestreamEditor } from "@/components/dashboard/editor/LivestreamEditor";
 import { MediaUploader } from "@/components/dashboard/editor/MediaUploader";
 import { MenuEditor } from "@/components/dashboard/editor/MenuEditor";
 import { RegistryEditor } from "@/components/dashboard/editor/RegistryEditor";
 import { RSVPSettings } from "@/components/dashboard/editor/RSVPSettings";
 import { TimelineEditor } from "@/components/dashboard/editor/TimelineEditor";
 import { VenueEditor } from "@/components/dashboard/editor/VenueEditor";
-import { WeddingPartyEditor } from "@/components/dashboard/editor/WeddingPartyEditor";
 
 const TABS = [
   { id: "design", label: "Design" },
@@ -67,48 +62,36 @@ export function EditorSidebar({ config, onChange, previewIframeRef }: Props) {
       </div>
 
       {/* Tab content */}
+      {/* Tab content — all panels stay mounted to preserve state and avoid re-fetching */}
       <div className="flex-1 overflow-y-auto p-2! space-y-6!">
-        {activeTab === "design" && (
+        <div className={activeTab === "design" ? "p-2 space-y-6" : "hidden"}>
           <DesignPanel
             config={config}
             onChange={onChange}
             previewIframeRef={previewIframeRef}
           />
-        )}
-        {activeTab === "couple" && (
+        </div>
+        <div className={activeTab === "couple" ? "p-2 space-y-6" : "hidden"}>
           <ContentEditor config={config} onChange={onChange} />
-        )}
-        {activeTab === "venue" && (
+        </div>
+        <div className={activeTab === "venue" ? "p-2 space-y-6" : "hidden"}>
           <VenueEditor config={config} onChange={onChange} />
-        )}
-        {activeTab === "timeline" && (
+        </div>
+        <div className={activeTab === "timeline" ? "p-2 space-y-6" : "hidden"}>
           <TimelineEditor config={config} onChange={onChange} />
-        )}
-        {activeTab === "menu" && (
+        </div>
+        <div className={activeTab === "menu" ? "p-2 space-y-6" : "hidden"}>
           <MenuEditor config={config} onChange={onChange} />
-        )}
-        {activeTab === "media" && (
+        </div>
+        <div className={activeTab === "media" ? "p-2 space-y-6" : "hidden"}>
           <MediaUploader config={config} onChange={onChange} />
-        )}
-        {activeTab === "dresscode" && (
-          <DressCodeEditor config={config} onChange={onChange} />
-        )}
-        {activeTab === "accommodation" && (
-          <AccommodationEditor config={config} onChange={onChange} />
-        )}
-        {activeTab === "party" && (
-          <WeddingPartyEditor config={config} onChange={onChange} />
-        )}
-        {activeTab === "faq" && (
-          <FaqEditor config={config} onChange={onChange} />
-        )}
-        {activeTab === "livestream" && (
-          <LivestreamEditor config={config} onChange={onChange} />
-        )}
-        {activeTab === "rsvp" && (
+        </div>
+        <div className={activeTab === "rsvp" ? "p-2 space-y-6" : "hidden"}>
           <RSVPSettings config={config} onChange={onChange} />
-        )}
-        {activeTab === "registry" && <RegistryEditor config={config} />}
+        </div>
+        <div className={activeTab === "registry" ? "p-2 space-y-6" : "hidden"}>
+          <RegistryEditor config={config} />
+        </div>
       </div>
     </div>
   );

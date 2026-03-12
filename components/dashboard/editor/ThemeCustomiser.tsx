@@ -1,7 +1,7 @@
 "use client";
 
 import { GlobeIcon, Loader2Icon, SaveIcon, Trash2Icon } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useApi } from "@/hooks/useApi";
 import { useToast } from "@/hooks/useToast";
@@ -65,6 +65,8 @@ export function ThemeCustomiser({
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const hasMountedRef = useRef(false);
+
   // Load saved themes on mount
   useEffect(() => {
     api["custom-themes"].get().then(({ data }) => {
@@ -75,6 +77,11 @@ export function ThemeCustomiser({
 
   // Send live preview update to iframe whenever colors change
   useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      return; // skip on mount — don't clobber the active built-in theme
+    }
+
     const iframe = previewIframeRef.current;
     if (!iframe?.contentWindow) return;
 

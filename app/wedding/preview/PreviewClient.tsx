@@ -53,11 +53,19 @@ function PreviewInner({
   }, [setThemeKey]);
 
   useEffect(() => {
+    console.log("[PreviewClient] message listener registered");
     // Signal to the parent editor that this page is ready to receive config
     window.parent.postMessage({ type: "PREVIEW_READY" }, "*");
 
     const handler = (e: MessageEvent) => {
+      console.log("[PreviewClient] message received:", e.data?.type, e.data);
+
       if (e.data?.type === "PREVIEW_CONFIG" && e.data.config) {
+        console.log(
+          "[PreviewClient] applying PREVIEW_CONFIG, themeKey:",
+          e.data.config.themeKey,
+        );
+
         const incoming: WeddingConfig = e.data.config;
         onConfigChangeRef.current(e.data.config);
         // Re-apply custom theme if present — PREVIEW_CONFIG fires after every
@@ -103,6 +111,7 @@ function PreviewInner({
 }
 
 export function PreviewClient({ initialConfig }: Props) {
+  console.log("[PreviewClient] initialConfig:", initialConfig);
   const [config, setConfig] = useState<WeddingConfig>(
     initialConfig ?? DEMO_WEDDING_CONFIG,
   );

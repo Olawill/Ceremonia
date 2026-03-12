@@ -56,13 +56,23 @@ export function EditorShell({ initialConfig, isNew }: Props) {
   const [showDialog, setShowDialog] = useState(isNew);
   const [previewOpen, setPreviewOpen] = useState(false);
 
+  const hasOpenedPreviewRef = useRef(false);
+
   // Prevent body scroll when preview sheet is open
   useEffect(() => {
     document.body.style.overflow = previewOpen ? "hidden" : "";
 
+    if (previewOpen) {
+      hasOpenedPreviewRef.current = true;
+    }
+
     // When closing the preview sheet, stop any playing audio/video in the iframe
     // by blanking then restoring the src — cleanest cross-origin safe approach
-    if (!previewOpen && previewIframeRef.current) {
+    if (
+      !previewOpen &&
+      hasOpenedPreviewRef.current &&
+      previewIframeRef.current
+    ) {
       const iframe = previewIframeRef.current;
       const currentSrc = iframe.src;
       iframe.src = "about:blank";
@@ -313,12 +323,7 @@ export function EditorShell({ initialConfig, isNew }: Props) {
                   ),
                 )}`;
               }}
-              className="flex items-center gap-1.5 font-label text-[9px] tracking-[0.3em] uppercase px-2.5! py-1.5! rounded-lg border transition-all hover:border-[#D4AF37] cursor-pointer"
-              style={{
-                borderColor: "#D4AF3780",
-                color: "#D4AF3780",
-                background: "transparent",
-              }}
+              className="flex items-center gap-1.5 font-label font-semibold text-[9px] tracking-[0.3em] uppercase px-2.5! py-1.5! rounded-lg border border-[#D4AF3780] text-[#D4AF3780] hover:text-[#D4AF37] transition-all hover:border-[#D4AF37] cursor-pointer bg-transparent"
               title="Restart the curtain from scratch"
             >
               <RefreshCwIcon className="size-3" />
