@@ -134,6 +134,7 @@ export function RSVP({
   return (
     <section
       className="min-h-screen flex flex-col items-center justify-center px-5! py-20!"
+      data-testid="rsvp-section"
       style={{
         background: `radial-gradient(ellipse at 30% 70%, ${theme.curtain}18 0%, ${theme.bg} 60%)`,
         paddingInline: "4px",
@@ -175,6 +176,7 @@ export function RSVP({
               <input
                 {...register("name")}
                 placeholder="Your Full Name"
+                data-testid="rsvp-name"
                 onFocus={() => setFocusedField("name")}
                 onBlur={() => setFocusedField(null)}
                 style={inputBase("name")}
@@ -197,7 +199,9 @@ export function RSVP({
                 style={{ ...inputBase("att"), cursor: "pointer" }}
               >
                 <option value="">Will you attend?</option>
-                <option value="yes">Joyfully Accept</option>
+                <option value="yes" data-testid="rsvp-attending-yes">
+                  Joyfully Accept
+                </option>
                 <option value="no">Regretfully Decline</option>
               </select>
               {errors.attendance && (
@@ -235,6 +239,7 @@ export function RSVP({
 
             <button
               type="submit"
+              data-testid="rsvp-submit"
               disabled={isSubmitting}
               className="mt-2! py-4! rounded-lg font-label text-[13px] tracking-[0.4em] cursor-pointer
                 transition-all duration-300"

@@ -50,7 +50,7 @@ export function SettingsClient({
   };
 
   return (
-    <div className="w-full max-w-4xl space-y-10!">
+    <div className="w-full mx-auto space-y-10!">
       {/* Header */}
       <div>
         <p className="font-label text-lg font-bold tracking-[0.5em] uppercase text-dash-gold/70">

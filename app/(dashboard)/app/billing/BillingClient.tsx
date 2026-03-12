@@ -2,8 +2,8 @@
 
 import clsx from "clsx";
 import { ArrowRightIcon, Loader2Icon, StarIcon } from "lucide-react";
-import posthog from "posthog-js";
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import { useEffect, useRef, useState } from "react";
 
 import { useApi } from "@/hooks/useApi";
@@ -174,7 +174,7 @@ export function BillingClient({
   };
 
   return (
-    <div className="w-full p-10 max-w-6xl">
+    <div className="w-full p-10! mx-auto">
       {/* ── Success banner ── */}
       {paymentSuccess && (
         <div className="mb-8! rounded-xl border border-[#D4AF3740] bg-[#D4AF3710] px-6! py-4! flex items-center gap-4">

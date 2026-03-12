@@ -19,6 +19,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Tooltip } from "../ui/Tooltip";
 
 interface NavItem {
   href: string;
@@ -49,12 +50,11 @@ const NavLinks = ({
       {NAV_ITEMS.map(({ href, label, Icon }) => {
         const active = pathname === href || pathname.startsWith(href + "/");
 
-        return (
+        const link = (
           <Link
             key={href}
             href={href}
             onClick={onNavigate}
-            title={collapsed ? label : undefined}
             className={clsx(
               "group relative flex items-center gap-3 h-9 rounded-lg px-3! py-2.5! font-label text-[12px] tracking-[0.3em] uppercase transition-all duration-150 font-semibold",
               active
@@ -77,13 +77,19 @@ const NavLinks = ({
             >
               {label}
             </span>
-            {/* Tooltip when collapsed */}
-            {collapsed && (
-              <span className="pointer-events-none absolute left-full ml-2 z-50 whitespace-nowrap rounded-lg! px-2.5! py-1.5! bg-dash-surface border border-dash-border font-label text-[10px] tracking-widest uppercase text-dash-gold opacity-0 group-hover:opacity-100 transition-opacity duration-150 shadow-lg">
-                {label}
-              </span>
-            )}
           </Link>
+        );
+
+        return (
+          <Tooltip
+            key={href}
+            content={label}
+            position="right"
+            delay={200}
+            showWhen={collapsed}
+          >
+            {link}
+          </Tooltip>
         );
       })}
     </>
@@ -245,23 +251,29 @@ export function Sidebar() {
             )}
           </div>
 
-          <button
-            onClick={() => setCollapsed((c) => !c)}
-            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className={clsx(
-              "flex w-full items-center gap-3 rounded-lg px-2.5! py-2! font-label text-[10px] tracking-widest uppercase text-dash-text/30 hover:text-dash-gold/60 hover:bg-dash-gold/5 transition-all duration-150",
-              collapsed && "justify-center",
-            )}
+          <Tooltip
+            content={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            position="right"
+            delay={200}
+            showWhen={collapsed}
           >
-            {collapsed ? (
-              <ChevronsRightIcon className="size-4" />
-            ) : (
-              <>
-                <ChevronsLeftIcon className="size-4" />
-                <span>Collapse</span>
-              </>
-            )}
-          </button>
+            <button
+              onClick={() => setCollapsed((c) => !c)}
+              className={clsx(
+                "flex w-full items-center gap-3 rounded-lg px-2.5! py-2! font-label text-[10px] tracking-widest uppercase text-dash-text/30 hover:text-dash-gold/60 hover:bg-dash-gold/5 transition-all duration-150 cursor-pointer",
+                collapsed && "justify-center",
+              )}
+            >
+              {collapsed ? (
+                <ChevronsRightIcon className="size-4" />
+              ) : (
+                <>
+                  <ChevronsLeftIcon className="size-4" />
+                  <span>Collapse</span>
+                </>
+              )}
+            </button>
+          </Tooltip>
         </div>
       </aside>
     </>

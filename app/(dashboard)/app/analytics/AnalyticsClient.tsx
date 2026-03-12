@@ -23,7 +23,7 @@ interface Props {
 
 export function AnalyticsClient({ weddings, rsvps }: Props) {
   return (
-    <div className="p-8 max-w-5xl mx-auto space-y-8!">
+    <div className="p-8! w-full mx-auto space-y-8!">
       <div>
         <h1 className="text-[clamp(28px,4vw,42px)] font-display font-light text-[#F5F0E8]">
           Analytics
