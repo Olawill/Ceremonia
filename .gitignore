@@ -37,3 +37,8 @@ next-env.d.ts
 .env.local
 
 .claude
+
+tests/e2e/.auth/user.json
+
+playwright-report
+test-results

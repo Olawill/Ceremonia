@@ -194,6 +194,7 @@ export function RSVP({
             <div>
               <select
                 {...register("attendance")}
+                data-testid="rsvp-attendance"
                 onFocus={() => setFocusedField("att")}
                 onBlur={() => setFocusedField(null)}
                 style={{ ...inputBase("att"), cursor: "pointer" }}

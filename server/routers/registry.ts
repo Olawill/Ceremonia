@@ -11,6 +11,7 @@ import { type Plan, PLAN_FEATURES, planMeetsRequirement } from "@/lib/plans";
 import { getPostHogClient } from "@/lib/posthog-server";
 
 import { getAuthUserId } from "@/server/auth";
+import { scrapeUrl } from "../scrape-helper";
 
 export const registryRouter = new Elysia({ prefix: "/registry" })
   .use(bearer())
@@ -219,109 +220,7 @@ export const registryRouter = new Elysia({ prefix: "/registry" })
         return status(400, { message: "Max 20 URLs at once" });
 
       const results = await Promise.allSettled(
-        urls.map(async (url) => {
-          try {
-            const res = await fetch(url, {
-              headers: {
-                // Impersonate a real browser so retailers don't block us
-                "User-Agent":
-                  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                "Accept-Language": "en-GB,en;q=0.9",
-              },
-              signal: AbortSignal.timeout(8000),
-            });
-
-            if (!res.ok) return { url, error: "Failed to fetch" };
-
-            const html = await res.text();
-            const dom = new JSDOM(html);
-            const doc = dom.window.document;
-
-            const getMeta = (property: string) =>
-              doc
-                .querySelector(
-                  `meta[property="${property}"], meta[name="${property}"]`,
-                )
-                ?.getAttribute("content") ?? null;
-
-            // Extract OG tags
-            const title =
-              getMeta("og:title") ??
-              doc.querySelector("title")?.textContent?.trim() ??
-              null;
-            const imageUrl = getMeta("og:image") ?? null;
-            const description = getMeta("og:description") ?? null;
-            const siteName = getMeta("og:site_name") ?? null;
-
-            // Try to extract price from JSON-LD structured data
-            let price: number | null = null;
-            const scripts = doc.querySelectorAll(
-              'script[type="application/ld+json"]',
-            );
-            for (const script of scripts) {
-              try {
-                const json = JSON.parse(script.textContent ?? "");
-                const offers = json?.offers ?? json?.[0]?.offers;
-                const priceRaw =
-                  offers?.price ?? offers?.[0]?.price ?? json?.price ?? null;
-                if (priceRaw) {
-                  const parsed = parseFloat(
-                    String(priceRaw).replace(/[^0-9.]/g, ""),
-                  );
-                  if (!isNaN(parsed)) {
-                    price = Math.round(parsed * 100); // store in pence
-                    break;
-                  }
-                }
-              } catch {}
-            }
-
-            // Fallback: try common price meta tags
-            if (!price) {
-              const priceMeta =
-                getMeta("product:price:amount") ??
-                getMeta("twitter:data1") ??
-                null;
-              if (priceMeta) {
-                const parsed = parseFloat(priceMeta.replace(/[^0-9.]/g, ""));
-                if (!isNaN(parsed)) price = Math.round(parsed * 100);
-              }
-            }
-
-            // Derive retailer from hostname
-            const hostname = new URL(url).hostname.replace("www.", "");
-            const retailerMap: Record<string, string> = {
-              "amazon.co.uk": "Amazon",
-              "amazon.com": "Amazon",
-              "johnlewis.com": "John Lewis",
-              "etsy.com": "Etsy",
-              "ikea.com": "IKEA",
-              "anthropologie.com": "Anthropologie",
-              "crateandbarrel.com": "Crate & Barrel",
-              "williams-sonoma.com": "Williams Sonoma",
-              "target.com": "Target",
-              "wayfair.com": "Wayfair",
-              "notonthehighstreet.com": "Not On The High Street",
-            };
-            const retailer =
-              siteName ??
-              retailerMap[hostname] ??
-              hostname.split(".")[0].charAt(0).toUpperCase() +
-                hostname.split(".")[0].slice(1);
-
-            return {
-              url,
-              title,
-              imageUrl,
-              description,
-              price,
-              retailer,
-              productUrl: url,
-            };
-          } catch (e) {
-            return { url, error: "Could not scrape this URL" };
-          }
-        }),
+        urls.map((url) => scrapeUrl(url)),
       );
 
       return results.map((r) =>
@@ -499,103 +398,7 @@ export const registryRouter = new Elysia({ prefix: "/registry" })
 
       // Now scrape each product URL (reusing existing scrape logic)
       const results = await Promise.allSettled(
-        productUrls.map(async (productUrl) => {
-          try {
-            const res = await fetch(productUrl, {
-              headers: {
-                "User-Agent":
-                  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                "Accept-Language": "en-GB,en;q=0.9",
-              },
-              signal: AbortSignal.timeout(8000),
-            });
-            if (!res.ok) return { url: productUrl, error: "Failed to fetch" };
-
-            const productHtml = await res.text();
-            const productDom = new JSDOM(productHtml);
-            const productDoc = productDom.window.document;
-
-            const getMeta = (property: string) =>
-              productDoc
-                .querySelector(
-                  `meta[property="${property}"], meta[name="${property}"]`,
-                )
-                ?.getAttribute("content") ?? null;
-
-            const title =
-              getMeta("og:title") ??
-              productDoc.querySelector("title")?.textContent?.trim() ??
-              null;
-            const imageUrl = getMeta("og:image") ?? null;
-            const description = getMeta("og:description") ?? null;
-            const siteName = getMeta("og:site_name") ?? null;
-
-            let price: number | null = null;
-            const scripts = productDoc.querySelectorAll(
-              'script[type="application/ld+json"]',
-            );
-            for (const script of scripts) {
-              try {
-                const json = JSON.parse(script.textContent ?? "");
-                const offers = json?.offers ?? json?.[0]?.offers;
-                const priceRaw =
-                  offers?.price ?? offers?.[0]?.price ?? json?.price ?? null;
-                if (priceRaw) {
-                  const parsed = parseFloat(
-                    String(priceRaw).replace(/[^0-9.]/g, ""),
-                  );
-                  if (!isNaN(parsed)) {
-                    price = Math.round(parsed * 100);
-                    break;
-                  }
-                }
-              } catch {}
-            }
-            if (!price) {
-              const priceMeta =
-                getMeta("product:price:amount") ??
-                getMeta("twitter:data1") ??
-                null;
-              if (priceMeta) {
-                const parsed = parseFloat(priceMeta.replace(/[^0-9.]/g, ""));
-                if (!isNaN(parsed)) price = Math.round(parsed * 100);
-              }
-            }
-
-            const retailerMap: Record<string, string> = {
-              "amazon.co.uk": "Amazon",
-              "amazon.com": "Amazon",
-              "johnlewis.com": "John Lewis",
-              "etsy.com": "Etsy",
-              "ikea.com": "IKEA",
-              "anthropologie.com": "Anthropologie",
-              "crateandbarrel.com": "Crate & Barrel",
-              "wayfair.com": "Wayfair",
-              "notonthehighstreet.com": "Not On The High Street",
-            };
-            const productHostname = new URL(productUrl).hostname.replace(
-              "www.",
-              "",
-            );
-            const retailer =
-              siteName ??
-              retailerMap[productHostname] ??
-              productHostname.split(".")[0].charAt(0).toUpperCase() +
-                productHostname.split(".")[0].slice(1);
-
-            return {
-              url: productUrl,
-              title,
-              imageUrl,
-              description,
-              price,
-              retailer,
-              productUrl,
-            };
-          } catch {
-            return { url: productUrl, error: "Could not scrape this URL" };
-          }
-        }),
+        productUrls.map((productUrl) => scrapeUrl(productUrl)),
       );
 
       return {

@@ -11,7 +11,14 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "db:seed": "bun db/seed.ts"
+    "db:seed": "bun db/seed.ts",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "test:unit:coverage": "vitest run --coverage",
+    "test:integration": "vitest run tests/integration",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test": "bun run test:unit && bun run test:e2e"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.39.0",
@@ -52,6 +59,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@clerk/testing": "^2.0.4",
     "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",

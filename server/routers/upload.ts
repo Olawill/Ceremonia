@@ -7,7 +7,6 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 
 import { PLAN_FEATURES } from "@/lib/plans";
-
 import { getPostHogClient } from "@/lib/posthog-server";
 import { getAuthUserId } from "@/server/auth";
 

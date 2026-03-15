@@ -483,7 +483,7 @@ export function RegistryEditor({ config }: Props) {
                                 ),
                               )
                             }
-                            className="w-full bg-transparent font-display text-sm font-semibold text-dash-text outline-none border-b border-dash-border/50 focus:border-dash-gold/40 pb-0.5 transition-colors"
+                            className="w-full bg-transparent font-display text-sm font-semibold text-dash-text outline-none border-b border-dash-border/50 focus:border-dash-gold/40 pb-0.5! transition-colors"
                           />
                           <div className="flex gap-2">
                             {item.retailer && (
@@ -493,7 +493,7 @@ export function RegistryEditor({ config }: Props) {
                             )}
                             {/* Editable price */}
                             <div className="flex items-center gap-1">
-                              <span className="font-display text-xs text-dash-text/40">
+                              <span className="font-display text-base text-dash-text/40">
                                 £
                               </span>
                               <input
@@ -510,12 +510,12 @@ export function RegistryEditor({ config }: Props) {
                                   )
                                 }
                                 placeholder="price"
-                                className="w-16 bg-transparent font-display text-xs text-dash-gold/80 outline-none border-b border-dash-border/50 focus:border-dash-gold/40 transition-colors"
+                                className="w-10 bg-transparent font-display text-base text-dash-gold/80 outline-none border-b border-dash-border/50 focus:border-dash-gold/40 transition-colors"
                               />
                             </div>
                             {/* Quantity */}
                             <div className="flex items-center gap-1">
-                              <span className="font-display text-xs text-dash-text/40">
+                              <span className="font-display text-base text-dash-text/40">
                                 qty
                               </span>
                               <input
@@ -534,7 +534,7 @@ export function RegistryEditor({ config }: Props) {
                                     ),
                                   )
                                 }
-                                className="w-10 bg-transparent font-display text-xs text-dash-text/70 outline-none border-b border-dash-border/50 focus:border-dash-gold/40 transition-colors"
+                                className="w-6 bg-transparent font-display text-base text-dash-text/70 outline-none border-b border-dash-border/50 focus:border-dash-gold/40 transition-colors"
                               />
                             </div>
                             {/* Category */}

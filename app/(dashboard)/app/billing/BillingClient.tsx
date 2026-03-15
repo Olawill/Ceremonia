@@ -285,7 +285,10 @@ export function BillingClient({
 
               {/* Plan header */}
               <div className="space-y-0.5 font-semibold">
-                <p className="font-label text-sm tracking-widest uppercase text-dash-gold">
+                <p
+                  data-tier-id={tier.name.toLowerCase()}
+                  className="font-label text-sm tracking-widest uppercase text-dash-gold"
+                >
                   {tier.name}
                 </p>
                 <p className="font-display font-light text-[28px] text-dash-text">

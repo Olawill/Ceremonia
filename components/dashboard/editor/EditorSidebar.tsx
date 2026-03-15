@@ -13,6 +13,11 @@ import { RegistryEditor } from "@/components/dashboard/editor/RegistryEditor";
 import { RSVPSettings } from "@/components/dashboard/editor/RSVPSettings";
 import { TimelineEditor } from "@/components/dashboard/editor/TimelineEditor";
 import { VenueEditor } from "@/components/dashboard/editor/VenueEditor";
+import { AccommodationEditor } from "./AccommodationEditor";
+import { DressCodeEditor } from "./DressCodeEditor";
+import { FaqEditor } from "./FaqEditor";
+import { LivestreamEditor } from "./LivestreamEditor";
+import { WeddingPartyEditor } from "./WeddingPartyEditor";
 
 const TABS = [
   { id: "design", label: "Design" },
@@ -85,6 +90,25 @@ export function EditorSidebar({ config, onChange, previewIframeRef }: Props) {
         </div>
         <div className={activeTab === "media" ? "p-2 space-y-6" : "hidden"}>
           <MediaUploader config={config} onChange={onChange} />
+        </div>
+        <div className={activeTab === "dresscode" ? "p-2 space-y-6" : "hidden"}>
+          <DressCodeEditor config={config} onChange={onChange} />
+        </div>
+        <div
+          className={activeTab === "accommodation" ? "p-2 space-y-6" : "hidden"}
+        >
+          <AccommodationEditor config={config} onChange={onChange} />
+        </div>
+        <div className={activeTab === "party" ? "p-2 space-y-6" : "hidden"}>
+          <WeddingPartyEditor config={config} onChange={onChange} />
+        </div>
+        <div className={activeTab === "faq" ? "p-2 space-y-6" : "hidden"}>
+          <FaqEditor config={config} onChange={onChange} />
+        </div>
+        <div
+          className={activeTab === "livestream" ? "p-2 space-y-6" : "hidden"}
+        >
+          <LivestreamEditor config={config} onChange={onChange} />
         </div>
         <div className={activeTab === "rsvp" ? "p-2 space-y-6" : "hidden"}>
           <RSVPSettings config={config} onChange={onChange} />
