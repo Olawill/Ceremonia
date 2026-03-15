@@ -138,6 +138,10 @@ export function EditorShell({ initialConfig, isNew }: Props) {
         livestreamUrl: config.livestreamUrl,
         livestreamTitle: config.livestreamTitle,
         livestreamNote: config.livestreamNote,
+        photoGalleryEnabled: config.photoGalleryEnabled,
+        galleryPhotos: config.galleryPhotos,
+        travelGuideEnabled: config.travelGuideEnabled,
+        travelItems: config.travelItems,
       } satisfies Parameters<typeof api.weddings.post>[0];
 
       if (isNew) {

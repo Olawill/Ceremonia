@@ -210,6 +210,7 @@ export function WeddingPartyEditor({ config, onChange }: Props) {
         onToggle={() =>
           onChange({ weddingPartyEnabled: !config.weddingPartyEnabled })
         }
+        disabledMessage="Enable to introduce your bridesmaids, groomsmen, and wedding party."
       />
       {config.weddingPartyEnabled && (
         <>

@@ -27,15 +27,18 @@ export function TravelGuide({ items, city }: Props) {
   return (
     <section
       ref={ref}
-      className="min-h-screen flex flex-col items-center justify-center px-8 py-20"
+      className="min-h-screen flex flex-col items-center justify-center px-8! py-20!"
     >
       <p
-        className="font-label text-[11px] tracking-[0.5em] uppercase mb-2"
+        className="font-label text-[11px] tracking-[0.5em] uppercase mb-2!"
         style={{ color: theme.gold }}
       >
         Getting to {city}
       </p>
-      <h2 className="font-display text-3xl mb-12" style={{ color: theme.text }}>
+      <h2
+        className="font-display text-3xl mb-12!"
+        style={{ color: theme.text }}
+      >
         Travel & Stay
       </h2>
       <div className="grid gap-4 max-w-2xl w-full">
@@ -47,14 +50,14 @@ export function TravelGuide({ items, city }: Props) {
               href={item.link ?? "#"}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-start gap-4 p-5 rounded-xl border transition-all hover:border-(--gold)"
+              className="flex items-start gap-4 p-5! rounded-xl border transition-all hover:border-(--gold)"
               style={{
                 borderColor: `${theme.gold}20`,
                 background: `${theme.gold}05`,
               }}
             >
               <Icon
-                className="size-5 mt-0.5 shrink-0"
+                className="size-5 mt-0.5! shrink-0"
                 style={{ color: theme.gold }}
               />
               <div>
@@ -65,7 +68,7 @@ export function TravelGuide({ items, city }: Props) {
                   {item.name}
                 </p>
                 <p
-                  className="font-display text-sm mt-1"
+                  className="font-display text-sm mt-1!"
                   style={{ color: `${theme.text}90` }}
                 >
                   {item.description}

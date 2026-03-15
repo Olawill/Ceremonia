@@ -37,9 +37,9 @@ export function PhotoGallery({ photos, caption }: Props) {
   if (!photos.length) return null;
 
   return (
-    <section className="min-h-screen flex flex-col items-center justify-center px-8 py-20">
+    <section className="min-h-screen flex flex-col items-center justify-center px-8! py-20!">
       <p
-        className="font-label text-[11px] tracking-[0.5em] uppercase mb-12"
+        className="font-label text-[11px] tracking-[0.5em] uppercase mb-12!"
         style={{ color: theme.gold }}
       >
         Our Memories
@@ -51,7 +51,7 @@ export function PhotoGallery({ photos, caption }: Props) {
         {photos.map((src, i) => (
           <div
             key={i}
-            className="photo-card relative bg-white p-3 pb-10 shadow-2xl"
+            className="photo-card relative bg-white p-3! pb-10! shadow-2xl"
             style={{ transform: `rotate(${((i % 3) - 1) * 3}deg)` }}
           >
             <img

@@ -22,6 +22,7 @@ export function LivestreamEditor({ config, onChange }: Props) {
         onToggle={() =>
           onChange({ livestreamEnabled: !config.livestreamEnabled })
         }
+        disabledMessage="Enable to embed a live stream so remote guests can watch the ceremony."
       />
 
       {config.livestreamEnabled && (

@@ -33,6 +33,7 @@ export function WeddingEngine({
 }: WeddingEngineProps) {
   const { theme } = useTheme();
 
+  const [activeIndex, setActiveIndex] = useState(0);
   const [curtainOpen, setCurtainOpen] = useState(false);
   const [dateRevealed, setDateRevealed] = useState(false);
 
@@ -50,6 +51,41 @@ export function WeddingEngine({
       window.parent.postMessage({ type: "CURTAIN_OPEN" }, "*");
     }
   };
+
+  const handleDateRevealed = () => {
+    setDateRevealed(true);
+    if (window.self !== window.top) {
+      window.parent.postMessage({ type: "DATE_REVEALED" }, "*");
+    }
+  };
+
+  const sections = buildSections(config, dateRevealed, handleDateRevealed);
+
+  useEffect(() => {
+    if (!curtainOpen) return;
+
+    const container = document.querySelector("[data-scroll-container]");
+    if (!container) return;
+
+    const sectionEls = Array.from(
+      container.querySelectorAll<HTMLElement>("[data-section]"),
+    );
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const idx = sectionEls.indexOf(entry.target as HTMLElement);
+            if (idx !== -1) setActiveIndex(idx);
+          }
+        }
+      },
+      { root: container, threshold: 0.5 },
+    );
+
+    sectionEls.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [curtainOpen, sections.length]);
 
   return (
     <>
@@ -106,25 +142,23 @@ export function WeddingEngine({
         }}
       >
         {/* Each section wrapper enforces full-viewport snap alignment */}
-        {buildSections(config, dateRevealed, () => setDateRevealed(true)).map(
-          (section, i) => (
-            <div
-              key={i}
-              data-section={section.key}
-              style={{
-                scrollSnapAlign: "start",
-                scrollSnapStop: "always",
-                minHeight: "100vh",
-                background: i % 2 === 0 ? theme.bg : theme.bgMid,
-                // Padding to keep content below the drape valance when drape is active
-                paddingTop:
-                  curtainStyle === "drape" ? "clamp(140px, 24vh, 280px)" : 0,
-              }}
-            >
-              {section.node}
-            </div>
-          ),
-        )}
+        {sections.map((section, i) => (
+          <div
+            key={i}
+            data-section={section.key}
+            style={{
+              scrollSnapAlign: "start",
+              scrollSnapStop: "always",
+              minHeight: "100vh",
+              background: i % 2 === 0 ? theme.bg : theme.bgMid,
+              // Padding to keep content below the drape valance when drape is active
+              paddingTop:
+                curtainStyle === "drape" ? "clamp(140px, 24vh, 280px)" : 0,
+            }}
+          >
+            {section.node}
+          </div>
+        ))}
       </main>
 
       {/* Float nav */}
@@ -141,7 +175,7 @@ export function WeddingEngine({
             gap: "6px",
           }}
         >
-          {buildSections(config, dateRevealed, () => {}).map((s, i) => (
+          {sections.map((s, i) => (
             <button
               key={s.key}
               title={s.label}
@@ -153,7 +187,8 @@ export function WeddingEngine({
                 height: "6px",
                 borderRadius: "50%",
                 border: "1px solid " + theme.gold + "80",
-                background: theme.gold + "40",
+                // background: theme.gold + "40",
+                background: i === activeIndex ? theme.gold : theme.gold + "40",
                 padding: 0,
                 cursor: "pointer",
                 transition: "all 0.2s",
@@ -165,7 +200,9 @@ export function WeddingEngine({
               }}
               onMouseLeave={(e) => {
                 const btn = e.currentTarget as HTMLButtonElement;
-                btn.style.background = `${theme.gold}40`;
+                // btn.style.background = `${theme.gold}40`;
+                btn.style.background =
+                  i === activeIndex ? theme.gold : `${theme.gold}40`;
                 btn.style.transform = "scale(1)";
               }}
             />

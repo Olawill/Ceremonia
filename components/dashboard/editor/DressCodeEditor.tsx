@@ -70,6 +70,7 @@ export function DressCodeEditor({ config, onChange }: Props) {
         onToggle={() =>
           onChange({ dressCodeEnabled: !config.dressCodeEnabled })
         }
+        disabledMessage="Enable to share your dress code and colour palette with guests."
       />
 
       {config.dressCodeEnabled && (

@@ -83,9 +83,12 @@ export function Tooltip<T extends React.ElementType = "button">({
   showWhen = true,
 }: TooltipProps) {
   const [visible, setVisible] = useState(false);
-  const [coords, setCoords] = useState<Coords>({ top: 0, left: 0 });
+  const [coords, setCoords] = useState<Coords | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [ready, setReady] = useState(false);
+
   const triggerRef = useRef<HTMLElement | null>(null);
+  const measureRef = useRef<HTMLDivElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -94,9 +97,9 @@ export function Tooltip<T extends React.ElementType = "button">({
   }, []);
 
   const updatePosition = useCallback(() => {
-    if (!triggerRef.current || !tooltipRef.current) return;
+    if (!triggerRef.current || !measureRef.current) return;
     const triggerRect = triggerRef.current.getBoundingClientRect();
-    const tooltipRect = tooltipRef.current.getBoundingClientRect();
+    const tooltipRect = measureRef.current.getBoundingClientRect();
     setCoords(getPosition(triggerRect, tooltipRect, position));
   }, [position]);
 
@@ -108,11 +111,39 @@ export function Tooltip<T extends React.ElementType = "button">({
   const hide = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
     setVisible(false);
+    setCoords(null);
   }, []);
 
+  // useEffect(() => {
+  //   if (!visible) {
+  //     setCoords(null);
+  //     return;
+  //   }
+  //   // Two rAF passes: first lets the DOM paint the invisible tooltip,
+  //   // second measures it after it has dimensions
+  //   requestAnimationFrame(() => {
+  //     requestAnimationFrame(() => {
+  //       updatePosition();
+  //     });
+  //   });
+  // }, [visible, updatePosition]);
+
   useEffect(() => {
-    if (visible) requestAnimationFrame(updatePosition);
-  }, [visible, updatePosition]);
+    if (!visible) {
+      setReady(false);
+      setCoords(null);
+      return;
+    }
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (!triggerRef.current || !tooltipRef.current) return;
+        const triggerRect = triggerRef.current.getBoundingClientRect();
+        const tooltipRect = tooltipRef.current.getBoundingClientRect();
+        setCoords(getPosition(triggerRect, tooltipRect, position));
+        setReady(true);
+      });
+    });
+  }, [visible, position]);
 
   useEffect(() => {
     if (!showWhen) {
@@ -122,12 +153,19 @@ export function Tooltip<T extends React.ElementType = "button">({
   }, [showWhen]);
 
   const arrowClasses: Record<TooltipPosition, string> = {
-    top: "bottom-[-4px] left-1/2 -translate-x-1/2 border-l border-t border-[var(--dash-border)]",
+    top: "bottom-[-4px] left-1/2 -translate-x-1/2 border-l border-t border-dash-gold/60",
     bottom:
-      "top-[-4px]    left-1/2 -translate-x-1/2 border-r border-b border-[var(--dash-border)]",
-    left: "right-[-4px]  top-1/2  -translate-y-1/2 border-r border-t border-[var(--dash-border)]",
+      "top-[-4px] left-1/2 -translate-x-1/2 border-r border-b border-dash-gold/60",
+    left: "right-[-4px] top-1/2 -translate-y-1/2 border-r border-t border-dash-gold/60",
     right:
-      "left-[-4px]   top-1/2  -translate-y-1/2 border-l border-b border-[var(--dash-border)]",
+      "left-[-4px] top-1/2 -translate-y-1/2 border-l border-b border-dash-gold/60",
+  };
+
+  const transformOriginClasses: Record<TooltipPosition, string> = {
+    top: "origin-bottom",
+    bottom: "origin-top",
+    left: "origin-right",
+    right: "origin-left",
   };
 
   type ChildProps = React.ComponentPropsWithRef<T>;
@@ -175,6 +213,56 @@ export function Tooltip<T extends React.ElementType = "button">({
   } as Partial<ChildProps>);
 
   return (
+    // <>
+    //   {trigger}
+    //   {mounted &&
+    //     visible &&
+    //     createPortal(
+    //       coords === null ? (
+    //         // Invisible measurement node — no position, no animation, just gets measured
+    //         <div
+    //           ref={measureRef}
+    //           aria-hidden="true"
+    //           style={{
+    //             position: "fixed",
+    //             visibility: "hidden",
+    //             top: -9999,
+    //             left: -9999,
+    //           }}
+    //           className={clsx(
+    //             "pointer-events-none max-w-[240px] px-3! py-2! rounded-xl",
+    //             "font-label text-[11px] tracking-[0.2em] uppercase",
+    //             className,
+    //           )}
+    //         >
+    //           {content}
+    //         </div>
+    //       ) : (
+    //         <div
+    //           ref={tooltipRef}
+    //           role="tooltip"
+    //           style={{ top: coords.top, left: coords.left }}
+    //           className={clsx(
+    //             "pointer-events-none fixed z-9999",
+    //             "max-w-[240px] px-3! py-2! rounded-xl",
+    //             "bg-dash-surface border border-dash-border shadow-xl",
+    //             "font-label text-[11px] tracking-[0.2em] uppercase text-dash-gold",
+    //             `animate-in fade-in zoom-in-95 duration-150 ${transformOriginClasses[position]}`,
+    //             className,
+    //           )}
+    //         >
+    //           {content}
+    //           <span
+    //             className={clsx(
+    //               "absolute w-2 h-2 rotate-45 bg-dash-surface",
+    //               arrowClasses[position],
+    //             )}
+    //           />
+    //         </div>
+    //       ),
+    //       document.body,
+    //     )}
+    // </>
     <>
       {trigger}
       {mounted &&
@@ -183,13 +271,28 @@ export function Tooltip<T extends React.ElementType = "button">({
           <div
             ref={tooltipRef}
             role="tooltip"
-            style={{ top: coords.top, left: coords.left }}
+            style={{
+              position: "fixed",
+              top: coords?.top ?? -9999,
+              left: coords?.left ?? -9999,
+              zIndex: 9999,
+              opacity: ready ? 1 : 0,
+              transform: ready ? "scale(1)" : "scale(0.92)",
+              transformOrigin: {
+                top: "bottom center",
+                bottom: "top center",
+                left: "right center",
+                right: "left center",
+              }[position],
+              transition: ready
+                ? "opacity 120ms ease-out, transform 120ms ease-out"
+                : "none",
+              pointerEvents: "none",
+            }}
             className={clsx(
-              "pointer-events-none fixed z-9999",
               "max-w-[240px] px-3! py-2! rounded-xl",
-              "bg-dash-surface border border-dash-border shadow-xl",
+              "bg-dash-surface border border-dash-gold/60 shadow-xl",
               "font-label text-[11px] tracking-[0.2em] uppercase text-dash-gold",
-              "animate-in fade-in zoom-in-95 duration-150",
               className,
             )}
           >

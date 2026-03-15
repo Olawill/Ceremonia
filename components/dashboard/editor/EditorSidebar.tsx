@@ -5,19 +5,21 @@ import { useState } from "react";
 
 import type { WeddingConfig } from "@/types/wedding";
 
+import { AccommodationEditor } from "@/components/dashboard/editor/AccommodationEditor";
 import { ContentEditor } from "@/components/dashboard/editor/ContentEditor";
 import { DesignPanel } from "@/components/dashboard/editor/DesignPanel";
+import { DressCodeEditor } from "@/components/dashboard/editor/DressCodeEditor";
+import { FaqEditor } from "@/components/dashboard/editor/FaqEditor";
+import { LivestreamEditor } from "@/components/dashboard/editor/LivestreamEditor";
 import { MediaUploader } from "@/components/dashboard/editor/MediaUploader";
 import { MenuEditor } from "@/components/dashboard/editor/MenuEditor";
+import { PhotoGalleryEditor } from "@/components/dashboard/editor/PhotoGalleryEditor";
 import { RegistryEditor } from "@/components/dashboard/editor/RegistryEditor";
 import { RSVPSettings } from "@/components/dashboard/editor/RSVPSettings";
 import { TimelineEditor } from "@/components/dashboard/editor/TimelineEditor";
+import { TravelGuideEditor } from "@/components/dashboard/editor/TravelGuideEditor";
 import { VenueEditor } from "@/components/dashboard/editor/VenueEditor";
-import { AccommodationEditor } from "./AccommodationEditor";
-import { DressCodeEditor } from "./DressCodeEditor";
-import { FaqEditor } from "./FaqEditor";
-import { LivestreamEditor } from "./LivestreamEditor";
-import { WeddingPartyEditor } from "./WeddingPartyEditor";
+import { WeddingPartyEditor } from "@/components/dashboard/editor/WeddingPartyEditor";
 
 const TABS = [
   { id: "design", label: "Design" },
@@ -26,11 +28,13 @@ const TABS = [
   { id: "timeline", label: "Timeline" },
   { id: "menu", label: "Menu" },
   { id: "media", label: "Media" },
+  { id: "gallery", label: "Gallery" },
   { id: "dresscode", label: "Attire" },
   { id: "accommodation", label: "Stay" },
   { id: "party", label: "Party" },
   { id: "faq", label: "FAQ" },
   { id: "livestream", label: "Stream" },
+  { id: "travel", label: "Travel" },
   { id: "rsvp", label: "RSVP" },
   { id: "registry", label: "Registry" },
 ] as const;
@@ -91,6 +95,9 @@ export function EditorSidebar({ config, onChange, previewIframeRef }: Props) {
         <div className={activeTab === "media" ? "p-2 space-y-6" : "hidden"}>
           <MediaUploader config={config} onChange={onChange} />
         </div>
+        <div className={activeTab === "gallery" ? "p-2 space-y-6" : "hidden"}>
+          <PhotoGalleryEditor config={config} onChange={onChange} />
+        </div>
         <div className={activeTab === "dresscode" ? "p-2 space-y-6" : "hidden"}>
           <DressCodeEditor config={config} onChange={onChange} />
         </div>
@@ -110,11 +117,14 @@ export function EditorSidebar({ config, onChange, previewIframeRef }: Props) {
         >
           <LivestreamEditor config={config} onChange={onChange} />
         </div>
+        <div className={activeTab === "travel" ? "p-2 space-y-6" : "hidden"}>
+          <TravelGuideEditor config={config} onChange={onChange} />
+        </div>
         <div className={activeTab === "rsvp" ? "p-2 space-y-6" : "hidden"}>
           <RSVPSettings config={config} onChange={onChange} />
         </div>
         <div className={activeTab === "registry" ? "p-2 space-y-6" : "hidden"}>
-          <RegistryEditor config={config} />
+          <RegistryEditor config={config} onChange={onChange} />
         </div>
       </div>
     </div>

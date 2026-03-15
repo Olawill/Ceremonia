@@ -109,6 +109,7 @@ export function FaqEditor({ config, onChange }: Props) {
         label="FAQ"
         enabled={config.faqEnabled ?? false}
         onToggle={() => onChange({ faqEnabled: !config.faqEnabled })}
+        disabledMessage="Enable to answer common questions your guests might have."
       />
 
       {config.faqEnabled && (

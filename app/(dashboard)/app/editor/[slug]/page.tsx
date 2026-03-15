@@ -16,6 +16,7 @@ import type {
   DressCodeConfig,
   FaqItem,
   TimelineEvent,
+  TravelItem,
   VenueEvent,
   WeddingConfig,
   WeddingPartyMember,
@@ -93,6 +94,10 @@ export default async function EditorPage({ params }: Props) {
     livestreamUrl: wedding.livestreamUrl ?? undefined,
     livestreamTitle: wedding.livestreamTitle ?? undefined,
     livestreamNote: wedding.livestreamNote ?? undefined,
+    photoGalleryEnabled: wedding.photoGalleryEnabled ?? false,
+    galleryPhotos: (wedding.galleryPhotos as string[]) ?? [],
+    travelGuideEnabled: wedding.travelGuideEnabled ?? false,
+    travelItems: (wedding.travelItems as TravelItem[]) ?? [],
   };
 
   return <EditorShell initialConfig={config} isNew={false} />;

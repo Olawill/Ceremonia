@@ -231,6 +231,7 @@ export function AccommodationEditor({ config, onChange }: Props) {
         onToggle={() =>
           onChange({ accommodationEnabled: !config.accommodationEnabled })
         }
+        disabledMessage="Enable to suggest hotels and accommodation options for your guests."
       />
 
       {config.accommodationEnabled && (

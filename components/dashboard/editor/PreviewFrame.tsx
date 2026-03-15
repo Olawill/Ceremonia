@@ -22,6 +22,7 @@ function buildUrl(config: WeddingConfig): string {
 
 export function PreviewFrame({ config, iframeRef }: Props) {
   const [curtainOpen, setCurtainOpen] = useState(false);
+  const [dateRevealed, setDateRevealed] = useState(false);
 
   // Freeze the src on first mount — never change it, use postMessage for all updates
   const frozenSrcRef = useRef<string | null>(null);
@@ -37,21 +38,15 @@ export function PreviewFrame({ config, iframeRef }: Props) {
   // Send config to the iframe via postMessage whenever it changes
   useEffect(() => {
     const iframe = iframeRef.current;
-    console.log(
-      "[PreviewFrame] config changed, iframe:",
-      iframe,
-      "contentWindow:",
-      iframe?.contentWindow,
-    );
     if (!iframe?.contentWindow) return;
 
-    console.log("[PreviewFrame] sending PREVIEW_CONFIG");
     iframe.contentWindow.postMessage({ type: "PREVIEW_CONFIG", config }, "*");
   }, [config]);
 
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       if (e.data?.type === "CURTAIN_OPEN") setCurtainOpen(true);
+      if (e.data?.type === "DATE_REVEALED") setDateRevealed(true);
     };
     window.addEventListener("message", handler);
     return () => window.removeEventListener("message", handler);
@@ -60,10 +55,9 @@ export function PreviewFrame({ config, iframeRef }: Props) {
   // When the iframe first loads, push the current config in case
   // the initial URL param was stale or too long
   const handleLoad = () => {
-    console.log("[PreviewFrame] iframe onLoad fired");
     setCurtainOpen(false);
+    setDateRevealed(false);
     setTimeout(() => {
-      console.log("[PreviewFrame] sending PREVIEW_CONFIG after load timeout");
       iframeRef.current?.contentWindow?.postMessage(
         { type: "PREVIEW_CONFIG", config },
         "*",
@@ -88,7 +82,7 @@ export function PreviewFrame({ config, iframeRef }: Props) {
             Jump to
           </span>
           <div className="flex gap-1 flex-wrap">
-            {buildSections(config, true, () => {}).map((s, i) => (
+            {buildSections(config, dateRevealed, () => {}).map((s, i) => (
               <button
                 key={s.key}
                 onClick={() =>
