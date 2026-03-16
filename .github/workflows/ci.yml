@@ -17,6 +17,20 @@ jobs:
       NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY_TEST }}
       CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY_TEST }}
       STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY_TEST }}
+      CLERK_WEBHOOK_SIGNING_SECRET: placeholder
+      STRIPE_WEBHOOK_SECRET: placeholder
+      RESEND_API_KEY: placeholder
+      BLOB_READ_WRITE_TOKEN: placeholder
+      UNSPLASH_ACCESS_KEY: placeholder
+      PIXABAY_API_KEY: placeholder
+      NEXT_PUBLIC_WEDDING_THEME: royal
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_placeholder
+      NEXT_PUBLIC_STRIPE_PRICE_STARTER_MONTHLY: price_placeholder
+      NEXT_PUBLIC_STRIPE_PRICE_STARTER_ONCE: price_placeholder
+      NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY: price_placeholder
+      NEXT_PUBLIC_STRIPE_PRICE_AGENCY_MONTHLY: price_placeholder
+      NEXT_PUBLIC_POSTHOG_KEY: phc_placeholder
+      NEXT_PUBLIC_POSTHOG_HOST: https://app.posthog.com
     services:
       postgres:
         image: postgres:16-alpine
