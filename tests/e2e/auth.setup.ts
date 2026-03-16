@@ -72,6 +72,16 @@ setup("authenticate", async ({ page }) => {
       await page.fill("[data-input-otp='true']", "424242");
       // await page.locator(".cl-formButtonPrimary").click();
     }
+
+    if (page.url().includes("factor-two")) {
+      const otpField = await page
+        .waitForSelector("[data-input-otp='true']", { timeout: 8000 })
+        .catch(() => null);
+      if (otpField) {
+        await page.fill("[data-input-otp='true']", "424242");
+        await page.locator(".cl-formButtonPrimary").click();
+      }
+    }
   }
 
   // Wait until we've landed on the dashboard
