@@ -160,7 +160,12 @@ test.describe("Wedding invitation — password protected", () => {
       return;
     }
 
-    await page.locator('input[type="password"]').fill("wrongpassword");
+    await page
+      .locator('input[type="password"]')
+      .pressSequentially("wrongpassword");
+    await expect(page.locator('button[type="submit"]')).toBeEnabled({
+      timeout: 5000,
+    });
     await page.locator('button[type="submit"]').click();
 
     // PasswordGate shows "Incorrect password" on failed attempt
@@ -181,7 +186,13 @@ test.describe("Wedding invitation — password protected", () => {
       return;
     }
 
-    await page.locator('input[type="password"]').fill(CORRECT_PASSWORD);
+    // await page.locator('input[type="password"]').fill(CORRECT_PASSWORD);
+    await page
+      .locator('input[type="password"]')
+      .pressSequentially(CORRECT_PASSWORD);
+    await expect(page.locator('button[type="submit"]')).toBeEnabled({
+      timeout: 5000,
+    });
     await page.locator('button[type="submit"]').click();
 
     // After correct password, router.refresh() is called and the gate disappears

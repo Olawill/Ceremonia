@@ -29,10 +29,10 @@ export function PasswordGate({ slug }: Props) {
 
   return (
     <div className="fixed inset-0 z-9999 flex items-center justify-center bg-[#0d0a07]">
-      <div className="w-full max-w-sm px-8 py-10 rounded-2xl border border-[#D4AF3730] bg-[#12100c] text-center flex flex-col gap-6">
+      <div className="w-full max-w-sm px-8! py-10! rounded-2xl border border-[#D4AF3730] bg-[#12100c] text-center flex flex-col gap-6">
         <div className="text-[#D4AF37] text-4xl">✦</div>
         <div>
-          <h1 className="font-display text-2xl font-light text-[#F5F0E8] mb-1">
+          <h1 className="font-display text-2xl font-light text-[#F5F0E8] mb-1!">
             Private Invitation
           </h1>
           <p className="font-display italic text-sm text-[#F5F0E880]">
@@ -49,7 +49,7 @@ export function PasswordGate({ slug }: Props) {
             }}
             placeholder="Password"
             autoFocus
-            className="w-full px-4 py-3 rounded-lg bg-[#F5F0E808] border border-[#D4AF3730] text-[#F5F0E8] font-display text-base outline-none focus:border-[#D4AF37] transition-colors placeholder:text-[#F5F0E840]"
+            className="w-full px-4! py-3! rounded-lg bg-[#F5F0E808] border border-[#D4AF3730] text-[#F5F0E8] font-display text-base outline-none focus:border-[#D4AF37] transition-colors placeholder:text-[#F5F0E840]"
           />
           {error && (
             <p className="text-[#D4AF3780] font-display italic text-sm">
@@ -59,7 +59,7 @@ export function PasswordGate({ slug }: Props) {
           <button
             type="submit"
             disabled={isPending || !input.trim()}
-            className="w-full py-3 rounded-lg border border-[#D4AF37] bg-[#D4AF3715] text-[#D4AF37] font-label text-[12px] tracking-[0.4em] uppercase transition-colors hover:bg-[#D4AF3725] disabled:opacity-50"
+            className="w-full py-3! rounded-lg border border-[#D4AF37] bg-[#D4AF3715] text-[#D4AF37] font-label text-[12px] tracking-[0.4em] uppercase transition-colors hover:bg-[#D4AF3725] disabled:opacity-50"
           >
             {isPending ? "Checking…" : "Enter"}
           </button>
