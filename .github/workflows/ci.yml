@@ -75,6 +75,10 @@ jobs:
       BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN_TEST || 'vercel_blob_placeholder' }}
       NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY_TEST }}
       NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY_TEST }}
+      NEXT_PUBLIC_CLERK_SIGN_IN_URL: /sign-in
+      NEXT_PUBLIC_CLERK_SIGN_UP_URL: /sign-up
+      NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL: /app/dashboard
+      NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL: /app/dashboard
       # Public config
       NEXT_PUBLIC_APP_URL: http://localhost:3000
       NEXT_PUBLIC_ROOT_DOMAIN: ceremonia.app
@@ -91,7 +95,7 @@ jobs:
       NEXT_PUBLIC_STRIPE_PRICE_AGENCY_MONTHLY: price_placeholder
       # Playwright
       PLAYWRIGHT_BASE_URL: http://localhost:3000
-      TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+      TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL || 'test+clerk_test@ceremonia.app' }}
       TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
       PLAYWRIGHT_DEMO_SLUG: demo
       # Suppress Next.js telemetry prompt in build output
