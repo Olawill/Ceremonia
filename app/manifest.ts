@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Ceremonia",
     short_name: "Ceremonia",
     description:
-      "Create cinematic, personalised wedding invitations your guests will never forget.",
+      "Create cinematic, personalised event invitations your guests will never forget.",
     start_url: "/",
     display: "standalone",
     background_color: "#0F0A0A",

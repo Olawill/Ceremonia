@@ -3,7 +3,7 @@ import { env } from "@/env";
 export type Plan = "free" | "starter" | "pro" | "agency";
 
 export interface PlanFeatures {
-  maxWeddings: number; // Infinity = unlimited
+  maxEvents: number; // Infinity = unlimited
   customThemes: boolean; // Pro+
   customAudio: boolean; // Starter+
   allBuiltInThemes: boolean; // Starter+
@@ -24,7 +24,7 @@ export interface PlanFeatures {
 
 export const PLAN_FEATURES: Record<Plan, PlanFeatures> = {
   free: {
-    maxWeddings: 1,
+    maxEvents: 1,
     customThemes: false,
     customAudio: false,
     allBuiltInThemes: false,
@@ -43,7 +43,7 @@ export const PLAN_FEATURES: Record<Plan, PlanFeatures> = {
     registryScraper: false,
   },
   starter: {
-    maxWeddings: 1,
+    maxEvents: 1,
     customThemes: false,
     customAudio: true,
     allBuiltInThemes: true,
@@ -62,7 +62,7 @@ export const PLAN_FEATURES: Record<Plan, PlanFeatures> = {
     registryScraper: true,
   },
   pro: {
-    maxWeddings: 5,
+    maxEvents: 5,
     customThemes: true,
     customAudio: true,
     allBuiltInThemes: true,
@@ -81,7 +81,7 @@ export const PLAN_FEATURES: Record<Plan, PlanFeatures> = {
     registryScraper: true,
   },
   agency: {
-    maxWeddings: Infinity,
+    maxEvents: Infinity,
     customThemes: true,
     customAudio: true,
     allBuiltInThemes: true,

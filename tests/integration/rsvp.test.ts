@@ -31,10 +31,10 @@ vi.mock("@/server/auth", () => ({
 import { app } from "@/server";
 
 describe("POST /api/rsvp — unauthenticated access", () => {
-  it("returns 404 when body is missing weddingId that matches nothing", async () => {
+  it("returns 404 when body is missing eventId that matches nothing", async () => {
     const { db } = await import("@/db");
 
-    // Simulate no wedding found
+    // Simulate no event found
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: () => ({
         where: () => ({
@@ -58,7 +58,7 @@ describe("POST /api/rsvp — unauthenticated access", () => {
 
     expect(res.status).toBe(404);
     const body = await res.json();
-    expect(body.message).toBe("Wedding not found");
+    expect(body.message).toBe("Event not found");
   });
 
   it("returns 422 when required fields are missing", async () => {
@@ -77,7 +77,7 @@ describe("POST /api/rsvp — unauthenticated access", () => {
     const { db } = await import("@/db");
     const mockSelect = (db as any).select as ReturnType<typeof vi.fn>;
 
-    // First call: get wedding — returns wedding with userId
+    // First call: get event — returns event with userId
     // Second call: get owner plan — returns free
     // Third call: get rsvp count — returns 20 (at cap)
     mockSelect
@@ -218,14 +218,14 @@ describe("POST /api/rsvp — unauthenticated access", () => {
 });
 
 describe("GET /api/rsvp", () => {
-  it("returns 400 when weddingId is missing", async () => {
+  it("returns 400 when eventId is missing", async () => {
     const res = await app.handle(
       new Request("http://localhost/api/rsvp", { method: "GET" }),
     );
     expect(res.status).toBe(400);
   });
 
-  it("returns results when weddingId is provided", async () => {
+  it("returns results when eventId is provided", async () => {
     const { db } = await import("@/db");
     const mockRsvps = [
       {
@@ -255,7 +255,7 @@ describe("GET /api/rsvp", () => {
 });
 
 describe("GET /api/rsvp/export", () => {
-  it("returns 400 when weddingId is missing", async () => {
+  it("returns 400 when eventId is missing", async () => {
     const res = await app.handle(
       new Request("http://localhost/api/rsvp/export", { method: "GET" }),
     );

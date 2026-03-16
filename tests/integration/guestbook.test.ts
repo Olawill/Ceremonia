@@ -84,10 +84,10 @@ beforeEach(() => {
   mockDb.delete.mockReturnValue({ where: () => Promise.resolve() });
 });
 
-// ── GET /:weddingSlug ─────────────────────────────────────────────────────────
+// ── GET /:eventSlug ─────────────────────────────────────────────────────────
 
-describe("GET /api/guestbook/:weddingSlug", () => {
-  it("returns 404 when wedding does not exist", async () => {
+describe("GET /api/guestbook/:eventSlug", () => {
+  it("returns 404 when event does not exist", async () => {
     mockDb.select.mockReturnValueOnce(selectReturning([]));
     const r = await req("GET", "/unknown-slug");
     expect(r.status).toBe(404);
@@ -96,7 +96,7 @@ describe("GET /api/guestbook/:weddingSlug", () => {
 
   it("returns 403 when guest book is disabled", async () => {
     mockDb.select.mockReturnValueOnce(
-      selectReturning([{ id: "wedding-1", guestBookEnabled: false }]),
+      selectReturning([{ id: "event-1", guestBookEnabled: false }]),
     );
     const r = await req("GET", "/james-sarah");
     expect(r.status).toBe(403);
@@ -109,20 +109,20 @@ describe("GET /api/guestbook/:weddingSlug", () => {
         id: "msg-1",
         name: "Jane",
         message: "Congratulations!",
-        weddingId: "wedding-1",
+        weddingId: "event-1",
         createdAt: new Date().toISOString(),
       },
       {
         id: "msg-2",
         name: "Bob",
         message: "Best wishes!",
-        weddingId: "wedding-1",
+        weddingId: "event-1",
         createdAt: new Date().toISOString(),
       },
     ];
-    // First select — wedding lookup
+    // First select — event lookup
     mockDb.select.mockReturnValueOnce(
-      selectReturning([{ id: "wedding-1", guestBookEnabled: true }]),
+      selectReturning([{ id: "event-1", guestBookEnabled: true }]),
     );
     // Second select — messages
     mockDb.select.mockReturnValueOnce(selectReturning(messages));
@@ -134,7 +134,7 @@ describe("GET /api/guestbook/:weddingSlug", () => {
 
   it("returns 200 with empty array when no messages yet", async () => {
     mockDb.select.mockReturnValueOnce(
-      selectReturning([{ id: "wedding-1", guestBookEnabled: true }]),
+      selectReturning([{ id: "event-1", guestBookEnabled: true }]),
     );
     mockDb.select.mockReturnValueOnce(selectReturning([]));
     const r = await req("GET", "/james-sarah");
@@ -143,15 +143,15 @@ describe("GET /api/guestbook/:weddingSlug", () => {
   });
 });
 
-// ── POST /:weddingSlug ────────────────────────────────────────────────────────
+// ── POST /:eventSlug ────────────────────────────────────────────────────────
 
-describe("POST /api/guestbook/:weddingSlug", () => {
+describe("POST /api/guestbook/:eventSlug", () => {
   const validBody = {
     name: "Jane Doe",
     message: "Wishing you both all the happiness!",
   };
 
-  it("returns 404 when wedding does not exist", async () => {
+  it("returns 404 when event does not exist", async () => {
     mockDb.select.mockReturnValueOnce(selectReturning([]));
     const r = await req("POST", "/unknown-slug", validBody);
     expect(r.status).toBe(404);
@@ -160,7 +160,7 @@ describe("POST /api/guestbook/:weddingSlug", () => {
   it("returns 403 when guest book is disabled", async () => {
     mockDb.select.mockReturnValueOnce(
       selectReturning([
-        { id: "wedding-1", userId: "user-1", guestBookEnabled: false },
+        { id: "event-1", userId: "user-1", guestBookEnabled: false },
       ]),
     );
     const r = await req("POST", "/james-sarah", validBody);
@@ -169,10 +169,10 @@ describe("POST /api/guestbook/:weddingSlug", () => {
   });
 
   it("returns 403 when owner is on free plan (Pro required)", async () => {
-    // Wedding lookup
+    // Event lookup
     mockDb.select.mockReturnValueOnce(
       selectReturning([
-        { id: "wedding-1", userId: "user-1", guestBookEnabled: true },
+        { id: "event-1", userId: "user-1", guestBookEnabled: true },
       ]),
     );
     // Owner plan lookup
@@ -185,7 +185,7 @@ describe("POST /api/guestbook/:weddingSlug", () => {
   it("returns 403 when owner is on starter plan (Pro required)", async () => {
     mockDb.select.mockReturnValueOnce(
       selectReturning([
-        { id: "wedding-1", userId: "user-1", guestBookEnabled: true },
+        { id: "event-1", userId: "user-1", guestBookEnabled: true },
       ]),
     );
     mockDb.select.mockReturnValueOnce(selectReturning([{ plan: "starter" }]));
@@ -196,7 +196,7 @@ describe("POST /api/guestbook/:weddingSlug", () => {
   it("returns 200 and created entry for pro plan", async () => {
     mockDb.select.mockReturnValueOnce(
       selectReturning([
-        { id: "wedding-1", userId: "user-1", guestBookEnabled: true },
+        { id: "event-1", userId: "user-1", guestBookEnabled: true },
       ]),
     );
     mockDb.select.mockReturnValueOnce(selectReturning([{ plan: "pro" }]));
@@ -204,7 +204,7 @@ describe("POST /api/guestbook/:weddingSlug", () => {
       id: "msg-new",
       name: "Jane Doe",
       message: "Wishing you both all the happiness!",
-      weddingId: "wedding-1",
+      weddingId: "event-1",
     };
     mockDb.insert.mockReturnValueOnce(insertReturning([created]));
     const r = await req("POST", "/james-sarah", validBody);
@@ -215,7 +215,7 @@ describe("POST /api/guestbook/:weddingSlug", () => {
   it("returns 200 and created entry for agency plan", async () => {
     mockDb.select.mockReturnValueOnce(
       selectReturning([
-        { id: "wedding-1", userId: "user-1", guestBookEnabled: true },
+        { id: "event-1", userId: "user-1", guestBookEnabled: true },
       ]),
     );
     mockDb.select.mockReturnValueOnce(selectReturning([{ plan: "agency" }]));
@@ -223,7 +223,7 @@ describe("POST /api/guestbook/:weddingSlug", () => {
       id: "msg-new",
       name: "John",
       message: "Congrats!",
-      weddingId: "wedding-1",
+      weddingId: "event-1",
     };
     mockDb.insert.mockReturnValueOnce(insertReturning([created]));
     const r = await req("POST", "/james-sarah", {
@@ -252,16 +252,16 @@ describe("POST /api/guestbook/:weddingSlug", () => {
   });
 });
 
-// ── DELETE /:weddingSlug/:messageId ──────────────────────────────────────────
+// ── DELETE /:eventSlug/:messageId ──────────────────────────────────────────
 
-describe("DELETE /api/guestbook/:weddingSlug/:messageId", () => {
+describe("DELETE /api/guestbook/:eventSlug/:messageId", () => {
   it("returns 401 when not authenticated", async () => {
     authed.mockResolvedValue(null);
     const r = await req("DELETE", "/james-sarah/msg-1", undefined, true);
     expect(r.status).toBe(401);
   });
 
-  it("returns 404 when wedding not found", async () => {
+  it("returns 404 when event not found", async () => {
     authed.mockResolvedValue("user-1");
     mockDb.select.mockReturnValueOnce(selectReturning([]));
     const r = await req("DELETE", "/unknown-slug/msg-1", undefined, true);
@@ -270,7 +270,7 @@ describe("DELETE /api/guestbook/:weddingSlug/:messageId", () => {
 
   it("returns 200 and deletes message on success", async () => {
     authed.mockResolvedValue("user-1");
-    mockDb.select.mockReturnValueOnce(selectReturning([{ id: "wedding-1" }]));
+    mockDb.select.mockReturnValueOnce(selectReturning([{ id: "event-1" }]));
     const r = await req("DELETE", "/james-sarah/msg-1", undefined, true);
     expect(r.status).toBe(200);
     expect((r.body as { success: boolean }).success).toBe(true);

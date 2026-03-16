@@ -11,6 +11,7 @@ import { env } from "@/env";
 
 import { PLAN_FEATURES } from "@/lib/plans";
 import { getPostHogClient } from "@/lib/posthog-server";
+import { EventType, getVocabulary } from "@/types/event";
 
 const resend = new Resend(env.RESEND_API_KEY);
 
@@ -50,6 +51,7 @@ export const rsvpRouter = new Elysia({ prefix: "/rsvp" })
           bride: weddings.bride,
           groom: weddings.groom,
           userId: weddings.userId,
+          eventType: weddings.eventType,
         })
         .from(weddings)
         .where(eq(weddings.id, body.weddingId))
@@ -110,7 +112,7 @@ export const rsvpRouter = new Elysia({ prefix: "/rsvp" })
             .send({
               from: "rsvp@ceremonia.app",
               to: wedding.notificationEmail,
-              subject: `New RSVP from ${body.name} — ${wedding.bride} & ${wedding.groom}`,
+              subject: `New RSVP from ${body.name} — ${wedding.groom ? `${wedding.bride} & ${wedding.groom}` : wedding.bride}`,
               react: RSVPNotificationEmail({
                 guestName: body.name,
                 attendance: body.attendance as "yes" | "no",
@@ -118,6 +120,9 @@ export const rsvpRouter = new Elysia({ prefix: "/rsvp" })
                 dietary: body.dietary,
                 bride: wedding.bride,
                 groom: wedding.groom,
+                eventLabel: getVocabulary(
+                  (wedding.eventType as EventType) ?? "wedding",
+                ).eventLabel,
               }),
             })
             .catch(console.error);

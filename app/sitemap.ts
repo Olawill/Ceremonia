@@ -30,7 +30,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   // Published wedding pages — these are the main SEO value
-  const publishedWeddings = await db
+  const publishedEvents = await db
     .select({
       slug: weddings.slug,
       updatedAt: weddings.createdAt,
@@ -39,15 +39,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .from(weddings)
     .where(eq(weddings.published, true));
 
-  const weddingRoutes: MetadataRoute.Sitemap = publishedWeddings
+  const eventRoutes: MetadataRoute.Sitemap = publishedEvents
     // Exclude password-protected invitations — they're private
     .filter((w) => !w.passwordProtected)
     .map((w) => ({
-      url: `${BASE}/wedding/${w.slug}`,
+      url: `${BASE}/event${w.slug}`,
       lastModified: w.updatedAt ?? new Date(),
       changeFrequency: "monthly" as const,
       priority: 0.6,
     }));
 
-  return [...staticRoutes, ...weddingRoutes];
+  return [...staticRoutes, ...eventRoutes];
 }

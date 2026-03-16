@@ -11,21 +11,21 @@ import { users } from "@/db/schema";
 import { Plan, PRICING } from "@/lib/plans";
 
 export const metadata: Metadata = {
-  title: "Ceremonia — Beautiful Wedding Invitations",
+  title: "Ceremonia — Beautiful Event Invitations",
   description:
-    "Create cinematic, personalised wedding invitations your guests will never forget. RSVP management, custom themes, and your own subdomain.",
+    "Create cinematic, personalised event invitations your guests will never forget. RSVP management, custom themes, and your own subdomain.",
   openGraph: {
-    title: "Ceremonia — Beautiful Wedding Invitations",
+    title: "Ceremonia — Beautiful Event Invitations",
     description:
-      "Create cinematic, personalised wedding invitations your guests will never forget.",
+      "Create cinematic, personalised event invitations your guests will never forget.",
     url: "https://ceremonia.app",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Ceremonia — Beautiful Wedding Invitations",
+    title: "Ceremonia — Beautiful Event Invitations",
     description:
-      "Create cinematic, personalised wedding invitations your guests will never forget.",
+      "Create cinematic, personalised event invitations your guests will never forget.",
   },
 };
 
@@ -43,7 +43,7 @@ const TIERS = [
     name: "Free",
     price: "$0",
     description: "Try it out",
-    features: ["1 wedding", "3 themes", "20 RSVPs", "Ceremonia watermark"],
+    features: ["1 event", "3 themes", "20 RSVPs", "Ceremonia watermark"],
     cta: "Start free",
     href: "/sign-up",
   },
@@ -66,7 +66,7 @@ const TIERS = [
     price: "$19/mo",
     description: "For power users",
     features: [
-      "5 weddings",
+      "5 events",
       "Custom theme builder",
       "Analytics",
       "CSV export",
@@ -79,7 +79,7 @@ const TIERS = [
     price: "$79/mo",
     description: "For planners",
     features: [
-      "Unlimited weddings",
+      "Unlimited events",
       "White-label",
       "Client management",
       "API access",
@@ -145,15 +145,16 @@ export default async function MarketingPage() {
       {/* Hero */}
       <section className="min-h-screen flex flex-col items-center justify-center text-center px-6! pt-20! font-semibold">
         <p className="font-label text-[12px] tracking-[0.5em] uppercase text-[#D4AF37] mb-6">
-          Wedding invitations, reimagined
+          Event invitations, reimagined
         </p>
         <h1 className="font-display font-light text-[clamp(48px,8vw,96px)] leading-[1.05] tracking-[0.02em] mb-6 max-w-4xl">
           Your love story,{" "}
           <span className="italic text-[#D4AF37]">beautifully told</span>
         </h1>
         <p className="font-display italic text-xl text-[#F5F0E8] mb-12! max-w-xl">
-          Create a cinematic wedding invitation your guests will never forget.
-          Live editor, custom themes, RSVP management — all in one place.
+          Create a cinematic invitation your guests will never forget —
+          weddings, birthdays, baby showers and more. Live editor, custom
+          themes, RSVP management — all in one place.
         </p>
         <div className="flex items-center gap-4 flex-wrap justify-center">
           <Link
@@ -163,7 +164,7 @@ export default async function MarketingPage() {
             Create your invitation
           </Link>
           <Link
-            href="/wedding/demo"
+            href="/eventdemo"
             className="font-label text-[12px] tracking-[0.4em] uppercase px-8! py-4! rounded-full border border-[#D4AF3790] text-[#D4AF37] hover:border-[#D4AF37] transition-colors"
           >
             See the demo

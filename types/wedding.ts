@@ -1,3 +1,4 @@
+import type { EventType } from "@/types/event";
 import type { ThemeKey, WeddingTheme } from "@/types/theme";
 
 export interface TimelineEvent {
@@ -40,9 +41,14 @@ export interface TravelItem {
 export interface WeddingConfig {
   id: string;
   slug: string;
+  eventType: EventType;
   customDomain?: string;
   bride: string;
   groom: string;
+  /** Neutral alias for bride — use for non-wedding events */
+  host1Name?: string;
+  /** Neutral alias for groom — use for non-wedding events */
+  host2Name?: string;
   tagLine?: string;
   finaleTagLine?: string;
   date: string; // ISO string "2026-07-12"
@@ -130,6 +136,12 @@ export type WeddingPartyRole =
   | "father-of-bride"
   | "mother-of-groom"
   | "father-of-groom"
+  | "godparent"
+  | "godmother"
+  | "godfather"
+  | "parent"
+  | "host"
+  | "guest_of_honour"
   | "custom";
 
 export interface WeddingPartyMember {
@@ -158,6 +170,7 @@ export const FALLBACK_LOCATION: VenueEvent = {
 export const DEMO_WEDDING_CONFIG: WeddingConfig = {
   id: "demo",
   slug: "demo",
+  eventType: "wedding",
   bride: "Taiwo",
   groom: "Tayo",
   tagLine: "A Cup of T 2026",

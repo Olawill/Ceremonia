@@ -6,8 +6,8 @@ import { cookies } from "next/headers";
 import { db } from "@/db";
 import { weddings } from "@/db/schema";
 
-import { getPostHogClient } from "@/lib/posthog-server";
 import { verifyPassword } from "@/lib/password";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 export async function unlockWedding(slug: string, password: string) {
   const [wedding] = await db
@@ -25,13 +25,13 @@ export async function unlockWedding(slug: string, password: string) {
     httpOnly: true,
     sameSite: "lax",
     maxAge: 60 * 60 * 24, // 24 hours
-    path: `/wedding/${slug}`,
+    path: `/event${slug}`,
   });
 
   const posthog = getPostHogClient();
   posthog.capture({
     distinctId: `guest:${slug}`,
-    event: "wedding_unlocked",
+    event: "event_unlocked",
     properties: { slug },
   });
   await posthog.shutdown();

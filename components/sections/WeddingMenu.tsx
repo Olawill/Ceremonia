@@ -7,6 +7,9 @@ import { Course } from "@/types/wedding";
 
 interface WeddingMenuProps {
   courses?: Course[];
+  label?: string;
+  subLabel?: string; // e.g. "Dinner Banquet" | "Party Food" | "Brunch"
+  description?: string; // e.g. "A five-course culinary journey..." | "Light bites and drinks"
 }
 
 const COURSES = [
@@ -974,7 +977,12 @@ function TableSVG({
   );
 }
 
-export function WeddingMenu({ courses }: WeddingMenuProps) {
+export function WeddingMenu({
+  courses,
+  label,
+  subLabel,
+  description,
+}: WeddingMenuProps) {
   const { theme } = useTheme();
   const ref = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
@@ -1012,7 +1020,7 @@ export function WeddingMenu({ courses }: WeddingMenuProps) {
           className="font-label uppercase tracking-[0.5em] text-[14px] font-semibold"
           style={{ color: `${theme.gold}70` }}
         >
-          Dinner Banquet
+          {subLabel ?? "Dinner Banquet"}
         </p>
         <h2
           className="font-display font-light"
@@ -1022,7 +1030,7 @@ export function WeddingMenu({ courses }: WeddingMenuProps) {
             letterSpacing: "0.08em",
           }}
         >
-          The Wedding Menu
+          {label ?? "The Menu"}
         </h2>
         <div
           className="w-16 h-px mx-auto"
@@ -1037,7 +1045,7 @@ export function WeddingMenu({ courses }: WeddingMenuProps) {
             fontSize: "clamp(13px,1.8vw,17px)",
           }}
         >
-          A five-course culinary journey curated with love
+          {description ?? "A culinary journey curated with love"}
         </p>
       </div>
 

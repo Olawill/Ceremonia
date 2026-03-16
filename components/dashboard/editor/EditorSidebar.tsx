@@ -20,26 +20,33 @@ import { TimelineEditor } from "@/components/dashboard/editor/TimelineEditor";
 import { TravelGuideEditor } from "@/components/dashboard/editor/TravelGuideEditor";
 import { VenueEditor } from "@/components/dashboard/editor/VenueEditor";
 import { WeddingPartyEditor } from "@/components/dashboard/editor/WeddingPartyEditor";
+import { EventType, getVocabulary } from "@/types/event";
 
-const TABS = [
-  { id: "design", label: "Design" },
-  { id: "couple", label: "Couple" },
-  { id: "venue", label: "Venue" },
-  { id: "timeline", label: "Timeline" },
-  { id: "menu", label: "Menu" },
-  { id: "media", label: "Media" },
-  { id: "gallery", label: "Gallery" },
-  { id: "dresscode", label: "Attire" },
-  { id: "accommodation", label: "Stay" },
-  { id: "party", label: "Party" },
-  { id: "faq", label: "FAQ" },
-  { id: "livestream", label: "Stream" },
-  { id: "travel", label: "Travel" },
-  { id: "rsvp", label: "RSVP" },
-  { id: "registry", label: "Registry" },
-] as const;
+const getTabs = (eventType: EventType) => {
+  const vocab = getVocabulary(eventType);
 
-type TabId = (typeof TABS)[number]["id"];
+  const TABS = [
+    { id: "design", label: "Design" },
+    { id: "couple", label: "Couple" },
+    { id: "venue", label: "Venue" },
+    { id: "timeline", label: "Timeline" },
+    { id: "menu", label: vocab.menuLabel.split(" ")[0] },
+    { id: "media", label: "Media" },
+    { id: "gallery", label: "Gallery" },
+    { id: "dresscode", label: vocab.attireLabel },
+    { id: "accommodation", label: "Stay" },
+    { id: "party", label: vocab.partyLabel.split(" ")[0] },
+    { id: "faq", label: "FAQ" },
+    { id: "livestream", label: "Stream" },
+    { id: "travel", label: "Travel" },
+    { id: "rsvp", label: "RSVP" },
+    { id: "registry", label: "Registry" },
+  ] as const;
+
+  return TABS;
+};
+
+type TabId = ReturnType<typeof getTabs>[number]["id"];
 
 interface Props {
   config: WeddingConfig;
@@ -49,6 +56,7 @@ interface Props {
 
 export function EditorSidebar({ config, onChange, previewIframeRef }: Props) {
   const [activeTab, setActiveTab] = useState<TabId>("couple");
+  const TABS = getTabs(config.eventType);
 
   return (
     <div className="flex flex-col h-full">

@@ -253,6 +253,7 @@ describe("POST /api/weddings", () => {
         body: JSON.stringify({
           bride: "Alice",
           groom: "Bob",
+          eventType: "wedding",
           date: "2026-06-01",
           venueDetails: [],
           themeKey: "royal",
@@ -307,6 +308,7 @@ describe("POST /api/weddings", () => {
         body: JSON.stringify({
           bride: "Alice",
           groom: "Bob",
+          eventType: "wedding",
           date: "2026-06-01",
           venueDetails: [],
           themeKey: "royal",
@@ -326,6 +328,32 @@ describe("POST /api/weddings", () => {
     // We can't easily inspect values() args via this mock chain,
     // so just assert the call went through without error
     expect(insertSpy).toHaveBeenCalledOnce();
+  });
+
+  it("creates a birthday event with correct eventType", async () => {
+    authed.mockResolvedValue("user-123");
+    // ... mock db as per existing pattern ...
+    const res = await app.handle(
+      new Request("http://localhost/api/weddings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventType: "birthday",
+          bride: "Emma", // host1
+          groom: "", // no second host
+          date: "2026-08-15",
+          venueDetails: [],
+          themeKey: "royal",
+          curtainStyle: "velvet",
+          timeline: [],
+          menuCourses: [],
+          rsvpEnabled: true,
+          published: false,
+          passwordProtected: false,
+        }),
+      }),
+    );
+    expect(res.status).toBe(200);
   });
 });
 

@@ -40,16 +40,16 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     }
   }
 
-  // If it's a wedding subdomain, rewrite to /wedding/[slug]
+  // If it's a event subdomain, rewrite to /event[slug]
   if (subdomain) {
-    url.pathname = `/wedding/${subdomain}${url.pathname}`;
+    url.pathname = `/event${subdomain}${url.pathname}`;
     return NextResponse.rewrite(url);
   }
 
   // Custom domain support — non-ceremonia.app hosts
   if (!isLocalhost && !host.endsWith(rootDomain)) {
     // Rewrite to a special route that will look up the domain in DB
-    url.pathname = `/wedding/domain/${host}${url.pathname}`;
+    url.pathname = `/eventdomain/${host}${url.pathname}`;
     return NextResponse.rewrite(url);
   }
 

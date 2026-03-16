@@ -17,11 +17,12 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useApi } from "@/hooks/useApi";
 import { useToast } from "@/hooks/useToast";
 
+import { EventType } from "@/types/event";
 import type { WeddingConfig } from "@/types/wedding";
 import { DEMO_WEDDING_CONFIG } from "@/types/wedding";
 
 import { EditorSidebar } from "@/components/dashboard/editor/EditorSidebar";
-import { NewWeddingDialog } from "@/components/dashboard/editor/NewWeddingDialog";
+import { NewEventDialog } from "@/components/dashboard/editor/NewEventDialog";
 import { PreviewFrame } from "@/components/dashboard/editor/PreviewFrame";
 
 interface Props {
@@ -29,9 +30,10 @@ interface Props {
   isNew: boolean;
 }
 
-interface NewWeddingValues {
-  bride: string;
-  groom: string;
+interface NewEventValues {
+  eventType: EventType;
+  host1Name: string;
+  host2Name?: string;
   date: string;
   notificationEmail?: string | undefined;
 }
@@ -92,11 +94,13 @@ export function EditorShell({ initialConfig, isNew }: Props) {
     setIsDirty(true);
   }, []);
 
-  const handleNewWeddingConfirm = useCallback((values: NewWeddingValues) => {
+  const handleNewEventConfirm = useCallback((values: NewEventValues) => {
     setConfig((prev) => ({
       ...prev,
-      bride: values.bride,
-      groom: values.groom,
+      eventType: values.eventType,
+      // Keep bride/groom populated for backwards compat with DB columns + ContentEditor
+      bride: values.host1Name,
+      groom: values.host2Name ?? "",
       date: values.date,
       notificationEmail: values.notificationEmail ?? "",
     }));
@@ -153,7 +157,7 @@ export function EditorShell({ initialConfig, isNew }: Props) {
         setSaveState("saved");
         setIsDirty(false);
         toast.success("Wedding created!");
-        posthog.capture("wedding_created", {
+        posthog.capture("event_created", {
           slug: data!.slug,
           bride: config.bride,
           groom: config.groom,
@@ -172,7 +176,7 @@ export function EditorShell({ initialConfig, isNew }: Props) {
         setSaveState("saved");
         setIsDirty(false);
         toast.success("Changes saved");
-        posthog.capture("wedding_saved", {
+        posthog.capture("event_saved", {
           slug: config.slug,
           published: config.published,
           theme_key: config.themeKey,
@@ -184,7 +188,7 @@ export function EditorShell({ initialConfig, isNew }: Props) {
       }
     } catch (err) {
       posthog.captureException(err, {
-        event_name: "wedding_save_failed",
+        event_name: "event_save_failed",
         properties: { is_new: isNew },
       });
       setSaveState("error");
@@ -195,7 +199,7 @@ export function EditorShell({ initialConfig, isNew }: Props) {
 
   return (
     <div className="flex h-full overflow-hidden space-x-2!">
-      {showDialog && <NewWeddingDialog onConfirm={handleNewWeddingConfirm} />}
+      {showDialog && <NewEventDialog onConfirm={handleNewEventConfirm} />}
 
       {/* Left — controls */}
       <div className="flex-1 shrink-0 flex flex-col border-r overflow-hidden border-[#D4AF3718]">
@@ -204,7 +208,9 @@ export function EditorShell({ initialConfig, isNew }: Props) {
           <div>
             <div className="flex items-center gap-2">
               <p className="font-display italic text-[#F5F0E8] text-xl!">
-                {config.bride || "Bride"} & {config.groom || "Groom"}
+                {config.groom
+                  ? `${config.bride || "Host"} & ${config.groom}`
+                  : config.bride || "Your Event"}
               </p>
               {isDirty && saveState === "idle" && (
                 <span className="font-label text-[9px] tracking-widest uppercase text-[#D4AF3790] border-[#D4AF3780]">
@@ -319,7 +325,7 @@ export function EditorShell({ initialConfig, isNew }: Props) {
               onClick={() => {
                 const iframe = previewIframeRef.current;
                 if (!iframe) return;
-                iframe.src = `/wedding/preview?initial=${encodeURIComponent(
+                iframe.src = `/eventpreview?initial=${encodeURIComponent(
                   btoa(
                     Array.from(new TextEncoder().encode(JSON.stringify(config)))
                       .map((b) => String.fromCharCode(b))

@@ -25,7 +25,7 @@ const TIERS = [
     price: "$0",
     description: "Get started",
     features: [
-      "1 wedding",
+      "1 event",
       "3 built-in themes",
       "Velvet curtain only",
       "20 RSVP limit",
@@ -41,7 +41,7 @@ const TIERS = [
     pricingOnce: PRICING.starter.once,
     description: "For couples",
     features: [
-      "1 wedding",
+      "1 event",
       "All built-in themes",
       "Both curtain styles",
       "Custom audio",
@@ -57,7 +57,7 @@ const TIERS = [
     pricingMonthly: PRICING.pro.monthly,
     description: "For power users",
     features: [
-      "Up to 5 weddings",
+      "Up to 5 events",
       "Custom theme builder",
       "Password protection",
       "Analytics dashboard",
@@ -74,7 +74,7 @@ const TIERS = [
     pricingMonthly: PRICING.agency.monthly,
     description: "For planners",
     features: [
-      "Unlimited weddings",
+      "Unlimited events",
       "White-label",
       "Theme marketplace",
       "Client management",

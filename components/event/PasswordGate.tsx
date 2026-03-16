@@ -1,6 +1,6 @@
 "use client";
 
-import { unlockWedding } from "@/app/wedding/[slug]/actions";
+import { unlockWedding } from "@/app/event/[slug]/actions";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 

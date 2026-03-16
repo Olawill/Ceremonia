@@ -1,5 +1,7 @@
 "use client";
 
+import { EventType, getVocabulary } from "@/types/event";
+
 interface Wedding {
   id: string;
   bride: string;
@@ -8,6 +10,7 @@ interface Wedding {
   viewCount: number | null;
   published: boolean | null;
   createdAt: Date | null;
+  eventType: string | null;
 }
 
 interface RSVP {
@@ -29,7 +32,7 @@ export function AnalyticsClient({ weddings, rsvps }: Props) {
           Analytics
         </h1>
         <p className="text-lg font-semibold font-display italic text-[#F5F0E880] mt-1">
-          Views and RSVP performance across your weddings
+          Views and RSVP performance across your events
         </p>
       </div>
 
@@ -37,7 +40,7 @@ export function AnalyticsClient({ weddings, rsvps }: Props) {
         {weddings.length === 0 && (
           <div className="text-center py-20! rounded-xl border border-[#ffffff80]">
             <p className="font-display font-semibold text-2xl text-[#F5F0E880]">
-              No weddings yet
+              No events yet
             </p>
           </div>
         )}
@@ -58,7 +61,11 @@ export function AnalyticsClient({ weddings, rsvps }: Props) {
               <div className="flex items-start justify-between mb-6">
                 <div>
                   <h2 className="font-display text-lg text-[#F5F0E8]">
-                    {w.bride} & {w.groom}
+                    {
+                      getVocabulary((w.eventType as EventType) ?? "wedding")
+                        .emoji
+                    }{" "}
+                    {w.groom ? `${w.bride} & ${w.groom}` : w.bride}
                   </h2>
                   <p className="font-label text-[10px] tracking-[0.3em] uppercase text-[#D4AF3780] mt-1">
                     {w.slug}.ceremonia.app

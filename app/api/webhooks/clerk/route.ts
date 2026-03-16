@@ -137,7 +137,7 @@
 //         await stripe.customers.del(user.stripeCustomerId);
 //       }
 
-//       // Delete user row (cascade will clean up weddings + rsvps if you add cascade to the schema)
+//       // Delete user row (cascade will clean up events + rsvps if you add cascade to the schema)
 //       await db.delete(users).where(eq(users.id, clerkUserId));
 
 //       break;

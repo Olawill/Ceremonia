@@ -48,7 +48,7 @@ test.describe("Dashboard (authenticated)", () => {
 
   test("shows dashboard overview", async ({ page }) => {
     await page.goto("/app/dashboard");
-    await expect(page.getByText(/Your Weddings/i)).toBeVisible();
+    await expect(page.getByText(/Your Events/i)).toBeVisible();
   });
 
   test("editor redirects or loads", async ({ page }) => {

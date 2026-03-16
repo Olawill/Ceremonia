@@ -1,6 +1,7 @@
 "use client";
 
 import type { Plan } from "@/lib/plans";
+import { EventType, getVocabulary } from "@/types/event";
 import clsx from "clsx";
 import { DownloadIcon } from "lucide-react";
 import { useState } from "react";
@@ -10,6 +11,7 @@ interface Wedding {
   bride: string;
   groom: string;
   slug: string;
+  eventType: string | null;
 }
 
 interface RSVP {
@@ -59,7 +61,10 @@ export function RSVPsClient({
             RSVPs
           </h1>
           <p className="text-lg font-display italic font-semibold text-[#F5F0E890] mt-1!">
-            Guest responses for your wedding
+            Guest responses for your{" "}
+            {getVocabulary(
+              (selectedWedding?.eventType as EventType) ?? "wedding",
+            ).eventLabel.toLowerCase()}
           </p>
         </div>
 
@@ -88,7 +93,8 @@ export function RSVPsClient({
                   : "border-[#ffffff15] text-[#F5F0E880] hover:border-[#D4AF3740]",
               )}
             >
-              {w.bride} & {w.groom}
+              {getVocabulary((w.eventType as EventType) ?? "wedding").emoji}{" "}
+              {w.groom ? `${w.bride} & ${w.groom}` : w.bride}
             </button>
           ))}
         </div>

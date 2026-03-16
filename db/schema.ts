@@ -25,6 +25,7 @@ export const users = pgTable("users", {
 export const weddings = pgTable("weddings", {
   id: uuid("id").defaultRandom().primaryKey(),
   slug: text("slug").notNull().unique(),
+  eventType: text("event_type").default("wedding"),
   customDomain: text("custom_domain").unique(),
   userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
   bride: text("bride").notNull(),

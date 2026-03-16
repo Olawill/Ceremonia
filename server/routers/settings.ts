@@ -53,7 +53,7 @@ export const settingsRouter = new Elysia({ prefix: "/settings" })
     },
   )
 
-  // DELETE /api/settings/account — delete account + all weddings (cascade)
+  // DELETE /api/settings/account — delete account + all events (cascade)
   .delete("/account", async ({ bearer, status }) => {
     const userId = await getAuthUserId(bearer);
     if (!userId) return status(401, { message: "Unauthorized" });

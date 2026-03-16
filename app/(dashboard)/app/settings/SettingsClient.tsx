@@ -145,8 +145,7 @@ export function SettingsClient({
           Danger zone
         </p>
         <p className="font-display font-semibold italic text-sm text-dash-text/50">
-          Permanently delete your account and all weddings. This cannot be
-          undone.
+          Permanently delete your account and all events. This cannot be undone.
         </p>
         <div className="space-y-3!">
           <input

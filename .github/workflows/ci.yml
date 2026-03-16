@@ -23,7 +23,7 @@ jobs:
       BLOB_READ_WRITE_TOKEN: placeholder
       UNSPLASH_ACCESS_KEY: placeholder
       PIXABAY_API_KEY: placeholder
-      NEXT_PUBLIC_WEDDING_THEME: royal
+      NEXT_PUBLIC_EVENT_THEME: royal
       NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_placeholder
       NEXT_PUBLIC_STRIPE_PRICE_STARTER_MONTHLY: price_placeholder
       NEXT_PUBLIC_STRIPE_PRICE_STARTER_ONCE: price_placeholder
@@ -82,7 +82,7 @@ jobs:
       # Public config
       NEXT_PUBLIC_APP_URL: http://localhost:3000
       NEXT_PUBLIC_ROOT_DOMAIN: ceremonia.app
-      NEXT_PUBLIC_WEDDING_THEME: royal
+      NEXT_PUBLIC_EVENT_THEME: royal
       NEXT_PUBLIC_POSTHOG_KEY: phc_placeholder
       NEXT_PUBLIC_POSTHOG_HOST: https://app.posthog.com
       # Optional — placeholders pass Zod validation

@@ -70,7 +70,7 @@ export default async function ThemeMarketplacePage() {
                   href={`/app/editor?applyTheme=${t.id}`}
                   className="block text-center font-label text-[10px] tracking-[0.3em] uppercase py-2.5 rounded-xl border border-[#D4AF3730] text-[#D4AF3780] hover:text-[#D4AF37] hover:border-[#D4AF3750] transition-colors"
                 >
-                  Apply to my wedding
+                  Apply to my event
                 </Link>
               </div>
             );

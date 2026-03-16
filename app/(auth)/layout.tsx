@@ -67,7 +67,7 @@ export default function AuthLayout({
               letterSpacing: "0.04em",
             }}
           >
-            Beautiful wedding
+            Beautiful event
             <br />
             <span style={{ color: "#D4AF37", fontStyle: "italic" }}>
               invitations,

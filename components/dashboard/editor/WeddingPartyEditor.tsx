@@ -13,6 +13,7 @@ import { SectionToggle } from "@/components/dashboard/editor/SectionToggle";
 import { Field, Input } from "@/components/ui/FormPrimitives";
 
 import { ImageUploadField } from "@/components/ui/ImageUploadField";
+import { EventType, getVocabulary } from "@/types/event";
 import type {
   WeddingConfig,
   WeddingPartyMember,
@@ -39,6 +40,34 @@ const ROLES: { value: WeddingPartyRole; label: string }[] = [
   { value: "custom", label: "Custom…" },
 ];
 
+function getRoles(
+  eventType: EventType,
+): { value: WeddingPartyRole; label: string }[] {
+  switch (eventType) {
+    case "baby_shower":
+      return [
+        { value: "godparent", label: "Godparent" },
+        { value: "host", label: "Host" },
+        { value: "custom", label: "Custom" },
+      ];
+    case "birthday":
+      return [
+        { value: "host", label: "Host" },
+        { value: "guest_of_honour", label: "Guest of Honour" },
+        { value: "custom", label: "Custom" },
+      ];
+    case "christening":
+      return [
+        { value: "godmother", label: "Godmother" },
+        { value: "godfather", label: "Godfather" },
+        { value: "parent", label: "Parent" },
+        { value: "custom", label: "Custom" },
+      ];
+    default: // wedding + bridal_shower + engagement
+      return ROLES; // existing wedding roles
+  }
+}
+
 const DEFAULT_MEMBER = (): WeddingPartyMember => ({
   id: nanoid(8),
   name: "",
@@ -48,14 +77,18 @@ const DEFAULT_MEMBER = (): WeddingPartyMember => ({
 
 function MemberEditor({
   member,
+  eventType,
   onUpdate,
   onDelete,
 }: {
   member: WeddingPartyMember;
+  eventType: EventType;
   onUpdate: (patch: Partial<WeddingPartyMember>) => void;
   onDelete: () => void;
 }) {
   const [expanded, setExpanded] = useState(!member.name);
+
+  const roles = getRoles(eventType);
 
   return (
     <div className="rounded-xl border border-[#D4AF3760] overflow-hidden">
@@ -72,7 +105,7 @@ function MemberEditor({
           <p className="font-label font-semibold text-[9px] tracking-widest uppercase text-[#D4AF3770]">
             {member.role === "custom"
               ? member.customRole || "Custom Role"
-              : ROLES.find((r) => r.value === member.role)?.label}
+              : roles.find((r) => r.value === member.role)?.label}
             {" · "}
             {member.side === "both"
               ? "Both sides"
@@ -113,7 +146,7 @@ function MemberEditor({
               Role
             </label>
             <div className="grid grid-cols-2 gap-1.5">
-              {ROLES.map(({ value, label }) => (
+              {roles.map(({ value, label }) => (
                 <button
                   key={value}
                   onClick={() => onUpdate({ role: value })}
@@ -189,6 +222,7 @@ function MemberEditor({
 
 export function WeddingPartyEditor({ config, onChange }: Props) {
   const members = config.weddingParty ?? [];
+  const vocab = getVocabulary(config.eventType);
 
   const update = (updated: WeddingPartyMember[]) =>
     onChange({ weddingParty: updated });
@@ -205,7 +239,7 @@ export function WeddingPartyEditor({ config, onChange }: Props) {
     <div className="space-y-6!">
       {/* Enable toggle */}
       <SectionToggle
-        label="Wedding Party"
+        label={vocab.partyLabel}
         enabled={config.weddingPartyEnabled ?? false}
         onToggle={() =>
           onChange({ weddingPartyEnabled: !config.weddingPartyEnabled })
@@ -220,7 +254,7 @@ export function WeddingPartyEditor({ config, onChange }: Props) {
                 No members added yet
               </p>
               <p className="font-label text-[9px] tracking-widest uppercase text-[#D4AF3770]">
-                Add your bridal party below
+                Add your {vocab.partyLabel.toLowerCase()} below
               </p>
             </div>
           )}
@@ -230,6 +264,7 @@ export function WeddingPartyEditor({ config, onChange }: Props) {
               <MemberEditor
                 key={member.id}
                 member={member}
+                eventType={config.eventType}
                 onUpdate={(patch) => updateMember(member.id, patch)}
                 onDelete={() => deleteMember(member.id)}
               />

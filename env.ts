@@ -14,7 +14,7 @@ export const env = createEnv({
     PIXABAY_API_KEY: z.string().min(1),
   },
   client: {
-    NEXT_PUBLIC_WEDDING_THEME: z.string().min(1),
+    NEXT_PUBLIC_EVENT_THEME: z.string().min(1),
     NEXT_PUBLIC_APP_URL: z.url(),
     NEXT_PUBLIC_ROOT_DOMAIN: z.string().min(1),
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
@@ -37,7 +37,7 @@ export const env = createEnv({
     UNSPLASH_ACCESS_KEY: process.env.UNSPLASH_ACCESS_KEY,
     PIXABAY_API_KEY: process.env.PIXABAY_API_KEY,
 
-    NEXT_PUBLIC_WEDDING_THEME: process.env.NEXT_PUBLIC_WEDDING_THEME,
+    NEXT_PUBLIC_EVENT_THEME: process.env.NEXT_PUBLIC_EVENT_THEME,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_ROOT_DOMAIN: process.env.NEXT_PUBLIC_ROOT_DOMAIN,
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:

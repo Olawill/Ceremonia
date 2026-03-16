@@ -52,7 +52,7 @@ async function main() {
   // ── STARTER ──────────────────────────────────────────────────────────
   const starterId = await createProduct(
     "Ceremonia Starter",
-    "1 wedding, all built-in themes, custom audio, unlimited RSVPs, no watermark",
+    "1 event, all built-in themes, custom audio, unlimited RSVPs, no watermark",
   );
   const starterMonthly = await createPrice(starterId, 900, "Starter Monthly", {
     interval: "month",
@@ -69,7 +69,7 @@ async function main() {
   // ── PRO ──────────────────────────────────────────────────────────────
   const proId = await createProduct(
     "Ceremonia Pro",
-    "Up to 5 weddings, custom theme builder, analytics, CSV export, custom domain",
+    "Up to 5 events, custom theme builder, analytics, CSV export, custom domain",
   );
   const proMonthly = await createPrice(proId, 1900, "Pro Monthly", {
     interval: "month",
@@ -79,7 +79,7 @@ async function main() {
   // ── AGENCY ───────────────────────────────────────────────────────────
   const agencyId = await createProduct(
     "Ceremonia Agency",
-    "Unlimited weddings, white-label, theme marketplace, API access",
+    "Unlimited events, white-label, theme marketplace, API access",
   );
   const agencyMonthly = await createPrice(agencyId, 7900, "Agency Monthly", {
     interval: "month",

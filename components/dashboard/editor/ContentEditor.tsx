@@ -9,10 +9,11 @@ import type { WeddingConfig } from "@/types/wedding";
 
 import { DatePicker } from "@/components/ui/DatePicker";
 import { Field, Input, Textarea } from "@/components/ui/FormPrimitives";
+import { getVocabulary } from "@/types/event";
 
 const schema = z.object({
   bride: z.string().min(1, "Bride's name is required"),
-  groom: z.string().min(1, "Groom's name is required"),
+  groom: z.string().optional(),
   date: z.string().min(1, "Date is required"),
   tagLine: z.string().optional(),
   finaleTagLine: z.string().optional(),
@@ -31,6 +32,8 @@ interface Props {
 }
 
 export function ContentEditor({ config, onChange }: Props) {
+  const vocab = getVocabulary(config.eventType);
+
   const {
     register,
     watch,
@@ -60,26 +63,38 @@ export function ContentEditor({ config, onChange }: Props) {
 
   return (
     <div className="space-y-5! font-semibold">
-      <SectionHeading>The Couple</SectionHeading>
+      <SectionHeading>
+        {vocab.dualHost
+          ? `${vocab.host1Label} & ${vocab.host2Label}`
+          : vocab.host1Label}
+      </SectionHeading>
 
       <div className="grid grid-cols-2 gap-4">
-        <Field label="Bride's Name" error={errors.bride?.message}>
+        <Field
+          label={`${vocab.host1Label}'s Name`}
+          error={errors.bride?.message}
+        >
           <Input
             {...register("bride")}
             placeholder="Isabella"
             hasError={!!errors.bride}
           />
         </Field>
-        <Field label="Groom's Name" error={errors.groom?.message}>
-          <Input
-            {...register("groom")}
-            placeholder="Alexander"
-            hasError={!!errors.groom}
-          />
-        </Field>
+        {vocab.dualHost && (
+          <Field
+            label={`${vocab.host2Label}'s Name`}
+            error={errors.groom?.message}
+          >
+            <Input
+              {...register("groom")}
+              placeholder="Alexander"
+              hasError={!!errors.groom}
+            />
+          </Field>
+        )}
       </div>
 
-      <Field label="Wedding Date" error={errors.date?.message}>
+      <Field label={`${vocab.eventLabel} Date`} error={errors.date?.message}>
         <DatePicker
           value={watch("date") ?? ""}
           onChange={(val) => setValue("date", val, { shouldValidate: true })}
@@ -93,7 +108,7 @@ export function ContentEditor({ config, onChange }: Props) {
       >
         <Textarea
           {...register("tagLine")}
-          placeholder="Together with our families, we joyfully invite you…"
+          placeholder={vocab.tagLinePlaceholder}
           rows={3}
         />
       </Field>

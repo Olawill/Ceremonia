@@ -6,8 +6,9 @@ import Link from "next/link";
 
 import { db } from "@/db";
 import { weddings } from "@/db/schema";
+import { EventType, getVocabulary } from "@/types/event";
 
-export const metadata: Metadata = { title: "My Weddings" };
+export const metadata: Metadata = { title: "My Events" };
 
 export default async function DashboardPage() {
   const { userId } = await auth();
@@ -30,21 +31,21 @@ export default async function DashboardPage() {
           className="font-display font-light"
           style={{ fontSize: "clamp(28px,4vw,42px)", letterSpacing: "0.04em" }}
         >
-          Your Weddings
+          Your Events
         </h1>
       </div>
 
       {myWeddings.length === 0 ? (
         <div className="rounded-2xl p-16! text-center border border-[#D4AF3720] bg-[#D4AF3706] space-y-4!">
           <p className="font-display italic font-semibold text-2xl mb-6 text-[#F5F0E8]">
-            No weddings yet
+            No events yet
           </p>
           <Link
             href="/app/editor/new"
             className="font-label text-sm tracking-[0.4em] font-semibold h-12 uppercase px-8! py-3! rounded-full border transition-all border-[#D4AF3760] text-[#D4AF37] flex items-center! justify-center! w-full"
           >
             <span className="flex items-center gap-2 w-fit">
-              <SparklesIcon className="size-4" /> Create Your First Wedding
+              <SparklesIcon className="size-4" /> Create Your First Event
             </span>
           </Link>
         </div>
@@ -60,7 +61,17 @@ export default async function DashboardPage() {
                 className="font-display font-light mb-1!"
                 style={{ fontSize: "clamp(18px,2.5vw,24px)", color: "#F5F0E8" }}
               >
-                {w.bride} <span style={{ color: "#D4AF37" }}>&</span> {w.groom}
+                <span className="mr-2">
+                  {getVocabulary((w.eventType as EventType) ?? "wedding").emoji}
+                </span>
+                {w.groom ? (
+                  <>
+                    {w.bride} <span style={{ color: "#D4AF37" }}>&</span>{" "}
+                    {w.groom}
+                  </>
+                ) : (
+                  w.bride
+                )}
               </p>
               <p
                 className="font-label text-xs tracking-widest mb-4!"
@@ -102,7 +113,7 @@ export default async function DashboardPage() {
                   tracking-[0.4em] uppercase transition-all rounded-lg border-[#D4AF3760] text-[#D4AF37]"
         >
           <span className="flex items-center gap-2 w-fit">
-            <SparklesIcon className="size-4" /> Add another wedding
+            <SparklesIcon className="size-4" /> Add another event
           </span>
         </Link>
       )}

@@ -36,6 +36,9 @@ const CurtainStyleSchema = t.UnionEnum(CURTAIN_STYLES);
 const WeddingBodySchema = t.Object({
   bride: t.String({ minLength: 1 }),
   groom: t.String({ minLength: 1 }),
+  eventType: t.Optional(t.String()),
+  host1Name: t.Optional(t.String()),
+  host2Name: t.Optional(t.String()),
   tagLine: t.Optional(t.String()),
   finaleTagLine: t.Optional(t.String()),
   customDomain: t.Optional(t.String()),
@@ -129,7 +132,7 @@ export const weddingsRouter = new Elysia({ prefix: "/weddings" })
           distinctId: userId,
           event: "plan_limit_hit",
           properties: {
-            feature: "max_weddings",
+            feature: "max_events",
             plan,
             limit: features.maxWeddings,
           },
@@ -161,6 +164,7 @@ export const weddingsRouter = new Elysia({ prefix: "/weddings" })
           .values({
             ...body,
             slug: finalSlug,
+            eventType: body.eventType ?? "wedding",
             userId,
             password: body.password ? hashPassword(body.password) : null,
           })
@@ -231,6 +235,9 @@ export const weddingsRouter = new Elysia({ prefix: "/weddings" })
         .update(weddings)
         .set({
           ...body,
+          ...(body.eventType !== undefined
+            ? { eventType: body.eventType }
+            : {}),
           // Only update password if a new one was provided
           ...(body.password ? { password: hashPassword(body.password) } : {}),
           ...(body.customDomain !== undefined

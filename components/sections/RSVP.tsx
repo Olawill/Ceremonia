@@ -29,12 +29,14 @@ interface RSVPProps {
   weddingId?: string;
   enabled?: boolean;
   rsvpDeadline?: string;
+  eventLabel?: string;
 }
 
 export function RSVP({
   weddingId = "demo",
   enabled = true,
   rsvpDeadline,
+  eventLabel,
 }: RSVPProps) {
   const { theme } = useTheme();
   const api = useApi();
@@ -83,7 +85,8 @@ export function RSVP({
     }
 
     posthog.capture("rsvp_submitted", {
-      wedding_id: weddingId,
+      event_id: weddingId,
+      event_type: eventLabel,
       attendance: data.attendance,
       guests:
         data.attendance === "yes" ? (data.guests ? Number(data.guests) : 1) : 0,
@@ -167,7 +170,34 @@ export function RSVP({
           />
         </div>
 
-        {!submitted ? (
+        {!enabled ? (
+          <div
+            className="text-center py-16! px-10! rounded-2xl"
+            style={{
+              background: `linear-gradient(135deg, ${theme.curtain}18, ${theme.bg}90)`,
+              border: `1px solid ${theme.gold}40`,
+            }}
+          >
+            <div
+              className="text-4xl mb-4!"
+              style={{ color: `${theme.gold}60` }}
+            >
+              ✦
+            </div>
+            <h3
+              className="font-display font-light mb-2!"
+              style={{ fontSize: "clamp(20px,3vw,28px)", color: theme.gold }}
+            >
+              RSVPs Are Closed
+            </h3>
+            <p
+              className="font-display italic"
+              style={{ color: `${theme.text}55`, fontSize: 16 }}
+            >
+              Thank you for your interest. We are no longer accepting responses.
+            </p>
+          </div>
+        ) : !submitted ? (
           <form
             onSubmit={handleSubmit(onSubmit)}
             className="flex flex-col gap-4"
@@ -292,7 +322,7 @@ export function RSVP({
             >
               {submittedAttendance === "yes"
                 ? `Dear ${submittedName}, your presence means the world to us ♡`
-                : `Dear ${submittedName}, you'll be in our hearts on the day.`}
+                : `Dear ${submittedName}, we'll miss you at the ${eventLabel?.toLowerCase() ?? "event"}.`}
             </p>
           </div>
         )}
