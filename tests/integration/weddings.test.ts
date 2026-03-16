@@ -332,7 +332,43 @@ describe("POST /api/weddings", () => {
 
   it("creates a birthday event with correct eventType", async () => {
     authed.mockResolvedValue("user-123");
-    // ... mock db as per existing pattern ...
+
+    // 1. Plan fetch → free (1 event allowed)
+    mockDb.select
+      .mockReturnValueOnce({
+        from: () => ({
+          where: () => ({ limit: () => Promise.resolve([{ plan: "free" }]) }),
+        }),
+      })
+      // 2. Event count → 0 (under the limit)
+      .mockReturnValueOnce({
+        from: () => ({
+          where: () => Promise.resolve([{ weddingCount: 0 }]),
+        }),
+      })
+      // 3. Slug check → not taken
+      .mockReturnValueOnce({
+        from: () => ({
+          where: () => ({ limit: () => Promise.resolve([]) }),
+        }),
+      });
+
+    mockDb.insert.mockReturnValue({
+      values: () => ({
+        returning: () =>
+          Promise.resolve([
+            {
+              id: "w-birthday-1",
+              slug: "emma",
+              eventType: "birthday",
+              bride: "Emma",
+              groom: "",
+              date: "2026-08-15",
+            },
+          ]),
+      }),
+    });
+
     const res = await app.handle(
       new Request("http://localhost/api/weddings", {
         method: "POST",
@@ -354,6 +390,10 @@ describe("POST /api/weddings", () => {
       }),
     );
     expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.eventType).toBe("birthday");
+    expect(body.bride).toBe("Emma");
+    expect(body.groom).toBe("");
   });
 });
 

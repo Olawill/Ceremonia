@@ -35,7 +35,7 @@ const CurtainStyleSchema = t.UnionEnum(CURTAIN_STYLES);
 
 const WeddingBodySchema = t.Object({
   bride: t.String({ minLength: 1 }),
-  groom: t.String({ minLength: 1 }),
+  groom: t.Optional(t.String()),
   eventType: t.Optional(t.String()),
   host1Name: t.Optional(t.String()),
   host2Name: t.Optional(t.String()),
@@ -164,6 +164,7 @@ export const weddingsRouter = new Elysia({ prefix: "/weddings" })
           .values({
             ...body,
             slug: finalSlug,
+            groom: body.groom ?? "",
             eventType: body.eventType ?? "wedding",
             userId,
             password: body.password ? hashPassword(body.password) : null,

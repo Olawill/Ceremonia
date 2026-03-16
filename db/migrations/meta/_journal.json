@@ -57,6 +57,13 @@
       "when": 1773626272079,
       "tag": "0007_cold_fabian_cortez",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1773675446585,
+      "tag": "0008_faulty_gunslinger",
+      "breakpoints": true
     }
   ]
 }

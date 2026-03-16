@@ -57,7 +57,7 @@ export const rsvpRouter = new Elysia({ prefix: "/rsvp" })
         .where(eq(weddings.id, body.weddingId))
         .limit(1);
 
-      if (!wedding) return status(404, { message: "Wedding not found" });
+      if (!wedding) return status(404, { message: "Event not found" });
       if (!wedding.rsvpEnabled)
         return status(403, { message: "RSVPs are closed" });
 
@@ -80,7 +80,7 @@ export const rsvpRouter = new Elysia({ prefix: "/rsvp" })
 
           if (total >= 20) {
             return status(403, {
-              message: "RSVP limit reached for this wedding",
+              message: "RSVP limit reached for this event",
             });
           }
         }
@@ -119,7 +119,7 @@ export const rsvpRouter = new Elysia({ prefix: "/rsvp" })
                 guests: body.guests,
                 dietary: body.dietary,
                 bride: wedding.bride,
-                groom: wedding.groom,
+                groom: wedding.groom ?? "",
                 eventLabel: getVocabulary(
                   (wedding.eventType as EventType) ?? "wedding",
                 ).eventLabel,
