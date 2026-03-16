@@ -126,7 +126,7 @@ export const weddingsRouter = new Elysia({ prefix: "/weddings" })
         .from(weddings)
         .where(eq(weddings.userId, userId));
 
-      if (weddingCount >= features.maxWeddings) {
+      if (weddingCount >= features.maxEvents) {
         const posthog = getPostHogClient();
         posthog.capture({
           distinctId: userId,
@@ -134,12 +134,12 @@ export const weddingsRouter = new Elysia({ prefix: "/weddings" })
           properties: {
             feature: "max_events",
             plan,
-            limit: features.maxWeddings,
+            limit: features.maxEvents,
           },
         });
         await posthog.shutdown();
         return status(403, {
-          message: `Your ${plan} plan allows a maximum of ${features.maxWeddings} wedding(s). Please upgrade.`,
+          message: `Your ${plan} plan allows a maximum of ${features.maxEvents} wedding(s). Please upgrade.`,
         });
       }
 
