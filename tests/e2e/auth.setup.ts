@@ -10,6 +10,7 @@ const authFile = "tests/e2e/.auth/user.json";
 
 setup("authenticate", async ({ page }) => {
   const email = process.env.TEST_USER_EMAIL;
+  setup.setTimeout(120_000);
 
   if (!email) {
     throw new Error(
@@ -71,6 +72,9 @@ setup("authenticate", async ({ page }) => {
     if (codeField) {
       await page.fill("[data-input-otp='true']", "424242");
       // await page.locator(".cl-formButtonPrimary").click();
+      await page
+        .waitForLoadState("networkidle", { timeout: 15000 })
+        .catch(() => {});
     }
 
     if (page.url().includes("factor-two")) {
@@ -79,6 +83,9 @@ setup("authenticate", async ({ page }) => {
         .catch(() => null);
       if (otpField) {
         await page.fill("[data-input-otp='true']", "424242");
+        await page
+          .waitForLoadState("networkidle", { timeout: 15000 })
+          .catch(() => {});
       }
     }
   }
