@@ -79,7 +79,6 @@ setup("authenticate", async ({ page }) => {
         .catch(() => null);
       if (otpField) {
         await page.fill("[data-input-otp='true']", "424242");
-        await page.locator(".cl-formButtonPrimary").click();
       }
     }
   }
