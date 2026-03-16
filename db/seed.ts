@@ -33,6 +33,7 @@
 //   process.exit(1);
 // });
 
+import { hashPassword } from "@/lib/password";
 import { DEMO_WEDDING_CONFIG } from "@/types/wedding";
 import { eq } from "drizzle-orm";
 import { db } from "./index";
@@ -120,6 +121,33 @@ async function main() {
       ])
       .onConflictDoNothing();
   }
+
+  // Seed a password-protected wedding for E2E tests
+  await db
+    .insert(weddings)
+    .values({
+      slug: "test-protected",
+      userId: null,
+      bride: "Isabella",
+      groom: "Alexander",
+      date: "2026-09-20",
+      venueDetails: [
+        { label: "Ceremony", value: "3:00 PM", sub: "The Chapel" },
+        { label: "Reception", value: "6:00 PM", sub: "The Grand Hall" },
+        { label: "Location", value: "Ashford Manor", sub: "Oxfordshire, UK" },
+      ],
+      themeKey: "royal",
+      curtainStyle: "velvet",
+      timeline: [],
+      menuCourses: [],
+      rsvpEnabled: false,
+      passwordProtected: true,
+      password: hashPassword("ceremony2026"),
+      published: true,
+    })
+    .onConflictDoNothing();
+
+  console.log("✅ test-protected wedding seeded");
 
   console.log("✅ Seed complete");
   process.exit(0);
