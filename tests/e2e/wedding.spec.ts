@@ -2,23 +2,23 @@ import { expect, test } from "@playwright/test";
 
 // ── Event invitation page (demo) ───────────────────────────────────────────
 //
-// The /eventdemo route always renders DEMO_WEDDING_CONFIG (Taiwo & Tayo)
+// The /wedding/demo route always renders DEMO_WEDDING_CONFIG (Taiwo & Tayo)
 // without a DB lookup or auth, making it a reliable E2E anchor.
 
 test.describe("Event invitation page (demo)", () => {
-  test("/eventdemo loads without error", async ({ page }) => {
-    const response = await page.goto("/eventdemo");
+  test("/wedding/demo loads without error", async ({ page }) => {
+    const response = await page.goto("/wedding/demo");
     expect(response?.status()).toBe(200);
   });
 
   test("page title contains bride & groom names", async ({ page }) => {
-    await page.goto("/eventdemo");
+    await page.goto("/wedding/demo");
     // The <title> set by generateMetadata for the demo slug
     await expect(page).toHaveTitle(/Taiwo.*Tayo|Tayo.*Taiwo/i);
   });
 
   test("curtain reveal animation container is present", async ({ page }) => {
-    await page.goto("/eventdemo");
+    await page.goto("/wedding/demo");
     // VelvetCurtain renders a full-screen overlay — look for the click target
     // The curtain wraps in a fixed div; check for its presence before interaction
     const curtain = page
@@ -36,7 +36,7 @@ test.describe("Event invitation page (demo)", () => {
   test("RSVP section is visible after curtain open and date reveal", async ({
     page,
   }) => {
-    await page.goto("/eventdemo");
+    await page.goto("/wedding/demo");
 
     // Step 1: Open the curtain
     await page.click("body");
@@ -136,7 +136,7 @@ test.describe("event invitation — password protected", () => {
   test("navigating to a password-protected event shows the PasswordGate", async ({
     page,
   }) => {
-    const response = await page.goto(`/event${PROTECTED_SLUG}`);
+    const response = await page.goto(`/wedding/${PROTECTED_SLUG}`);
 
     // If the slug doesn't exist in this environment, skip
     if (response?.status() === 404) {
@@ -154,7 +154,7 @@ test.describe("event invitation — password protected", () => {
   });
 
   test("entering wrong password shows error message", async ({ page }) => {
-    const response = await page.goto(`/event${PROTECTED_SLUG}`);
+    const response = await page.goto(`/wedding/${PROTECTED_SLUG}`);
     if (response?.status() === 404) {
       test.skip();
       return;
@@ -180,7 +180,7 @@ test.describe("event invitation — password protected", () => {
   test("entering correct password dismisses the gate and shows invitation", async ({
     page,
   }) => {
-    const response = await page.goto(`/event${PROTECTED_SLUG}`);
+    const response = await page.goto(`/wedding/${PROTECTED_SLUG}`);
     if (response?.status() === 404) {
       test.skip();
       return;
