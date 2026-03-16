@@ -71,10 +71,6 @@ setup("authenticate", async ({ page }) => {
 
     if (codeField) {
       await page.fill("[data-input-otp='true']", "424242");
-      // await page.locator(".cl-formButtonPrimary").click();
-      await page
-        .waitForLoadState("networkidle", { timeout: 15000 })
-        .catch(() => {});
     }
 
     if (page.url().includes("factor-two")) {
@@ -83,15 +79,23 @@ setup("authenticate", async ({ page }) => {
         .catch(() => null);
       if (otpField) {
         await page.fill("[data-input-otp='true']", "424242");
-        await page
-          .waitForLoadState("networkidle", { timeout: 15000 })
-          .catch(() => {});
       }
     }
   }
 
+  // Let any in-flight Clerk redirects settle before asserting the URL
+  await page
+    .waitForLoadState("networkidle", { timeout: 30000 })
+    .catch(() => {});
+
+  // If Clerk landed on an intermediate page (factor-two, continue, etc.)
+  // give it one more moment to complete the redirect chain
+  if (!page.url().includes("/app/dashboard")) {
+    await page.waitForTimeout(2000);
+  }
+
   // Wait until we've landed on the dashboard
-  await page.waitForURL(/\/app\/dashboard/, { timeout: 45000 });
+  await page.waitForURL(/\/app\/dashboard/, { timeout: 60000 });
 
   await page.context().storageState({ path: authFile });
   console.log(`✦ Auth state saved to ${authFile}`);
