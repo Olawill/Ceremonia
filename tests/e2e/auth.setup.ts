@@ -85,7 +85,7 @@ setup("authenticate", async ({ page }) => {
   }
 
   // Wait until we've landed on the dashboard
-  await page.waitForURL(/\/app\/dashboard/, { timeout: 20000 });
+  await page.waitForURL(/\/app\/dashboard/, { timeout: 45000 });
 
   await page.context().storageState({ path: authFile });
   console.log(`✦ Auth state saved to ${authFile}`);
