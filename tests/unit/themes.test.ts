@@ -23,11 +23,11 @@ describe("Theme definitions", () => {
 
 describe("defaultThemeKey fallback", () => {
   it("falls back to 'royal' when env var is not set", async () => {
-    // The env mock in setup.ts sets NEXT_PUBLIC_EVENT_THEME — temporarily clear it
+    // The env mock in setup.ts sets NEXT_PUBLIC_WEDDING_THEME — temporarily clear it
     vi.resetModules();
     vi.doMock("@/env", () => ({
       env: {
-        NEXT_PUBLIC_EVENT_THEME: undefined,
+        NEXT_PUBLIC_WEDDING_THEME: undefined,
       },
     }));
     const { defaultThemeKey } = await import("@/themes/index");

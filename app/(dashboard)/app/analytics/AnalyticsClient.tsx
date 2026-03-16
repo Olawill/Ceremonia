@@ -5,7 +5,7 @@ import { EventType, getVocabulary } from "@/types/event";
 interface Wedding {
   id: string;
   bride: string;
-  groom: string;
+  groom: string | null;
   slug: string;
   viewCount: number | null;
   published: boolean | null;

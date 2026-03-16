@@ -14,15 +14,16 @@ import {
 import { useEffect, useState } from "react";
 
 import { Field, Input, Textarea } from "@/components/ui/FormPrimitives";
+import { PlanGate } from "@/components/ui/PlanGate";
+
+import { SectionToggle } from "@/components/dashboard/editor/SectionToggle";
+import { formatPrice } from "@/components/sections/Registry";
 
 import { useApi } from "@/hooks/useApi";
 import { useToast } from "@/hooks/useToast";
 
-import { formatPrice } from "@/components/sections/Registry";
-import { PlanGate } from "@/components/ui/PlanGate";
-import { usePlan } from "@/hooks/usePlan";
+import { getVocabulary } from "@/types/event";
 import type { WeddingConfig } from "@/types/wedding";
-import { SectionToggle } from "./SectionToggle";
 
 interface RegistryItem {
   id: string;
@@ -74,7 +75,8 @@ type AddMode = "idle" | "manual" | "link" | "bulk" | "browse";
 
 export function RegistryEditor({ config, onChange }: Props) {
   const { api } = useApi();
-  const { plan } = usePlan();
+  const vocab = getVocabulary(config.eventType);
+
   const { toast, handleApiError } = useToast();
   const [items, setItems] = useState<RegistryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -300,7 +302,7 @@ export function RegistryEditor({ config, onChange }: Props) {
         label="Gift Registry"
         enabled={config.registryEnabled ?? false}
         onToggle={() => onChange({ registryEnabled: !config.registryEnabled })}
-        disabledMessage="Enable to share your gift registry with guests."
+        disabledMessage={`Enable to share your ${vocab.registryLabel.toLowerCase()} with guests.`}
       />
 
       {config.registryEnabled && (

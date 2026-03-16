@@ -9,7 +9,7 @@ import { useState } from "react";
 interface Wedding {
   id: string;
   bride: string;
-  groom: string;
+  groom: string | null;
   slug: string;
   eventType: string | null;
 }

@@ -174,6 +174,6 @@ export const themes: Record<ThemeKey, WeddingTheme> = {
 };
 
 export const defaultThemeKey: ThemeKey =
-  (env.NEXT_PUBLIC_EVENT_THEME as ThemeKey | undefined) ?? "royal";
+  (env.NEXT_PUBLIC_WEDDING_THEME as ThemeKey | undefined) ?? "royal";
 
 export const activeTheme: WeddingTheme = themes[defaultThemeKey];

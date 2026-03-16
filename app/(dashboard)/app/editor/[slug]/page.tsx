@@ -74,7 +74,7 @@ export default async function EditorPage({ params }: Props) {
     slug: wedding.slug,
     eventType: (wedding.eventType as EventType) ?? "wedding",
     bride: wedding.bride,
-    groom: wedding.groom,
+    groom: wedding.groom ?? "",
     tagLine: wedding.tagLine ?? undefined,
     date: wedding.date,
     venueDetails:
