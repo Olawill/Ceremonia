@@ -8,14 +8,17 @@ import { useEffect, useRef, useState } from "react";
 
 import { useApi } from "@/hooks/useApi";
 import type { Plan } from "@/lib/plans";
-import { PRICING } from "@/lib/plans";
+import { PLAN_ORDER, PRICING } from "@/lib/plans";
 import { useUser } from "@clerk/nextjs";
+import { syncPlanFromStripe } from "./actions";
 
 interface Props {
   currentPlan: Plan;
   hasStripeAccount: boolean;
+  hasEverPaid: boolean;
   paymentSuccess?: boolean;
   paymentCancelled?: boolean;
+  successPriceId?: string;
 }
 
 const TIERS = [
@@ -87,13 +90,17 @@ const TIERS = [
 export function BillingClient({
   currentPlan,
   hasStripeAccount,
+  hasEverPaid,
   paymentSuccess,
   paymentCancelled,
+  successPriceId,
 }: Props) {
   const { api } = useApi();
   const router = useRouter();
   const { user } = useUser();
-  const [loading, setLoading] = useState<string | null>(null);
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [redirecting, setRedirecting] = useState(false);
+
   const [activePlan, setActivePlan] = useState<Plan>(currentPlan);
   const [syncing, setSyncing] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -103,6 +110,29 @@ export function BillingClient({
   useEffect(() => {
     if (!paymentSuccess) return;
 
+    // Derive which plan was purchased from the priceId in the redirect URL
+    const purchasedPlan: Plan | null = successPriceId
+      ? (() => {
+          if (
+            successPriceId === PRICING.starter.monthly.priceId ||
+            successPriceId === PRICING.starter.once.priceId
+          )
+            return "starter";
+          if (successPriceId === PRICING.pro.monthly.priceId) return "pro";
+          if (successPriceId === PRICING.agency.monthly.priceId)
+            return "agency";
+          return null;
+        })()
+      : null;
+
+    // Optimistically apply the plan immediately — don't wait for the webhook
+    if (purchasedPlan) {
+      setActivePlan(purchasedPlan);
+      // Persist to DB + Clerk in the background — this is a safety net
+      // in case the Stripe webhook is slow or fails
+      syncPlanFromStripe(purchasedPlan).catch(console.error);
+    }
+
     setSyncing(true);
 
     pollRef.current = setInterval(async () => {
@@ -110,16 +140,18 @@ export function BillingClient({
       const updatedPlan =
         (user?.publicMetadata?.plan as Plan | undefined) ?? "free";
 
-      if (updatedPlan !== currentPlan) {
+      // Stop polling once Clerk confirms a plan upgrade
+      const isUpgraded =
+        PLAN_ORDER.indexOf(updatedPlan) > PLAN_ORDER.indexOf(currentPlan);
+
+      if (isUpgraded || updatedPlan === purchasedPlan) {
         setActivePlan(updatedPlan);
         setSyncing(false);
         clearInterval(pollRef.current!);
-        // Clean up the URL
         router.replace("/app/billing");
       }
     }, 1500);
 
-    // Stop polling after 30s regardless
     const timeout = setTimeout(() => {
       clearInterval(pollRef.current!);
       setSyncing(false);
@@ -129,13 +161,15 @@ export function BillingClient({
       clearInterval(pollRef.current!);
       clearTimeout(timeout);
     };
-  }, [paymentSuccess]);
+  }, [paymentSuccess, successPriceId]);
 
   const handleCheckout = async (
     priceId: string,
     mode: "subscription" | "payment",
   ) => {
-    setLoading(priceId);
+    setLoadingId(priceId);
+    setRedirecting(true);
+
     const tier = TIERS.find(
       (t) =>
         ("pricingMonthly" in t && t.pricingMonthly?.priceId === priceId) ||
@@ -156,12 +190,14 @@ export function BillingClient({
       router.push(data.url);
     } catch (err) {
       posthog.captureException(err, { event_name: "checkout_failed" });
-      setLoading(null);
+      setLoadingId(null);
+      setRedirecting(false);
     }
   };
 
   const handlePortal = async () => {
-    setLoading("portal");
+    setLoadingId("portal");
+    setRedirecting(true);
     posthog.capture("billing_portal_opened", { current_plan: activePlan });
     try {
       const { data, error } = await api.billing.portal.post({});
@@ -169,9 +205,12 @@ export function BillingClient({
       router.push(data.url);
     } catch (err) {
       posthog.captureException(err, { event_name: "billing_portal_failed" });
-      setLoading(null);
+      setLoadingId(null);
+      setRedirecting(false);
     }
   };
+
+  console.log({ hasStripeAccount, hasEverPaid });
 
   return (
     <div className="w-full p-10! mx-auto">
@@ -185,7 +224,7 @@ export function BillingClient({
                 <p className="font-label font-semibold! text-[11px] tracking-[0.4em] uppercase text-dash-gold">
                   Activating your plan…
                 </p>
-                <p className="font-display italic text-sm font-semibold! text-dash-text/60 mt-0.5">
+                <p className="font-display italic text-sm font-semibold! text-dash-text/60 mt-0.5!">
                   This usually takes a few seconds
                 </p>
               </div>
@@ -197,7 +236,7 @@ export function BillingClient({
                 <p className="font-label text-[11px] tracking-[0.4em] uppercase text-dash-gold">
                   Payment successful
                 </p>
-                <p className="font-display italic text-sm text-dash-text/60 mt-0.5">
+                <p className="font-display italic text-sm text-dash-text/60 mt-0.5!">
                   Your plan has been upgraded to{" "}
                   <span className="text-dash-gold capitalize">
                     {activePlan}
@@ -211,15 +250,15 @@ export function BillingClient({
 
       {/* ── Cancelled banner ── */}
       {paymentCancelled && (
-        <div className="mb-8 rounded-xl border border-[#ffffff15] bg-[#ffffff05] px-6 py-4">
-          <p className="font-label text-[11px] tracking-[0.4em] uppercase text-dash-text/50">
+        <div className="mb-8! rounded-xl border border-[#ffffff15] bg-[#ffffff05] px-6! py-4!">
+          <p className="font-label text-[11px] tracking-[0.4em] uppercase text-dash-text/80">
             Payment cancelled — no charge was made
           </p>
         </div>
       )}
 
       {/* ── Header ── */}
-      <div className="mb-10 space-y-2">
+      <div className="mb-10! space-y-2!">
         <p className="font-label text-sm font-semibold tracking-[0.5em] uppercase text-dash-gold/70">
           Billing
         </p>
@@ -239,18 +278,12 @@ export function BillingClient({
         <div className="mb-8!">
           <button
             onClick={handlePortal}
-            disabled={loading === "portal"}
+            disabled={redirecting}
             className="flex items-center gap-2 font-label text-sm font-bold tracking-[0.4em] uppercase px-6! py-3! rounded-full border border-dash-border-md text-dash-gold/80 transition-all hover:text-dash-gold hover:border-dash-border-hi disabled:opacity-50"
           >
-            {loading === "portal" ? (
-              <>
-                <Loader2Icon className="size-3.5 animate-spin" /> Redirecting…
-              </>
-            ) : (
-              <>
-                Manage Subscription <ArrowRightIcon className="size-3.5" />
-              </>
-            )}
+            <>
+              Manage Subscription <ArrowRightIcon className="size-3.5" />
+            </>
           </button>
         </div>
       )}
@@ -317,48 +350,50 @@ export function BillingClient({
                   {"pricingMonthly" in tier && tier.pricingMonthly && (
                     <button
                       onClick={() =>
-                        handleCheckout(
-                          tier.pricingMonthly!.priceId,
-                          "subscription",
-                        )
+                        hasStripeAccount
+                          ? handlePortal()
+                          : handleCheckout(
+                              tier.pricingMonthly!.priceId,
+                              "subscription",
+                            )
                       }
-                      disabled={!!loading}
+                      disabled={redirecting}
                       className="flex items-center justify-center gap-1.5 w-full py-2! rounded-xl font-label text-[14px] tracking-[0.3em] uppercase transition-all border border-dash-border-hi text-dash-gold bg-dash-gold/8 hover:bg-dash-gold/[0.14] disabled:opacity-50 cursor-pointer"
                     >
-                      {loading === tier.pricingMonthly.priceId ? (
-                        <>
-                          <Loader2Icon className="size-3 animate-spin" />{" "}
-                          Redirecting…
-                        </>
-                      ) : (
-                        tier.pricingMonthly.label
-                      )}
+                      {tier.pricingMonthly.label}
                     </button>
                   )}
-                  {"pricingOnce" in tier && tier.pricingOnce && (
-                    <button
-                      onClick={() =>
-                        handleCheckout(tier.pricingOnce!.priceId, "payment")
-                      }
-                      disabled={!!loading}
-                      className="flex items-center justify-center gap-1.5 w-full py-2! rounded-xl font-label text-[14px] tracking-[0.3em] uppercase transition-all border border-dash-border text-dash-gold/60 hover:text-dash-gold hover:border-dash-border-md disabled:opacity-50 cursor-pointer"
-                    >
-                      {loading === tier.pricingOnce.priceId ? (
-                        <>
-                          <Loader2Icon className="size-3 animate-spin" />{" "}
-                          Redirecting…
-                        </>
-                      ) : (
-                        tier.pricingOnce.label
-                      )}
-                    </button>
-                  )}
+                  {"pricingOnce" in tier &&
+                    tier.pricingOnce &&
+                    !hasEverPaid && (
+                      // Only show one-time payment option for new customers — existing
+                      // subscribers manage payment via the portal
+                      <button
+                        onClick={() =>
+                          handleCheckout(tier.pricingOnce!.priceId, "payment")
+                        }
+                        disabled={redirecting}
+                        className="flex items-center justify-center gap-1.5 w-full py-2! rounded-xl font-label text-[14px] tracking-[0.3em] uppercase transition-all border border-dash-border text-dash-gold/60 hover:text-dash-gold hover:border-dash-border-md disabled:opacity-50 cursor-pointer"
+                      >
+                        {tier.pricingOnce.label}
+                      </button>
+                    )}
                 </div>
               )}
             </div>
           );
         })}
       </div>
+
+      {/* ── Redirect overlay ── */}
+      {redirecting && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-dash-bg/90 backdrop-blur-sm">
+          <Loader2Icon className="size-8 text-dash-gold animate-spin" />
+          <p className="font-label text-[11px] tracking-[0.4em] uppercase text-dash-gold">
+            Redirecting to Stripe…
+          </p>
+        </div>
+      )}
     </div>
   );
 }

@@ -56,7 +56,7 @@ export function AnalyticsClient({ weddings, rsvps }: Props) {
           return (
             <div
               key={w.id}
-              className="rounded-xl border border-[#D4AF3720] bg-[#D4AF3705] p-6"
+              className="rounded-xl border border-[#D4AF3720] bg-[#D4AF3705] p-6!"
             >
               <div className="flex items-start justify-between mb-6">
                 <div>
@@ -67,12 +67,12 @@ export function AnalyticsClient({ weddings, rsvps }: Props) {
                     }{" "}
                     {w.groom ? `${w.bride} & ${w.groom}` : w.bride}
                   </h2>
-                  <p className="font-label text-[10px] tracking-[0.3em] uppercase text-[#D4AF3780] mt-1">
+                  <p className="font-label text-[10px] tracking-[0.3em] uppercase text-[#D4AF3790] mt-1">
                     {w.slug}.ceremonia.app
                   </p>
                 </div>
                 <span
-                  className={`font-label text-[10px] tracking-[0.3em] uppercase px-2 py-1 rounded-full ${
+                  className={`font-label text-[10px] tracking-[0.3em] uppercase px-2! py-1! rounded-full ${
                     w.published
                       ? "bg-[#D4AF3720] text-[#D4AF37]"
                       : "bg-[#ffffff10] text-[#F5F0E860]"
@@ -93,7 +93,7 @@ export function AnalyticsClient({ weddings, rsvps }: Props) {
                     <p className="font-display text-3xl font-light text-[#F5F0E8]">
                       {stat.value}
                     </p>
-                    <p className="font-label text-[10px] tracking-[0.3em] uppercase text-[#D4AF3780] mt-1">
+                    <p className="font-label text-[10px] tracking-[0.3em] uppercase text-[#D4AF3790] mt-1!">
                       {stat.label}
                     </p>
                   </div>

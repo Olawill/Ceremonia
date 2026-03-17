@@ -4,18 +4,18 @@ const slug = process.env.PLAYWRIGHT_DEMO_SLUG || "demo";
 
 test.describe("Event invitation page", () => {
   test("page loads and returns 200", async ({ page }) => {
-    const response = await page.goto(`/wedding/${slug}`);
+    const response = await page.goto(`/event/${slug}`);
     expect(response?.status()).toBe(200);
   });
 
   test("page title contains event names or invitation", async ({ page }) => {
-    await page.goto(`/wedding/${slug}`);
+    await page.goto(`/event/${slug}`);
     const title = await page.title();
     expect(title.length).toBeGreaterThan(0);
   });
 
   test("curtain or invitation content is visible", async ({ page }) => {
-    await page.goto(`/wedding/${slug}`);
+    await page.goto(`/event/${slug}`);
     await page.waitForLoadState("networkidle");
     // Either the curtain or the main content should be present
     const hasCurtain = await page.locator("canvas").count();
@@ -28,7 +28,7 @@ test.describe("Event invitation page", () => {
     page.on("console", (msg) => {
       if (msg.type() === "error") errors.push(msg.text());
     });
-    await page.goto(`/wedding/${slug}`);
+    await page.goto(`/event/${slug}`);
     await page.waitForLoadState("networkidle");
     // Filter out known non-critical errors
     const critical = errors.filter(

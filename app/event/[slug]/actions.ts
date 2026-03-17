@@ -25,7 +25,7 @@ export async function unlockWedding(slug: string, password: string) {
     httpOnly: true,
     sameSite: "lax",
     maxAge: 60 * 60 * 24, // 24 hours
-    path: `/event${slug}`,
+    path: `/event/${slug}`,
   });
 
   const posthog = getPostHogClient();

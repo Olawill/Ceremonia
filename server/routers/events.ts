@@ -33,7 +33,7 @@ const CourseSchema = t.Object({
 
 const CurtainStyleSchema = t.UnionEnum(CURTAIN_STYLES);
 
-const WeddingBodySchema = t.Object({
+const EventBodySchema = t.Object({
   bride: t.String({ minLength: 1 }),
   groom: t.Optional(t.String()),
   eventType: t.Optional(t.String()),
@@ -75,10 +75,10 @@ const WeddingBodySchema = t.Object({
   travelItems: t.Optional(t.Any()),
 });
 
-export const weddingsRouter = new Elysia({ prefix: "/weddings" })
+export const eventsRouter = new Elysia({ prefix: "/events" })
   .use(bearer())
 
-  // GET /api/weddings — list all weddings for current user
+  // GET /api/events — list all weddings for current user
   .get("/", async ({ bearer, status }) => {
     const userId = await getAuthUserId(bearer);
     if (!userId) return status(401, { message: "Unauthorized" });
@@ -91,7 +91,7 @@ export const weddingsRouter = new Elysia({ prefix: "/weddings" })
     return result;
   })
 
-  // GET /api/weddings/:slug — get a single wedding (must be owner)
+  // GET /api/events/:slug — get a single wedding (must be owner)
   .get("/:slug", async ({ params, bearer, status }) => {
     const userId = await getAuthUserId(bearer);
     if (!userId) return status(401, { message: "Unauthorized" });
@@ -106,7 +106,7 @@ export const weddingsRouter = new Elysia({ prefix: "/weddings" })
     return wedding;
   })
 
-  // POST /api/weddings — create new wedding
+  // POST /api/events — create new wedding
   .post(
     "/",
     async ({ body, bearer, status }) => {
@@ -177,10 +177,10 @@ export const weddingsRouter = new Elysia({ prefix: "/weddings" })
 
       return created;
     },
-    { body: WeddingBodySchema },
+    { body: EventBodySchema },
   )
 
-  // PATCH /api/weddings/:slug — update (owner only)
+  // PATCH /api/events/:slug — update (owner only)
   .patch(
     "/:slug",
     async ({ params, body, bearer, status }) => {
@@ -251,10 +251,10 @@ export const weddingsRouter = new Elysia({ prefix: "/weddings" })
       if (!updated) return status(404, { message: "Not found" });
       return updated;
     },
-    { body: t.Partial(WeddingBodySchema) },
+    { body: t.Partial(EventBodySchema) },
   )
 
-  // DELETE /api/weddings/:slug
+  // DELETE /api/events/:slug
   .delete("/:slug", async ({ params, bearer, status }) => {
     const userId = await getAuthUserId(bearer);
     if (!userId) return status(401, { message: "Unauthorized" });

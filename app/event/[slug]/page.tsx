@@ -109,7 +109,14 @@ export async function generateStaticParams() {
     .from(weddings)
     .where(eq(weddings.published, true));
 
-  return allWeddings.map((w) => ({ slug: w.slug }));
+  const slugs = allWeddings.map((w) => ({ slug: w.slug }));
+
+  // Always pre-render the demo slug — it bypasses DB and serves DEMO_WEDDING_CONFIG
+  if (!slugs.find((s) => s.slug === "demo")) {
+    slugs.push({ slug: "demo" });
+  }
+
+  return slugs;
 }
 
 // Revalidate every 60 seconds — keeps it fast but fresh

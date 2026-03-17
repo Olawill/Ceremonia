@@ -106,7 +106,7 @@ export default async function MarketingPage() {
     : "/sign-up?redirect_url=/app/billing/checkout";
 
   return (
-    <div className="min-h-screen bg-dash-bg text-[#F5F0E8]">
+    <div className="min-h-screen bg-dash-bg text-[#F5F0E8] flex flex-col gap-2">
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8! py-5! border-b border-[#D4AF37] bg-dash-bg/90 backdrop-blur-md">
         <div className="flex items-center gap-2">
@@ -143,7 +143,7 @@ export default async function MarketingPage() {
       </nav>
 
       {/* Hero */}
-      <section className="min-h-screen flex flex-col items-center justify-center text-center px-6! pt-20! font-semibold">
+      <section className="min-h-screen flex flex-col items-center justify-center text-center px-6! pt-20 font-semibold">
         <p className="font-label text-[12px] tracking-[0.5em] uppercase text-[#D4AF37] mb-6">
           Event invitations, reimagined
         </p>
@@ -164,7 +164,7 @@ export default async function MarketingPage() {
             Create your invitation
           </Link>
           <Link
-            href="/eventdemo"
+            href="/event/demo"
             className="font-label text-[12px] tracking-[0.4em] uppercase px-8! py-4! rounded-full border border-[#D4AF3790] text-[#D4AF37] hover:border-[#D4AF37] transition-colors"
           >
             See the demo
@@ -186,8 +186,8 @@ export default async function MarketingPage() {
       </section>
 
       {/* Pricing */}
-      <section className="px-6! py-4! max-w-6xl! mx-auto">
-        <div className="text-center mb-8!">
+      <section className="px-6! py-2 w-full mx-auto">
+        <div className="text-center mb-8">
           <p className="font-label text-[14px] font-semibold tracking-[0.5em] uppercase text-[#D4AF37] mb-4">
             Pricing
           </p>

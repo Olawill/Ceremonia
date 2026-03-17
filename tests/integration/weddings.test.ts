@@ -79,13 +79,13 @@ const validBody = {
   passwordProtected: false,
 };
 
-// ── GET /api/weddings ─────────────────────────────────────────────────────────
+// ── GET /api/events ─────────────────────────────────────────────────────────
 
-describe("GET /api/weddings", () => {
+describe("GET /api/events", () => {
   it("returns 401 without auth", async () => {
     authed.mockResolvedValue(null);
     const res = await app.handle(
-      new Request("http://localhost/api/weddings", { method: "GET" }),
+      new Request("http://localhost/api/events", { method: "GET" }),
     );
     expect(res.status).toBe(401);
   });
@@ -96,7 +96,7 @@ describe("GET /api/weddings", () => {
       from: () => ({ where: () => Promise.resolve([]) }),
     });
     const res = await app.handle(
-      new Request("http://localhost/api/weddings", { method: "GET" }),
+      new Request("http://localhost/api/events", { method: "GET" }),
     );
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -112,7 +112,7 @@ describe("GET /api/weddings", () => {
       from: () => ({ where: () => Promise.resolve(mockWeddings) }),
     });
     const res = await app.handle(
-      new Request("http://localhost/api/weddings", { method: "GET" }),
+      new Request("http://localhost/api/events", { method: "GET" }),
     );
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -121,13 +121,13 @@ describe("GET /api/weddings", () => {
   });
 });
 
-// ── GET /api/weddings/:slug ───────────────────────────────────────────────────
+// ── GET /api/events/:slug ───────────────────────────────────────────────────
 
-describe("GET /api/weddings/:slug", () => {
+describe("GET /api/events/:slug", () => {
   it("returns 401 without auth", async () => {
     authed.mockResolvedValue(null);
     const res = await app.handle(
-      new Request("http://localhost/api/weddings/alice-bob", { method: "GET" }),
+      new Request("http://localhost/api/events/alice-bob", { method: "GET" }),
     );
     expect(res.status).toBe(401);
   });
@@ -140,7 +140,7 @@ describe("GET /api/weddings/:slug", () => {
       }),
     });
     const res = await app.handle(
-      new Request("http://localhost/api/weddings/nonexistent", {
+      new Request("http://localhost/api/events/nonexistent", {
         method: "GET",
       }),
     );
@@ -161,7 +161,7 @@ describe("GET /api/weddings/:slug", () => {
       }),
     });
     const res = await app.handle(
-      new Request("http://localhost/api/weddings/alice-bob", { method: "GET" }),
+      new Request("http://localhost/api/events/alice-bob", { method: "GET" }),
     );
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -169,13 +169,13 @@ describe("GET /api/weddings/:slug", () => {
   });
 });
 
-// ── POST /api/weddings ────────────────────────────────────────────────────────
+// ── POST /api/events ────────────────────────────────────────────────────────
 
-describe("POST /api/weddings", () => {
+describe("POST /api/events", () => {
   it("returns 401 without auth", async () => {
     authed.mockResolvedValue(null);
     const res = await app.handle(
-      new Request("http://localhost/api/weddings", {
+      new Request("http://localhost/api/events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(validBody),
@@ -188,7 +188,7 @@ describe("POST /api/weddings", () => {
     authed.mockResolvedValue("user-123");
     const { bride: _, ...withoutBride } = validBody;
     const res = await app.handle(
-      new Request("http://localhost/api/weddings", {
+      new Request("http://localhost/api/events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(withoutBride),
@@ -200,7 +200,7 @@ describe("POST /api/weddings", () => {
   it("returns 422 when curtainStyle is invalid", async () => {
     authed.mockResolvedValue("user-123");
     const res = await app.handle(
-      new Request("http://localhost/api/weddings", {
+      new Request("http://localhost/api/events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...validBody, curtainStyle: "invalid" }),
@@ -247,7 +247,7 @@ describe("POST /api/weddings", () => {
     });
 
     const res = await app.handle(
-      new Request("http://localhost/api/weddings", {
+      new Request("http://localhost/api/events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -302,7 +302,7 @@ describe("POST /api/weddings", () => {
     mockDb.insert.mockImplementation(insertSpy);
 
     await app.handle(
-      new Request("http://localhost/api/weddings", {
+      new Request("http://localhost/api/events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -370,7 +370,7 @@ describe("POST /api/weddings", () => {
     });
 
     const res = await app.handle(
-      new Request("http://localhost/api/weddings", {
+      new Request("http://localhost/api/events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -397,13 +397,13 @@ describe("POST /api/weddings", () => {
   });
 });
 
-// ── PATCH /api/weddings/:slug ─────────────────────────────────────────────────
+// ── PATCH /api/events/:slug ─────────────────────────────────────────────────
 
-describe("PATCH /api/weddings/:slug", () => {
+describe("PATCH /api/events/:slug", () => {
   it("returns 401 without auth", async () => {
     authed.mockResolvedValue(null);
     const res = await app.handle(
-      new Request("http://localhost/api/weddings/alice-bob", {
+      new Request("http://localhost/api/events/alice-bob", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ bride: "Alice" }),
@@ -413,13 +413,13 @@ describe("PATCH /api/weddings/:slug", () => {
   });
 });
 
-// ── DELETE /api/weddings/:slug ────────────────────────────────────────────────
+// ── DELETE /api/events/:slug ────────────────────────────────────────────────
 
-describe("DELETE /api/weddings/:slug", () => {
+describe("DELETE /api/events/:slug", () => {
   it("returns 401 without auth", async () => {
     authed.mockResolvedValue(null);
     const res = await app.handle(
-      new Request("http://localhost/api/weddings/alice-bob", {
+      new Request("http://localhost/api/events/alice-bob", {
         method: "DELETE",
       }),
     );
@@ -429,7 +429,7 @@ describe("DELETE /api/weddings/:slug", () => {
   it("returns 200 when authed and wedding exists", async () => {
     authed.mockResolvedValue("user-123");
     const res = await app.handle(
-      new Request("http://localhost/api/weddings/alice-bob", {
+      new Request("http://localhost/api/events/alice-bob", {
         method: "DELETE",
       }),
     );
@@ -441,7 +441,7 @@ describe("DELETE /api/weddings/:slug", () => {
 
 // ── PATCH plan-gating ─────────────────────────────────────────────────────────
 
-describe("PATCH /api/weddings/:slug plan gating", () => {
+describe("PATCH /api/events/:slug plan gating", () => {
   it("returns 403 when free plan tries to set customDomain", async () => {
     authed.mockResolvedValue("user-123");
     // Plan fetch returns free
@@ -451,7 +451,7 @@ describe("PATCH /api/weddings/:slug plan gating", () => {
       }),
     });
     const res = await app.handle(
-      new Request("http://localhost/api/weddings/alice-bob", {
+      new Request("http://localhost/api/events/alice-bob", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ customDomain: "my-wedding.com" }),
@@ -468,7 +468,7 @@ describe("PATCH /api/weddings/:slug plan gating", () => {
       }),
     });
     const res = await app.handle(
-      new Request("http://localhost/api/weddings/alice-bob", {
+      new Request("http://localhost/api/events/alice-bob", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ passwordProtected: true }),
@@ -485,7 +485,7 @@ describe("PATCH /api/weddings/:slug plan gating", () => {
       }),
     });
     const res = await app.handle(
-      new Request("http://localhost/api/weddings/alice-bob", {
+      new Request("http://localhost/api/events/alice-bob", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ audioUrl: "https://example.com/song.mp3" }),
@@ -509,7 +509,7 @@ describe("PATCH /api/weddings/:slug plan gating", () => {
       }),
     });
     const res = await app.handle(
-      new Request("http://localhost/api/weddings/nonexistent", {
+      new Request("http://localhost/api/events/nonexistent", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ bride: "Alice" }),
@@ -521,7 +521,7 @@ describe("PATCH /api/weddings/:slug plan gating", () => {
 
 // ── POST wedding count limit ───────────────────────────────────────────────────
 
-describe("POST /api/weddings plan limit", () => {
+describe("POST /api/events plan limit", () => {
   it("returns 403 when free plan already has 1 wedding", async () => {
     authed.mockResolvedValue("user-123");
 
@@ -557,7 +557,7 @@ describe("POST /api/weddings plan limit", () => {
       });
 
     const res = await app.handle(
-      new Request("http://localhost/api/weddings", {
+      new Request("http://localhost/api/events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -2,7 +2,8 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import clsx from "clsx";
-import { ArrowRightIcon, SparklesIcon } from "lucide-react";
+import { ArrowLeftIcon, ArrowRightIcon, SparklesIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -34,6 +35,7 @@ interface Props {
 }
 
 export function NewEventDialog({ onConfirm }: Props) {
+  const router = useRouter();
   const {
     register,
     handleSubmit,
@@ -55,6 +57,15 @@ export function NewEventDialog({ onConfirm }: Props) {
     // Full-screen overlay
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2! bg-dash-bg/95 backdrop-blur-md">
       <div className="w-full max-w-lg mx-auto rounded-2xl p-4! space-y-8! bg-dash-surface border border-dash-border">
+        {/* Back to dashboard */}
+        <button
+          type="button"
+          onClick={() => router.push("/app/dashboard")}
+          className="flex items-center gap-1.5 font-label text-[10px] tracking-widest uppercase text-dash-gold/50 hover:text-dash-gold transition-colors cursor-pointer"
+        >
+          <ArrowLeftIcon className="size-3" />
+          Dashboard
+        </button>
         {/* Header */}
         <div className="text-center space-y-3">
           <p className="font-label text-xs font-bold tracking-[0.5em] uppercase text-dash-gold/70">
@@ -116,6 +127,7 @@ export function NewEventDialog({ onConfirm }: Props) {
             <Field
               label={vocab.host1Label + "'s Name"}
               error={errors.host1Name?.message}
+              className={clsx(!vocab.dualHost && "col-span-2")}
             >
               <Input
                 {...register("host1Name")}

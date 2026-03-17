@@ -11,7 +11,7 @@ interface Props {
 }
 
 function buildUrl(config: WeddingConfig): string {
-  return `/eventpreview?initial=${encodeURIComponent(
+  return `/event/preview?initial=${encodeURIComponent(
     btoa(
       Array.from(new TextEncoder().encode(JSON.stringify(config)))
         .map((b) => String.fromCharCode(b))

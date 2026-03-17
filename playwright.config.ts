@@ -30,7 +30,10 @@ export default defineConfig({
     },
     {
       name: "mobile",
-      use: { ...devices["iPhone 13"] },
+      use: {
+        ...devices["iPhone 13"],
+        storageState: "tests/e2e/.auth/user.json",
+      },
       dependencies: ["setup"],
     },
   ],

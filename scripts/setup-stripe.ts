@@ -63,8 +63,8 @@ async function main() {
     "Starter One-time",
     undefined,
   );
-  results["STRIPE_PRICE_STARTER_MONTHLY"] = starterMonthly.priceId;
-  results["STRIPE_PRICE_STARTER_ONCE"] = starterOnce.priceId;
+  results["NEXT_PUBLIC_STRIPE_PRICE_STARTER_MONTHLY"] = starterMonthly.priceId;
+  results["NEXT_PUBLIC_STRIPE_PRICE_STARTER_ONCE"] = starterOnce.priceId;
 
   // ── PRO ──────────────────────────────────────────────────────────────
   const proId = await createProduct(
@@ -74,7 +74,7 @@ async function main() {
   const proMonthly = await createPrice(proId, 1900, "Pro Monthly", {
     interval: "month",
   });
-  results["STRIPE_PRICE_PRO_MONTHLY"] = proMonthly.priceId;
+  results["NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY"] = proMonthly.priceId;
 
   // ── AGENCY ───────────────────────────────────────────────────────────
   const agencyId = await createProduct(
@@ -84,9 +84,58 @@ async function main() {
   const agencyMonthly = await createPrice(agencyId, 7900, "Agency Monthly", {
     interval: "month",
   });
-  results["STRIPE_PRICE_AGENCY_MONTHLY"] = agencyMonthly.priceId;
+  results["NEXT_PUBLIC_STRIPE_PRICE_AGENCY_MONTHLY"] = agencyMonthly.priceId;
 
-  // ── Write .env.local additions ────────────────────────────────────────
+  // ── PORTAL CONFIGURATION ─────────────────────────────────────────────
+  // Create the portal config now that we have all product + price IDs
+  const portalConfig = await stripe.billingPortal.configurations.create({
+    business_profile: {
+      headline: "Manage your Ceremonia subscription",
+      privacy_policy_url: `${process.env.NEXT_PUBLIC_APP_URL}/privacy`,
+      terms_of_service_url: `${process.env.NEXT_PUBLIC_APP_URL}/terms`,
+    },
+    features: {
+      payment_method_update: { enabled: true },
+      subscription_cancel: {
+        enabled: true,
+        mode: "at_period_end",
+        cancellation_reason: {
+          enabled: true,
+          options: [
+            "too_expensive",
+            "missing_features",
+            "switched_service",
+            "other",
+          ],
+        },
+      },
+      subscription_update: {
+        enabled: true,
+        default_allowed_updates: ["price"],
+        proration_behavior: "create_prorations",
+        products: [
+          {
+            product: starterId,
+            prices: [starterMonthly.priceId, starterOnce.priceId],
+          },
+          {
+            product: proId,
+            prices: [proMonthly.priceId],
+          },
+          {
+            product: agencyId,
+            prices: [agencyMonthly.priceId],
+          },
+        ],
+      },
+      invoice_history: { enabled: true },
+    },
+  });
+
+  console.log(`✦ Portal configuration created: ${portalConfig.id}`);
+  results["STRIPE_PORTAL_CONFIG_ID"] = portalConfig.id;
+
+  // ── Write env file ────────────────────────────────────────────────────
   const envLines = Object.entries(results)
     .map(([key, val]) => `${key}=${val}`)
     .join("\n");
@@ -94,7 +143,7 @@ async function main() {
   const envPath = path.resolve(process.cwd(), ".env.stripe.local");
   fs.writeFileSync(envPath, envLines + "\n");
 
-  console.log("\n✦ Done! Price IDs written to .env.stripe.local\n");
+  console.log("\n✦ Done! IDs written to .env.stripe.local\n");
   console.log("─────────────────────────────────────────────");
   console.log(envLines);
   console.log("─────────────────────────────────────────────");

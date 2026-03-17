@@ -146,17 +146,17 @@ export function EditorShell({ initialConfig, isNew }: Props) {
         galleryPhotos: config.galleryPhotos,
         travelGuideEnabled: config.travelGuideEnabled,
         travelItems: config.travelItems,
-      } satisfies Parameters<typeof api.weddings.post>[0];
+      } satisfies Parameters<typeof api.events.post>[0];
 
       if (isNew) {
-        const { data, error } = await api.weddings.post(payload);
+        const { data, error } = await api.events.post(payload);
         if (error) {
-          handleApiError(error, "Failed to create wedding");
+          handleApiError(error, "Failed to create event");
           throw error;
         }
         setSaveState("saved");
         setIsDirty(false);
-        toast.success("Wedding created!");
+        toast.success("Event created!");
         posthog.capture("event_created", {
           slug: data!.slug,
           bride: config.bride,
@@ -167,10 +167,10 @@ export function EditorShell({ initialConfig, isNew }: Props) {
         startTransition(() => router.replace(`/app/editor/${data!.slug}`));
       } else {
         const { error } = await api
-          .weddings({ slug: config.slug })
+          .events({ slug: config.slug })
           .patch(payload);
         if (error) {
-          handleApiError(error, "Failed to save wedding");
+          handleApiError(error, "Failed to save event");
           throw error;
         }
         setSaveState("saved");
@@ -289,7 +289,7 @@ export function EditorShell({ initialConfig, isNew }: Props) {
       {/* Right — preview: full panel on lg+, sheet on smaller screens */}
 
       {/* Sheet backdrop (mobile/md) */}
-      {previewOpen && (
+      {previewOpen && !showDialog && (
         <div
           className="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
           onClick={() => setPreviewOpen(false)}
@@ -305,6 +305,8 @@ export function EditorShell({ initialConfig, isNew }: Props) {
           "fixed inset-y-0 right-0 z-50 flex flex-col w-full max-w-2xl bg-[#050505]",
           "border-l-2 border-dash-border-hi transition-transform duration-300",
           previewOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0",
+          // Hide entirely when the new event dialog is open
+          showDialog && "lg:hidden",
         )}
       >
         <div className="px-6! py-1! border-b border-dash-border/10 flex items-center justify-between shrink-0">
@@ -325,7 +327,7 @@ export function EditorShell({ initialConfig, isNew }: Props) {
               onClick={() => {
                 const iframe = previewIframeRef.current;
                 if (!iframe) return;
-                iframe.src = `/eventpreview?initial=${encodeURIComponent(
+                iframe.src = `/event/preview?initial=${encodeURIComponent(
                   btoa(
                     Array.from(new TextEncoder().encode(JSON.stringify(config)))
                       .map((b) => String.fromCharCode(b))

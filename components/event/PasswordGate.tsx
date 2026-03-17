@@ -15,6 +15,7 @@ export function PasswordGate({ slug }: Props) {
   const router = useRouter();
 
   const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
+    // const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     startTransition(async () => {
       const result = await unlockWedding(slug, input);

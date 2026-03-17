@@ -34,7 +34,7 @@ export const billingRouter = new Elysia({ prefix: "/billing" })
         customer: user.stripeCustomerId ?? undefined,
         customer_email: user.stripeCustomerId ? undefined : user.email,
         line_items: [{ price: body.priceId, quantity: 1 }],
-        success_url: `${env.NEXT_PUBLIC_APP_URL}/app/billing?success=true`,
+        success_url: `${env.NEXT_PUBLIC_APP_URL}/app/billing?success=true&priceId=${body.priceId}`,
         cancel_url: `${env.NEXT_PUBLIC_APP_URL}/app/billing?cancelled=true`,
         metadata: { userId },
         subscription_data:
@@ -69,6 +69,9 @@ export const billingRouter = new Elysia({ prefix: "/billing" })
     const session = await stripe.billingPortal.sessions.create({
       customer: user.stripeCustomerId,
       return_url: `${env.NEXT_PUBLIC_APP_URL}/app/billing`,
+      ...(env.STRIPE_PORTAL_CONFIG_ID
+        ? { configuration: env.STRIPE_PORTAL_CONFIG_ID }
+        : {}),
     });
 
     return { url: session.url };
