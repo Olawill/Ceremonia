@@ -12,9 +12,6 @@ export const env = createEnv({
     BLOB_READ_WRITE_TOKEN: z.string().min(1),
     UNSPLASH_ACCESS_KEY: z.string().min(1),
     PIXABAY_API_KEY: z.string().min(1),
-    STRIPE_PRODUCT_STARTER_ID: z.string().min(1),
-    STRIPE_PRODUCT_PRO_ID: z.string().min(1),
-    STRIPE_PRODUCT_AGENCY_ID: z.string().min(1),
     STRIPE_PORTAL_CONFIG_ID: z.string().optional(),
   },
   client: {
@@ -40,9 +37,6 @@ export const env = createEnv({
     BLOB_READ_WRITE_TOKEN: process.env.BLOB_READ_WRITE_TOKEN,
     UNSPLASH_ACCESS_KEY: process.env.UNSPLASH_ACCESS_KEY,
     PIXABAY_API_KEY: process.env.PIXABAY_API_KEY,
-    STRIPE_PRODUCT_STARTER_ID: process.env.STRIPE_PRODUCT_STARTER_ID,
-    STRIPE_PRODUCT_PRO_ID: process.env.STRIPE_PRODUCT_PRO_ID,
-    STRIPE_PRODUCT_AGENCY_ID: process.env.STRIPE_PRODUCT_AGENCY_ID,
     STRIPE_PORTAL_CONFIG_ID: process.env.STRIPE_PORTAL_CONFIG_ID,
 
     NEXT_PUBLIC_WEDDING_THEME: process.env.NEXT_PUBLIC_WEDDING_THEME,
