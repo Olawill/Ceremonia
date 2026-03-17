@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
+  const BASE = process.env.NEXT_PUBLIC_APP_URL!;
   return {
     rules: [
       {
@@ -15,7 +16,7 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: "https://ceremonia.app/sitemap.xml",
+    sitemap: `${BASE}/sitemap.xml`,
     host: "https://ceremonia.app",
   };
 }

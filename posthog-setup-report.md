@@ -17,7 +17,7 @@ The wizard has completed a deep integration of PostHog analytics into the Ceremo
 | `subscription_created`   | Stripe webhook confirms a new subscription was created (server-side)               | `app/api/webhooks/stripe/route.ts`                |
 | `subscription_cancelled` | Stripe webhook confirms a user's subscription was cancelled (server-side)          | `app/api/webhooks/stripe/route.ts`                |
 | `payment_completed`      | Stripe webhook confirms a one-time payment was completed (server-side)             | `app/api/webhooks/stripe/route.ts`                |
-| `event_unlocked`         | Guest successfully unlocks a password-protected wedding invitation (server action) | `app/event[slug]/actions.ts`                      |
+| `event_unlocked`         | Guest successfully unlocks a password-protected wedding invitation (server action) | `app/event/[slug]/actions.ts`                     |
 
 ## Next steps
 

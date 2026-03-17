@@ -5,7 +5,7 @@ import { db } from "@/db";
 import { weddings } from "@/db/schema";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const BASE = "https://ceremonia.app";
+  const BASE = process.env.NEXT_PUBLIC_APP_URL!;
 
   // Static marketing pages
   const staticRoutes: MetadataRoute.Sitemap = [
@@ -27,6 +27,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly",
       priority: 0.3,
     },
+    {
+      url: `${BASE}/themes`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.6,
+    },
+    {
+      url: `${BASE}/privacy`,
+      lastModified: new Date(),
+      changeFrequency: "yearly",
+      priority: 0.2,
+    },
+    {
+      url: `${BASE}/terms`,
+      lastModified: new Date(),
+      changeFrequency: "yearly",
+      priority: 0.2,
+    },
   ];
 
   // Published wedding pages — these are the main SEO value
@@ -43,7 +61,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Exclude password-protected invitations — they're private
     .filter((w) => !w.passwordProtected)
     .map((w) => ({
-      url: `${BASE}/event${w.slug}`,
+      url: `${BASE}/event/${w.slug}`,
       lastModified: w.updatedAt ?? new Date(),
       changeFrequency: "monthly" as const,
       priority: 0.6,

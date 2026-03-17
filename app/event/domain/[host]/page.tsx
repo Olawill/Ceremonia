@@ -45,5 +45,5 @@ export default async function CustomDomainPage({ params }: Props) {
   if (!wedding) notFound();
 
   // Redirect to the slug route which has all the rendering logic
-  redirect(`/event${wedding.slug}`);
+  redirect(`/event/${wedding.slug}`);
 }

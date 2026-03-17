@@ -7,6 +7,8 @@ export const metadata: Metadata = {
     default: "Dashboard",
     template: "%s | Ceremonia Dashboard",
   },
+  description:
+    "Manage your Ceremonia event invitations, RSVPs, and account settings.",
   robots: { index: false, follow: false },
 };
 

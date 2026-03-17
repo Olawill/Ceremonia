@@ -124,6 +124,7 @@ export const registryItems = pgTable("registry_items", {
   title: text("title").notNull(),
   description: text("description"),
   price: integer("price"), // in pence/cents, e.g. 4999 = £49.99
+  currency: text("currency").default("USD"),
   imageUrl: text("image_url"),
   productUrl: text("product_url"), // Amazon/John Lewis/etc link
   retailer: text("retailer"), // "Amazon", "John Lewis", etc.

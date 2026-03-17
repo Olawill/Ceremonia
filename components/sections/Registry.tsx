@@ -15,6 +15,7 @@ interface RegistryItem {
   title: string;
   description?: string | null;
   price?: number | null;
+  currency?: string | null;
   imageUrl?: string | null;
   productUrl?: string | null;
   retailer?: string | null;
@@ -35,12 +36,18 @@ interface Props {
   label?: string;
 }
 
-export function formatPrice(pence: number, fraction: boolean = false) {
-  return new Intl.NumberFormat("en-US", {
+export function formatPrice(
+  minorUnits: number,
+  currency: string = "USD",
+  fraction: boolean = false,
+) {
+  return new Intl.NumberFormat(undefined, {
+    // `undefined` = user's browser locale
     style: "currency",
-    currency: "USD",
+    currency,
     minimumFractionDigits: fraction ? 2 : 0,
-  }).format(pence / 100);
+    maximumFractionDigits: fraction ? 2 : 0,
+  }).format(minorUnits / 100);
 }
 
 export function Registry({ weddingSlug, label }: Props) {
@@ -312,7 +319,11 @@ export function Registry({ weddingSlug, label }: Props) {
                             className="font-display text-sm font-semibold"
                             style={{ color: theme.gold }}
                           >
-                            {formatPrice(item.price)}
+                            {formatPrice(
+                              item.price,
+                              item.currency ?? "USD",
+                              true,
+                            )}
                           </p>
                         )}
 

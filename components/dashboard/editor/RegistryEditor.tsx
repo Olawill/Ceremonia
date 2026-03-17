@@ -30,6 +30,7 @@ interface RegistryItem {
   title: string;
   description?: string | null;
   price?: number | null;
+  currency?: string | null;
   imageUrl?: string | null;
   productUrl?: string | null;
   retailer?: string | null;
@@ -44,6 +45,7 @@ interface ScrapedItem {
   title?: string | null;
   description?: string | null;
   price?: number | null;
+  currency?: string | null;
   imageUrl?: string | null;
   retailer?: string | null;
   productUrl?: string | null;
@@ -223,6 +225,7 @@ export function RegistryEditor({ config, onChange }: Props) {
           price: item.editPrice
             ? Math.round(parseFloat(item.editPrice) * 100)
             : (item.price ?? undefined),
+          currency: item.currency ?? "USD",
           productUrl: item.productUrl || undefined,
           retailer: item.retailer || undefined,
           category: item.editCategory || undefined,
@@ -354,7 +357,11 @@ export function RegistryEditor({ config, onChange }: Props) {
                         )}
                         {item.price && (
                           <span className="font-display text-[14px] text-dash-gold/90">
-                            {formatPrice(item.price, true)}
+                            {formatPrice(
+                              item.price,
+                              item.currency ?? "USD",
+                              true,
+                            )}
                           </span>
                         )}
                         {!!item.purchasedCount && (

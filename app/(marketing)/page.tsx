@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import clsx from "clsx";
 import { eq } from "drizzle-orm";
-import { SparklesIcon, StarIcon } from "lucide-react";
+import { StarIcon } from "lucide-react";
 import { Metadata, Route } from "next";
 import Link from "next/link";
 
@@ -106,42 +106,7 @@ export default async function MarketingPage() {
     : "/sign-up?redirect_url=/app/billing/checkout";
 
   return (
-    <div className="min-h-screen bg-dash-bg text-[#F5F0E8] flex flex-col gap-2">
-      {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8! py-5! border-b border-[#D4AF37] bg-dash-bg/90 backdrop-blur-md">
-        <div className="flex items-center gap-2">
-          <SparklesIcon className="size-4 text-[#D4AF37]" />
-          <span className="font-label font-bold text-[14px] tracking-[0.4em] uppercase text-[#D4AF37]">
-            Ceremonia
-          </span>
-        </div>
-        <div className="flex items-center gap-4">
-          {userId ? (
-            <Link
-              href="/app/dashboard"
-              className="font-label font-bold text-[11px] tracking-[0.3em] uppercase px-5! py-2.5! rounded-full border border-[#D4AF3770] text-[#D4AF37] hover:bg-[#D4AF3710] transition-colors"
-            >
-              Dashboard
-            </Link>
-          ) : (
-            <>
-              <Link
-                href="/sign-in"
-                className="hidden md:inline-flex font-label font-bold text-[11px] tracking-[0.3em] uppercase text-[#F5F0E890] hover:text-[#F5F0E8] transition-colors"
-              >
-                Sign in
-              </Link>
-              <Link
-                href="/sign-up"
-                className="font-label font-bold text-[11px] tracking-[0.3em] uppercase px-5! py-2.5! rounded-full border border-[#D4AF3770] text-[#D4AF37] hover:bg-[#D4AF3710] transition-colors"
-              >
-                Get started
-              </Link>
-            </>
-          )}
-        </div>
-      </nav>
-
+    <div className="size-full text-[#F5F0E8] flex flex-col gap-2">
       {/* Hero */}
       <section className="min-h-screen flex flex-col items-center justify-center text-center px-6! pt-20 font-semibold">
         <p className="font-label text-[12px] tracking-[0.5em] uppercase text-[#D4AF37] mb-6">
@@ -311,19 +276,6 @@ export default async function MarketingPage() {
           ))}
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="border-t border-[#D4AF3780] px-8! py-8! flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <SparklesIcon className="size-3.5 text-[#D4AF37]" />
-          <span className="font-label font-bold text-[14px] tracking-[0.4em] uppercase text-[#D4AF37]">
-            Ceremonia
-          </span>
-        </div>
-        <p className="font-display italic text-lg text-[#F5F0E8]">
-          © {new Date().getFullYear()} Ceremonia
-        </p>
-      </footer>
     </div>
   );
 }

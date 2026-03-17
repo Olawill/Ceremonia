@@ -6,9 +6,52 @@ interface ScrapedProduct {
   title: string | null;
   imageUrl: string | null;
   description: string | null;
-  price: number | null; // in pence/cents
+  price: number | null; // in minor units (pence, cents, etc.)
+  currency: string | null; // ISO 4217 — "GBP", "USD", "CAD", "EUR", etc.
   retailer: string | null;
 }
+
+const RETAILER_MAP: Record<string, string> = {
+  "amazon.co.uk": "Amazon",
+  "amazon.com": "Amazon",
+  "amazon.ca": "Amazon",
+  "amazon.com.au": "Amazon",
+  "amazon.de": "Amazon",
+  "amazon.fr": "Amazon",
+  "bestbuy.ca": "Best Buy",
+  "bestbuy.com": "Best Buy",
+  "johnlewis.com": "John Lewis",
+  "etsy.com": "Etsy",
+  "ikea.com": "IKEA",
+  "anthropologie.com": "Anthropologie",
+  "crateandbarrel.com": "Crate & Barrel",
+  "williams-sonoma.com": "Williams Sonoma",
+  "target.com": "Target",
+  "wayfair.com": "Wayfair",
+  "walmart.com": "Walmart",
+  "notonthehighstreet.com": "Not On The High Street",
+};
+
+const DOMAIN_CURRENCY_MAP: Record<string, string> = {
+  "amazon.co.uk": "GBP",
+  "amazon.com": "USD",
+  "amazon.ca": "CAD",
+  "amazon.com.au": "AUD",
+  "amazon.de": "EUR",
+  "amazon.fr": "EUR",
+  "bestbuy.ca": "CAD",
+  "bestbuy.com": "USD",
+  "johnlewis.com": "GBP",
+  "notonthehighstreet.com": "GBP",
+  "etsy.com": "USD",
+  "ikea.com": "USD",
+  "anthropologie.com": "USD",
+  "crateandbarrel.com": "USD",
+  "williams-sonoma.com": "USD",
+  "target.com": "USD",
+  "wayfair.com": "USD",
+  "walmart.com": "USD",
+};
 
 /** Extract product data from raw HTML using OG tags + JSON-LD */
 function extractFromHtml(html: string, url: string): ScrapedProduct {
@@ -29,8 +72,9 @@ function extractFromHtml(html: string, url: string): ScrapedProduct {
   const siteName = getMeta("og:site_name") ?? null;
 
   let price: number | null = null;
+  let currency: string | null = null;
 
-  // JSON-LD structured data
+  // JSON-LD structured data — extract price and priceCurrency in one pass
   const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
   for (const script of scripts) {
     try {
@@ -38,17 +82,26 @@ function extractFromHtml(html: string, url: string): ScrapedProduct {
       const offers = json?.offers ?? json?.[0]?.offers;
       const priceRaw =
         offers?.price ?? offers?.[0]?.price ?? json?.price ?? null;
+      const currencyRaw =
+        offers?.priceCurrency ?? offers?.[0]?.priceCurrency ?? null;
       if (priceRaw) {
         const parsed = parseFloat(String(priceRaw).replace(/[^0-9.]/g, ""));
         if (!isNaN(parsed)) {
           price = Math.round(parsed * 100);
+          if (
+            currencyRaw &&
+            typeof currencyRaw === "string" &&
+            currencyRaw.length === 3
+          ) {
+            currency = currencyRaw.toUpperCase();
+          }
           break;
         }
       }
     } catch {}
   }
 
-  // Fallback meta price tags
+  // Fallback: meta price tags
   if (!price) {
     const priceMeta =
       getMeta("product:price:amount") ?? getMeta("twitter:data1") ?? null;
@@ -58,30 +111,27 @@ function extractFromHtml(html: string, url: string): ScrapedProduct {
     }
   }
 
+  // Fallback: OG/meta currency tag
+  if (!currency) {
+    const currencyMeta = getMeta("product:price:currency");
+    if (currencyMeta && currencyMeta.length === 3)
+      currency = currencyMeta.toUpperCase();
+  }
+
   const hostname = new URL(url).hostname.replace("www.", "");
-  const retailerMap: Record<string, string> = {
-    "amazon.co.uk": "Amazon",
-    "amazon.com": "Amazon",
-    "bestbuy.ca": "Best Buy",
-    "bestbuy.com": "Best Buy",
-    "johnlewis.com": "John Lewis",
-    "etsy.com": "Etsy",
-    "ikea.com": "IKEA",
-    "anthropologie.com": "Anthropologie",
-    "crateandbarrel.com": "Crate & Barrel",
-    "williams-sonoma.com": "Williams Sonoma",
-    "target.com": "Target",
-    "wayfair.com": "Wayfair",
-    "notonthehighstreet.com": "Not On The High Street",
-  };
+
+  // Fallback: domain currency lookup
+  if (!currency) {
+    currency = DOMAIN_CURRENCY_MAP[hostname] ?? null;
+  }
 
   const retailer =
     siteName ??
-    retailerMap[hostname] ??
+    RETAILER_MAP[hostname] ??
     hostname.split(".")[0].charAt(0).toUpperCase() +
       hostname.split(".")[0].slice(1);
 
-  return { title, imageUrl, description, price, retailer };
+  return { title, imageUrl, description, price, currency, retailer };
 }
 
 /**
@@ -147,6 +197,10 @@ Infer the retailer from the URL domain if not obvious from the HTML.`,
       imageUrl: parsed.imageUrl ?? null,
       description: parsed.description ?? null,
       price: typeof parsed.price === "number" ? parsed.price : null,
+      currency:
+        typeof parsed.currency === "string" && parsed.currency.length === 3
+          ? parsed.currency.toUpperCase()
+          : null,
       retailer: parsed.retailer ?? null,
     };
   } catch {
@@ -155,6 +209,7 @@ Infer the retailer from the URL domain if not obvious from the HTML.`,
       imageUrl: null,
       description: null,
       price: null,
+      currency: null,
       retailer: null,
     };
   }
@@ -198,9 +253,10 @@ async function extractWithJina(url: string): Promise<ScrapedProduct> {
   // Price — Jina returns the rendered page content as markdown text,
   // so we scan it for price patterns like $49.99, £199, CAD 1,299.00
   let price: number | null = null;
+  let currency: string | null = null;
   const content: string = data.content ?? "";
   const priceMatch = content.match(
-    /(?:CAD|USD|GBP|EUR|£|\$|€)\s*[\d,]+(?:\.\d{2})?|[\d,]+(?:\.\d{2})?\s*(?:CAD|USD|GBP|EUR)/i,
+    /(?:CAD|USD|GBP|EUR|AUD|£|\$|€|A\$|C\$)\s*[\d,]+(?:\.\d{2})?|[\d,]+(?:\.\d{2})?\s*(?:CAD|USD|GBP|EUR|AUD)/i,
   );
   if (priceMatch) {
     const raw = priceMatch[0].replace(/[^0-9.]/g, "");
@@ -208,29 +264,28 @@ async function extractWithJina(url: string): Promise<ScrapedProduct> {
     if (!isNaN(parsed) && parsed > 0) {
       price = Math.round(parsed * 100);
     }
+    // Detect currency from the matched token
+    const tok = priceMatch[0].toUpperCase();
+    if (tok.includes("CAD") || tok.includes("C$")) currency = "CAD";
+    else if (tok.includes("AUD") || tok.includes("A$")) currency = "AUD";
+    else if (tok.includes("GBP") || tok.includes("£")) currency = "GBP";
+    else if (tok.includes("EUR") || tok.includes("€")) currency = "EUR";
+    else if (tok.includes("USD") || tok.includes("$")) currency = "USD";
   }
 
-  // Retailer from hostname
   const hostname = new URL(url).hostname.replace("www.", "");
-  const retailerMap: Record<string, string> = {
-    "bestbuy.ca": "Best Buy",
-    "bestbuy.com": "Best Buy",
-    "amazon.co.uk": "Amazon",
-    "amazon.com": "Amazon",
-    "johnlewis.com": "John Lewis",
-    "etsy.com": "Etsy",
-    "ikea.com": "IKEA",
-    "walmart.com": "Walmart",
-    "target.com": "Target",
-    "wayfair.com": "Wayfair",
-    "notonthehighstreet.com": "Not On The High Street",
-  };
+
+  // Fallback: domain currency lookup
+  if (!currency) {
+    currency = DOMAIN_CURRENCY_MAP[hostname] ?? "USD";
+  }
+
   const retailer =
-    retailerMap[hostname] ??
+    RETAILER_MAP[hostname] ??
     hostname.split(".")[0].charAt(0).toUpperCase() +
       hostname.split(".")[0].slice(1);
 
-  return { title, imageUrl, description, price, retailer };
+  return { title, imageUrl, description, price, currency, retailer };
 }
 
 /**
@@ -398,6 +453,7 @@ export async function scrapeUrl(
         imageUrl: null,
         description: null,
         price: null,
+        currency: null,
         retailer: null,
         error: "Failed to fetch",
       };
@@ -411,6 +467,7 @@ export async function scrapeUrl(
       imageUrl: null,
       description: null,
       price: null,
+      currency: null,
       retailer: null,
       error: "Could not reach URL",
     };
@@ -434,6 +491,7 @@ export async function scrapeUrl(
         imageUrl: jinaResult.imageUrl ?? htmlResult.imageUrl,
         description: jinaResult.description ?? htmlResult.description,
         price: jinaResult.price ?? htmlResult.price,
+        currency: jinaResult.currency ?? htmlResult.currency,
         retailer: jinaResult.retailer ?? htmlResult.retailer,
       };
     }
@@ -452,6 +510,7 @@ export async function scrapeUrl(
         imageUrl: claudeResult.imageUrl ?? htmlResult.imageUrl,
         description: claudeResult.description ?? htmlResult.description,
         price: claudeResult.price ?? htmlResult.price,
+        currency: claudeResult.currency ?? htmlResult.currency,
         retailer: claudeResult.retailer ?? htmlResult.retailer,
       };
     } catch {

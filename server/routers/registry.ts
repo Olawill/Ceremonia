@@ -95,7 +95,11 @@ export const registryRouter = new Elysia({ prefix: "/registry" })
 
       const [item] = await db
         .insert(registryItems)
-        .values({ weddingId: params.weddingId, ...body })
+        .values({
+          weddingId: params.weddingId,
+          ...body,
+          currency: body.currency ?? "USD",
+        })
         .returning();
 
       return item;
@@ -105,6 +109,7 @@ export const registryRouter = new Elysia({ prefix: "/registry" })
         title: t.String({ minLength: 1 }),
         description: t.Optional(t.String()),
         price: t.Optional(t.Number()),
+        currency: t.Optional(t.String()),
         imageUrl: t.Optional(t.String()),
         productUrl: t.Optional(t.String()),
         retailer: t.Optional(t.String()),
@@ -153,6 +158,7 @@ export const registryRouter = new Elysia({ prefix: "/registry" })
           title: t.String({ minLength: 1 }),
           description: t.String(),
           price: t.Number(),
+          currency: t.String(),
           imageUrl: t.String(),
           productUrl: t.String(),
           retailer: t.String(),
