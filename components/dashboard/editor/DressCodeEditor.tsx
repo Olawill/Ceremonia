@@ -1,6 +1,7 @@
 "use client";
 
 import { SectionToggle } from "@/components/dashboard/editor/SectionToggle";
+import { getVocabulary } from "@/types/event";
 
 import type {
   DressCodeConfig,
@@ -33,6 +34,7 @@ const DEFAULT_DRESS_CODE: DressCodeConfig = {
 
 export function DressCodeEditor({ config, onChange }: Props) {
   const dc = config.dressCode ?? DEFAULT_DRESS_CODE;
+  const vocab = getVocabulary(config.eventType);
 
   const update = (patch: Partial<DressCodeConfig>) =>
     onChange({ dressCode: { ...dc, ...patch } });
@@ -70,7 +72,7 @@ export function DressCodeEditor({ config, onChange }: Props) {
         onToggle={() =>
           onChange({ dressCodeEnabled: !config.dressCodeEnabled })
         }
-        disabledMessage="Enable to share your dress code and colour palette with guests."
+        disabledMessage={`Enable to share the ${vocab.attireLabel.toLowerCase()} and colour palette with your guests.`}
       />
 
       {config.dressCodeEnabled && (

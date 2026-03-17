@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { db } from "@/db";
 import { weddings } from "@/db/schema";
+import { EventType, getVocabulary } from "@/types/event";
 
 interface Props {
   params: Promise<{ host: string }>;
@@ -12,14 +13,22 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { host } = await params;
   const [wedding] = await db
-    .select({ bride: weddings.bride, groom: weddings.groom })
+    .select({
+      bride: weddings.bride,
+      groom: weddings.groom,
+      eventType: weddings.eventType,
+    })
     .from(weddings)
     .where(eq(weddings.customDomain, host))
     .limit(1);
 
-  if (!wedding) return { title: "Wedding Invitation" };
+  if (!wedding) return { title: "Event Invitation" };
+  const vocab = getVocabulary((wedding.eventType as EventType) ?? "wedding");
+  const hostsStr = wedding.groom
+    ? `${wedding.bride} & ${wedding.groom}`
+    : wedding.bride;
   return {
-    title: `${wedding.bride} & ${wedding.groom} — Wedding Invitation`,
+    title: `${hostsStr} — ${vocab.eventLabel} Invitation`,
     robots: { index: true, follow: false },
   };
 }
@@ -36,5 +45,5 @@ export default async function CustomDomainPage({ params }: Props) {
   if (!wedding) notFound();
 
   // Redirect to the slug route which has all the rendering logic
-  redirect(`/wedding/${wedding.slug}`);
+  redirect(`/event${wedding.slug}`);
 }

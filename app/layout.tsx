@@ -25,11 +25,11 @@ const cinzel = Cinzel({
 
 export const metadata: Metadata = {
   title: {
-    default: "Ceremonia — Beautiful Wedding Invitations",
+    default: "Ceremonia — Beautiful Event Invitations",
     template: "%s | Ceremonia",
   },
   description:
-    "Create cinematic, personalised wedding invitations your guests will never forget. RSVP management, custom themes, and your own subdomain.",
+    "Create cinematic, personalised invitations your guests will never forget. Weddings, birthdays, baby showers and more — RSVP management, custom themes, and your own subdomain.",
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_APP_URL ?? "https://ceremonia.app",
   ),

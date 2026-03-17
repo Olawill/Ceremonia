@@ -11,7 +11,7 @@ interface Props {
 }
 
 function buildUrl(config: WeddingConfig): string {
-  return `/wedding/preview?initial=${encodeURIComponent(
+  return `/event/preview?initial=${encodeURIComponent(
     btoa(
       Array.from(new TextEncoder().encode(JSON.stringify(config)))
         .map((b) => String.fromCharCode(b))
@@ -106,7 +106,7 @@ export function PreviewFrame({ config, iframeRef }: Props) {
           src={initialUrl.current}
           // src={frozenSrcRef.current}
           className="w-full h-full border-0"
-          title="Wedding Preview"
+          title="Event Preview"
           onLoad={handleLoad}
         />
       </div>

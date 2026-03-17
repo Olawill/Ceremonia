@@ -10,6 +10,7 @@ import {
 
 import { SectionToggle } from "@/components/dashboard/editor/SectionToggle";
 import { Field, Input, Textarea } from "@/components/ui/FormPrimitives";
+import { getVocabulary } from "@/types/event";
 import type { TravelItem, WeddingConfig } from "@/types/wedding";
 
 interface Props {
@@ -36,6 +37,7 @@ const DEFAULT_ITEM = (): TravelItem => ({
 
 export function TravelGuideEditor({ config, onChange }: Props) {
   const items = config.travelItems ?? [];
+  const vocab = getVocabulary(config.eventType);
 
   const update = (index: number, patch: Partial<TravelItem>) => {
     const next = items.map((item, i) =>
@@ -57,7 +59,7 @@ export function TravelGuideEditor({ config, onChange }: Props) {
         onToggle={() =>
           onChange({ travelGuideEnabled: !config.travelGuideEnabled })
         }
-        disabledMessage="Enable to provide travel tips, airport info, and nearby hotels."
+        disabledMessage={`Enable to provide travel tips and directions for guests coming to your ${vocab.eventLabel.toLowerCase()}.`}
       />
 
       {config.travelGuideEnabled && (

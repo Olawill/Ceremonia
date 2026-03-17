@@ -14,6 +14,7 @@ import { z } from "zod";
 import type { Course, WeddingConfig } from "@/types/wedding";
 
 import { Field, Input } from "@/components/ui/FormPrimitives";
+import { getVocabulary } from "@/types/event";
 import { PlusIcon, XIcon } from "lucide-react";
 
 const schema = z.object({
@@ -70,6 +71,8 @@ export function MenuEditor({ config, onChange }: Props) {
     mode: "onChange",
   });
 
+  const vocab = getVocabulary(config.eventType);
+
   const {
     fields: courseFields,
     append: appendCourse,
@@ -95,7 +98,7 @@ export function MenuEditor({ config, onChange }: Props) {
         className="font-label text-[12px] font-semibold tracking-[0.5em] uppercase"
         style={{ color: "#D4AF37" }}
       >
-        Wedding Menu
+        {vocab.menuLabel}
       </p>
 
       {courseFields.map((courseField, courseIndex) => (

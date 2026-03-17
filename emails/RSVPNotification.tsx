@@ -5,6 +5,7 @@ interface Props {
   dietary?: string;
   bride: string;
   groom: string;
+  eventLabel?: string; // e.g. "Wedding", "Birthday Party"
 }
 
 export function RSVPNotificationEmail({
@@ -14,6 +15,7 @@ export function RSVPNotificationEmail({
   dietary,
   bride,
   groom,
+  eventLabel = "Wedding",
 }: Props) {
   const attending = attendance === "yes";
 
@@ -36,13 +38,13 @@ export function RSVPNotificationEmail({
         <h1
           style={{ fontSize: 24, fontWeight: 400, color: "#8B6914", margin: 0 }}
         >
-          New RSVP — {bride} & {groom}
+          New RSVP — {groom ? `${bride} & ${groom}` : bride}
         </h1>
       </div>
 
       <p style={{ fontSize: 16, lineHeight: 1.6 }}>
         <strong>{guestName}</strong> has {attending ? "accepted" : "declined"}{" "}
-        your wedding invitation.
+        your {eventLabel.toLowerCase()} invitation.
       </p>
 
       {attending && (

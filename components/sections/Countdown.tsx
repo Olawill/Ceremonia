@@ -22,6 +22,7 @@ interface TimeLeft {
 interface CoundownProps {
   date?: string;
   location?: VenueEvent;
+  eventLabel?: string;
 }
 
 function getTimeLeft(weddingDate: Date): TimeLeft {
@@ -113,6 +114,7 @@ function CountUnit({
 export function Countdown({
   date,
   location = FALLBACK_LOCATION,
+  eventLabel = "Wedding",
 }: CoundownProps) {
   const { theme } = useTheme();
   const ref = useRef<HTMLElement>(null);
@@ -169,7 +171,7 @@ export function Countdown({
           className="font-label uppercase tracking-[0.5em] text-[14px] font-semibold"
           style={{ color: `${theme.gold}70` }}
         >
-          Until We Say I Do
+          Until {eventLabel === "Wedding" ? "We Say I Do" : "The Big Day"}
         </p>
         <h2
           className="font-display font-light"

@@ -32,6 +32,7 @@ export default async function RSVPsPage() {
       bride: weddings.bride,
       groom: weddings.groom,
       slug: weddings.slug,
+      eventType: weddings.eventType,
     })
     .from(weddings)
     .where(eq(weddings.userId, userId));

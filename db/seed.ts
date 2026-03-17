@@ -46,6 +46,7 @@ async function main() {
     .insert(weddings)
     .values({
       slug: "demo",
+      eventType: "wedding",
       userId: null,
       bride: DEMO_WEDDING_CONFIG.bride,
       groom: DEMO_WEDDING_CONFIG.groom,

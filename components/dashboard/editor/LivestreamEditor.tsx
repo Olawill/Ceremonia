@@ -5,6 +5,7 @@ import { RadioIcon } from "lucide-react";
 import { SectionToggle } from "@/components/dashboard/editor/SectionToggle";
 import { Field, Input, Textarea } from "@/components/ui/FormPrimitives";
 
+import { getVocabulary } from "@/types/event";
 import type { WeddingConfig } from "@/types/wedding";
 
 interface Props {
@@ -13,6 +14,8 @@ interface Props {
 }
 
 export function LivestreamEditor({ config, onChange }: Props) {
+  const vocab = getVocabulary(config.eventType);
+
   return (
     <div className="space-y-6!">
       {/* Enable toggle */}
@@ -22,7 +25,7 @@ export function LivestreamEditor({ config, onChange }: Props) {
         onToggle={() =>
           onChange({ livestreamEnabled: !config.livestreamEnabled })
         }
-        disabledMessage="Enable to embed a live stream so remote guests can watch the ceremony."
+        disabledMessage={`Enable to embed a live stream so remote guests can watch your ${vocab.eventLabel.toLowerCase()}.`}
       />
 
       {config.livestreamEnabled && (
@@ -75,7 +78,7 @@ export function LivestreamEditor({ config, onChange }: Props) {
             <Textarea
               value={config.livestreamNote ?? ""}
               onChange={(e) => onChange({ livestreamNote: e.target.value })}
-              placeholder="The stream will go live 30 minutes before the ceremony begins…"
+              placeholder={`The stream will go live 30 minutes before the ${vocab.eventLabel.toLowerCase()} begins…`}
               rows={3}
             />
           </Field>

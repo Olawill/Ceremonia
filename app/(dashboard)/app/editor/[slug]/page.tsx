@@ -8,6 +8,7 @@ import { weddings } from "@/db/schema";
 
 import { EditorShell } from "@/components/dashboard/editor/EditorShell";
 
+import { EventType, getVocabulary } from "@/types/event";
 import type { ThemeKey, WeddingTheme } from "@/types/theme";
 import type {
   AccommodationConfig,
@@ -29,16 +30,24 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  if (slug === "new") return { title: "New Wedding" };
+  if (slug === "new") return { title: "New Event" };
 
   const [wedding] = await db
-    .select({ bride: weddings.bride, groom: weddings.groom })
+    .select({
+      bride: weddings.bride,
+      groom: weddings.groom,
+      eventType: weddings.eventType,
+    })
     .from(weddings)
     .where(eq(weddings.slug, slug))
     .limit(1);
 
   if (!wedding) return { title: "Editor" };
-  return { title: `Editing ${wedding.bride} & ${wedding.groom}` };
+  const vocab = getVocabulary((wedding.eventType as EventType) ?? "wedding");
+  const hostsStr = wedding.groom
+    ? `${wedding.bride} & ${wedding.groom}`
+    : wedding.bride;
+  return { title: `Editing ${hostsStr} — ${vocab.eventLabel}` };
 }
 
 export default async function EditorPage({ params }: Props) {
@@ -63,8 +72,9 @@ export default async function EditorPage({ params }: Props) {
   const config: WeddingConfig = {
     id: wedding.id,
     slug: wedding.slug,
+    eventType: (wedding.eventType as EventType) ?? "wedding",
     bride: wedding.bride,
-    groom: wedding.groom,
+    groom: wedding.groom ?? "",
     tagLine: wedding.tagLine ?? undefined,
     date: wedding.date,
     venueDetails:

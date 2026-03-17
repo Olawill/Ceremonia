@@ -115,69 +115,69 @@ beforeEach(() => {
   mockDb.delete.mockReturnValue(deleteWhere());
 });
 
-// ── GET /:weddingId ──────────────────────────────────────────────────────────
+// ── GET /:eventId ──────────────────────────────────────────────────────────
 
-describe("GET /api/registry/:weddingId", () => {
+describe("GET /api/registry/:eventId", () => {
   it("returns 401 when not authenticated", async () => {
     authed.mockResolvedValue(null);
-    const r = await req("GET", "/wedding-uuid-1");
+    const r = await req("GET", "/event-uuid-1");
     expect(r.status).toBe(401);
   });
 
-  it("returns 404 when wedding not found or not owned", async () => {
+  it("returns 404 when event not found or not owned", async () => {
     authed.mockResolvedValue("user-1");
     // First select (ownership check) returns empty
     mockDb.select.mockReturnValueOnce(selectReturning([]));
-    const r = await req("GET", "/wedding-uuid-1");
+    const r = await req("GET", "/event-uuid-1");
     expect(r.status).toBe(404);
   });
 
   it("returns 200 with items array", async () => {
     authed.mockResolvedValue("user-1");
-    const mockWedding = { id: "wedding-uuid-1" };
+    const mockEvent = { id: "event-uuid-1" };
     const mockItems = [
-      { id: "item-1", title: "KitchenAid Mixer", weddingId: "wedding-uuid-1" },
-      { id: "item-2", title: "Le Creuset Set", weddingId: "wedding-uuid-1" },
+      { id: "item-1", title: "KitchenAid Mixer", eventId: "event-uuid-1" },
+      { id: "item-2", title: "Le Creuset Set", eventId: "event-uuid-1" },
     ];
     // First select → ownership check
-    mockDb.select.mockReturnValueOnce(selectReturning([mockWedding]));
+    mockDb.select.mockReturnValueOnce(selectReturning([mockEvent]));
     // Second select → items list
     mockDb.select.mockReturnValueOnce(selectReturning(mockItems));
-    const r = await req("GET", "/wedding-uuid-1");
+    const r = await req("GET", "/event-uuid-1");
     expect(r.status).toBe(200);
     expect(r.body).toHaveLength(2);
   });
 });
 
-// ── POST /:weddingId ─────────────────────────────────────────────────────────
+// ── POST /:eventId ─────────────────────────────────────────────────────────
 
-describe("POST /api/registry/:weddingId", () => {
+describe("POST /api/registry/:eventId", () => {
   const validItem = { title: "Dyson Vacuum" };
 
   it("returns 401 when not authenticated", async () => {
     authed.mockResolvedValue(null);
-    const r = await req("POST", "/wedding-uuid-1", validItem);
+    const r = await req("POST", "/event-uuid-1", validItem);
     expect(r.status).toBe(401);
   });
 
-  it("returns 404 when wedding not found or not owned", async () => {
+  it("returns 404 when event not found or not owned", async () => {
     authed.mockResolvedValue("user-1");
     mockDb.select.mockReturnValueOnce(selectReturning([]));
-    const r = await req("POST", "/wedding-uuid-1", validItem);
+    const r = await req("POST", "/event-uuid-1", validItem);
     expect(r.status).toBe(404);
   });
 
   it("returns 422 when title is empty", async () => {
     authed.mockResolvedValue("user-1");
-    const r = await req("POST", "/wedding-uuid-1", { title: "" });
+    const r = await req("POST", "/event-uuid-1", { title: "" });
     expect(r.status).toBe(422);
   });
 
   it("returns 403 when free plan hits registry item limit (10)", async () => {
     authed.mockResolvedValue("user-1");
-    // Wedding ownership check passes
+    // Event ownership check passes
     mockDb.select.mockReturnValueOnce(
-      selectReturning([{ id: "wedding-uuid-1" }]),
+      selectReturning([{ id: "event-uuid-1" }]),
     );
     // Owner plan = free
     mockDb.select.mockReturnValueOnce(selectReturning([{ plan: "free" }]));
@@ -187,7 +187,7 @@ describe("POST /api/registry/:weddingId", () => {
         where: () => Promise.resolve([{ itemCount: 10 }]),
       }),
     });
-    const r = await req("POST", "/wedding-uuid-1", validItem);
+    const r = await req("POST", "/event-uuid-1", validItem);
     expect(r.status).toBe(403);
     expect((r.body as { message: string }).message).toMatch(/maximum of 10/);
   });
@@ -195,7 +195,7 @@ describe("POST /api/registry/:weddingId", () => {
   it("returns 200 and created item for starter plan (limit not hit)", async () => {
     authed.mockResolvedValue("user-1");
     mockDb.select.mockReturnValueOnce(
-      selectReturning([{ id: "wedding-uuid-1" }]),
+      selectReturning([{ id: "event-uuid-1" }]),
     );
     // Starter plan — limit is 30
     mockDb.select.mockReturnValueOnce(selectReturning([{ plan: "starter" }]));
@@ -208,10 +208,10 @@ describe("POST /api/registry/:weddingId", () => {
     const createdItem = {
       id: "item-new",
       title: "Dyson Vacuum",
-      weddingId: "wedding-uuid-1",
+      eventId: "event-uuid-1",
     };
     mockDb.insert.mockReturnValueOnce(insertReturning([createdItem]));
-    const r = await req("POST", "/wedding-uuid-1", validItem);
+    const r = await req("POST", "/event-uuid-1", validItem);
     expect(r.status).toBe(200);
     expect((r.body as { title: string }).title).toBe("Dyson Vacuum");
   });
@@ -219,13 +219,13 @@ describe("POST /api/registry/:weddingId", () => {
   it("returns 200 for pro plan (unlimited items)", async () => {
     authed.mockResolvedValue("user-1");
     mockDb.select.mockReturnValueOnce(
-      selectReturning([{ id: "wedding-uuid-1" }]),
+      selectReturning([{ id: "event-uuid-1" }]),
     );
     // Pro plan — registryItemLimit is Infinity, count check is skipped
     mockDb.select.mockReturnValueOnce(selectReturning([{ plan: "pro" }]));
     const createdItem = { id: "item-new", title: "Dyson Vacuum" };
     mockDb.insert.mockReturnValueOnce(insertReturning([createdItem]));
-    const r = await req("POST", "/wedding-uuid-1", validItem);
+    const r = await req("POST", "/event-uuid-1", validItem);
     expect(r.status).toBe(200);
   });
 });
@@ -246,13 +246,13 @@ describe("PATCH /api/registry/item/:itemId", () => {
     expect(r.status).toBe(404);
   });
 
-  it("returns 403 when item belongs to another user's wedding", async () => {
+  it("returns 403 when item belongs to another user's event", async () => {
     authed.mockResolvedValue("user-1");
     // Item exists
     mockDb.select.mockReturnValueOnce(
-      selectReturning([{ weddingId: "wedding-other" }]),
+      selectReturning([{ eventId: "event-other" }]),
     );
-    // Ownership check fails — wedding belongs to different user
+    // Ownership check fails — event belongs to different user
     mockDb.select.mockReturnValueOnce(selectReturning([]));
     const r = await req("PATCH", "/item/item-uuid-1", { title: "Updated" });
     expect(r.status).toBe(403);
@@ -261,10 +261,10 @@ describe("PATCH /api/registry/item/:itemId", () => {
   it("returns 200 with updated item", async () => {
     authed.mockResolvedValue("user-1");
     mockDb.select.mockReturnValueOnce(
-      selectReturning([{ weddingId: "wedding-uuid-1" }]),
+      selectReturning([{ eventId: "event-uuid-1" }]),
     );
     mockDb.select.mockReturnValueOnce(
-      selectReturning([{ id: "wedding-uuid-1" }]),
+      selectReturning([{ id: "event-uuid-1" }]),
     );
     const updated = { id: "item-uuid-1", title: "Updated Title" };
     mockDb.update.mockReturnValueOnce(updateReturning([updated]));
@@ -295,7 +295,7 @@ describe("DELETE /api/registry/item/:itemId", () => {
   it("returns 403 when item belongs to another user", async () => {
     authed.mockResolvedValue("user-1");
     mockDb.select.mockReturnValueOnce(
-      selectReturning([{ weddingId: "wedding-other" }]),
+      selectReturning([{ eventId: "event-other" }]),
     );
     mockDb.select.mockReturnValueOnce(selectReturning([]));
     const r = await req("DELETE", "/item/item-uuid-1");
@@ -305,10 +305,10 @@ describe("DELETE /api/registry/item/:itemId", () => {
   it("returns 200 on success", async () => {
     authed.mockResolvedValue("user-1");
     mockDb.select.mockReturnValueOnce(
-      selectReturning([{ weddingId: "wedding-uuid-1" }]),
+      selectReturning([{ eventId: "event-uuid-1" }]),
     );
     mockDb.select.mockReturnValueOnce(
-      selectReturning([{ id: "wedding-uuid-1" }]),
+      selectReturning([{ id: "event-uuid-1" }]),
     );
     const r = await req("DELETE", "/item/item-uuid-1");
     expect(r.status).toBe(200);
@@ -414,24 +414,24 @@ describe("GET /api/registry/public/:slug", () => {
   });
 
   it("returns 200 with items including claim counts but no tokens", async () => {
-    const mockWedding = { id: "wedding-uuid-1" };
+    const mockEvent = { id: "event-uuid-1" };
     const mockItems = [
-      { id: "item-1", title: "KitchenAid", weddingId: "wedding-uuid-1" },
+      { id: "item-1", title: "KitchenAid", eventId: "event-uuid-1" },
     ];
     const mockClaims = [
       {
         id: "claim-1",
         itemId: "item-1",
-        weddingId: "wedding-uuid-1",
+        eventId: "event-uuid-1",
         status: "reserved",
         claimToken: "secret-token",
       },
     ];
 
-    // Select 1: wedding by slug — ends in .limit()
+    // Select 1: event by slug — ends in .limit()
     mockDb.select.mockReturnValueOnce({
       from: () => ({
-        where: () => ({ limit: () => Promise.resolve([mockWedding]) }),
+        where: () => ({ limit: () => Promise.resolve([mockEvent]) }),
       }),
     });
     // Select 2: items — ends in .orderBy()
@@ -480,7 +480,7 @@ describe("POST /api/registry/claim", () => {
       from: () => ({
         where: () => ({
           limit: () =>
-            Promise.resolve([{ quantity: 1, weddingId: "wedding-uuid-1" }]),
+            Promise.resolve([{ quantity: 1, eventId: "event-uuid-1" }]),
         }),
       }),
     });
@@ -504,7 +504,7 @@ describe("POST /api/registry/claim", () => {
       from: () => ({
         where: () => ({
           limit: () =>
-            Promise.resolve([{ quantity: 2, weddingId: "wedding-uuid-1" }]),
+            Promise.resolve([{ quantity: 2, eventId: "event-uuid-1" }]),
         }),
       }),
     });
@@ -762,19 +762,19 @@ describe("POST /api/registry/scrape-page — agency success", () => {
   });
 });
 
-// ── POST /registry/:weddingId — additional edge cases ────────────────────────
+// ── POST /registry/:eventId — additional edge cases ────────────────────────
 
-describe("POST /api/registry/:weddingId — edge cases", () => {
+describe("POST /api/registry/:eventId — edge cases", () => {
   it("returns 403 when starter plan hits item limit (30)", async () => {
     authed.mockResolvedValue("user-1");
     mockDb.select.mockReturnValueOnce(
-      selectReturning([{ id: "wedding-uuid-1" }]),
+      selectReturning([{ id: "event-uuid-1" }]),
     );
     mockDb.select.mockReturnValueOnce(selectReturning([{ plan: "starter" }]));
     mockDb.select.mockReturnValueOnce({
       from: () => ({ where: () => Promise.resolve([{ itemCount: 30 }]) }),
     });
-    const r = await req("POST", "/wedding-uuid-1", { title: "New Item" });
+    const r = await req("POST", "/event-uuid-1", { title: "New Item" });
     expect(r.status).toBe(403);
     expect((r.body as { message: string }).message).toMatch(/maximum of 30/);
   });
@@ -782,7 +782,7 @@ describe("POST /api/registry/:weddingId — edge cases", () => {
   it("creates item with all optional fields", async () => {
     authed.mockResolvedValue("user-1");
     mockDb.select.mockReturnValueOnce(
-      selectReturning([{ id: "wedding-uuid-1" }]),
+      selectReturning([{ id: "event-uuid-1" }]),
     );
     mockDb.select.mockReturnValueOnce(selectReturning([{ plan: "pro" }]));
     const fullItem = {
@@ -798,7 +798,7 @@ describe("POST /api/registry/:weddingId — edge cases", () => {
       sortOrder: 1,
     };
     mockDb.insert.mockReturnValueOnce(insertReturning([fullItem]));
-    const r = await req("POST", "/wedding-uuid-1", {
+    const r = await req("POST", "/event-uuid-1", {
       title: "KitchenAid",
       description: "Red stand mixer",
       price: 49999,
@@ -819,37 +819,37 @@ describe("POST /api/registry/:weddingId — edge cases", () => {
 
 describe("GET /api/registry/public/:slug — extended", () => {
   it("returns items with mixed reserved and purchased counts", async () => {
-    const mockWedding = { id: "wedding-uuid-1" };
+    const mockEvent = { id: "event-uuid-1" };
     const mockItems = [
-      { id: "item-1", title: "Mixer", weddingId: "wedding-uuid-1" },
-      { id: "item-2", title: "Blender", weddingId: "wedding-uuid-1" },
+      { id: "item-1", title: "Mixer", eventId: "event-uuid-1" },
+      { id: "item-2", title: "Blender", eventId: "event-uuid-1" },
     ];
     const mockClaims = [
       {
         id: "c1",
         itemId: "item-1",
-        weddingId: "wedding-uuid-1",
+        eventId: "event-uuid-1",
         status: "reserved",
         claimToken: "tok1",
       },
       {
         id: "c2",
         itemId: "item-1",
-        weddingId: "wedding-uuid-1",
+        eventId: "event-uuid-1",
         status: "purchased",
         claimToken: "tok2",
       },
       {
         id: "c3",
         itemId: "item-2",
-        weddingId: "wedding-uuid-1",
+        eventId: "event-uuid-1",
         status: "purchased",
         claimToken: "tok3",
       },
     ];
     mockDb.select.mockReturnValueOnce({
       from: () => ({
-        where: () => ({ limit: () => Promise.resolve([mockWedding]) }),
+        where: () => ({ limit: () => Promise.resolve([mockEvent]) }),
       }),
     });
     mockDb.select.mockReturnValueOnce({
@@ -879,22 +879,22 @@ describe("GET /api/registry/public/:slug — extended", () => {
   });
 
   it("never exposes claimToken on any item", async () => {
-    const mockWedding = { id: "wedding-uuid-1" };
+    const mockEvent = { id: "event-uuid-1" };
     const mockItems = [
-      { id: "item-1", title: "Gift", weddingId: "wedding-uuid-1" },
+      { id: "item-1", title: "Gift", eventId: "event-uuid-1" },
     ];
     const mockClaims = [
       {
         id: "c1",
         itemId: "item-1",
-        weddingId: "wedding-uuid-1",
+        eventId: "event-uuid-1",
         status: "reserved",
         claimToken: "super-secret",
       },
     ];
     mockDb.select.mockReturnValueOnce({
       from: () => ({
-        where: () => ({ limit: () => Promise.resolve([mockWedding]) }),
+        where: () => ({ limit: () => Promise.resolve([mockEvent]) }),
       }),
     });
     mockDb.select.mockReturnValueOnce({

@@ -1,6 +1,6 @@
 "use client";
 
-import { unlockWedding } from "@/app/wedding/[slug]/actions";
+import { unlockWedding } from "@/app/event/[slug]/actions";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
@@ -15,6 +15,7 @@ export function PasswordGate({ slug }: Props) {
   const router = useRouter();
 
   const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
+    // const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     startTransition(async () => {
       const result = await unlockWedding(slug, input);

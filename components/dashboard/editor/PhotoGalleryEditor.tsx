@@ -5,6 +5,7 @@ import { PlusIcon, Trash2Icon } from "lucide-react";
 import { SectionToggle } from "@/components/dashboard/editor/SectionToggle";
 import { ImageUploadField } from "@/components/ui/ImageUploadField";
 
+import { getVocabulary } from "@/types/event";
 import type { WeddingConfig } from "@/types/wedding";
 
 interface Props {
@@ -14,6 +15,7 @@ interface Props {
 
 export function PhotoGalleryEditor({ config, onChange }: Props) {
   const photos = config.galleryPhotos ?? [];
+  const vocab = getVocabulary(config.eventType);
 
   const addPhoto = (url: string) =>
     onChange({ galleryPhotos: [...photos, url] });
@@ -35,7 +37,7 @@ export function PhotoGalleryEditor({ config, onChange }: Props) {
         onToggle={() =>
           onChange({ photoGalleryEnabled: !config.photoGalleryEnabled })
         }
-        disabledMessage="Enable to showcase a photo gallery on your invitation."
+        disabledMessage={`Enable to showcase a photo gallery on your ${vocab.eventLabel.toLowerCase()} invitation.`}
       />
 
       {config.photoGalleryEnabled && (
@@ -44,8 +46,8 @@ export function PhotoGalleryEditor({ config, onChange }: Props) {
             className="font-display italic text-xs"
             style={{ color: "#F5F0E860" }}
           >
-            Upload photos that will appear in the gallery section of your
-            invitation.
+            Upload photos that will appear in the gallery section of your{" "}
+            {vocab.eventLabel.toLowerCase()} invitation.
           </p>
 
           <div className="space-y-3!">

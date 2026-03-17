@@ -10,6 +10,7 @@ interface ParallaxHeroProps {
   groom?: string;
   tagLine?: string;
   heroPhotoUrl?: string;
+  topLabel?: string;
 }
 
 export function ParallaxHero({
@@ -17,6 +18,7 @@ export function ParallaxHero({
   groom = "Tayo",
   tagLine,
   heroPhotoUrl,
+  topLabel,
 }: ParallaxHeroProps) {
   const { theme } = useTheme();
   const [scrollY, setScrollY] = useState(0);
@@ -78,15 +80,19 @@ export function ParallaxHero({
         style={{ transform: `translateY(${scrollY * 0.12}px)` }}
       >
         <p className="font-label font-semibold uppercase tracking-[1.2em] text-[14px] text-(--theme-gold) opacity-90">
-          Together in Love
+          {topLabel ?? "Together in Love"}
         </p>
 
         <h1 className="font-display font-light leading-none text-[clamp(48px,10vw,120px)] text-(--theme-text) tracking-[0.04em]">
           {bride}
-          <br />
-          <span className="text-(--theme-gold) opacity-80">&</span>
-          <br />
-          {groom}
+          {groom && (
+            <>
+              <br />
+              <span className="text-(--theme-gold) opacity-80">&</span>
+              <br />
+              {groom}
+            </>
+          )}
         </h1>
 
         {tagLine && (

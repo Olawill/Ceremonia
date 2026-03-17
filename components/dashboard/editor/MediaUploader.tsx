@@ -380,7 +380,7 @@ function UploadField({
                       onKeyDown={(e) => {
                         if (e.key === "Enter") searchStock(stockQuery, 1);
                       }}
-                      placeholder="Search wedding photos…"
+                      placeholder="Search event photos…"
                       className="dash-input flex-1 text-xs py-1.5!"
                     />
                     <button

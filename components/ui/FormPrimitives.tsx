@@ -50,11 +50,12 @@ interface FieldProps {
   error?: string;
   hint?: string;
   children: ReactNode;
+  className?: string;
 }
 
-export function Field({ label, error, hint, children }: FieldProps) {
+export function Field({ label, error, hint, children, className }: FieldProps) {
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className={clsx("flex flex-col gap-1.5", className)}>
       <label className="font-label text-[10px] tracking-[0.4em] uppercase text-dash-gold/90">
         {label}
       </label>

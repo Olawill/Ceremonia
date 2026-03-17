@@ -32,6 +32,7 @@ interface ClaimRecord {
 
 interface Props {
   weddingSlug: string;
+  label?: string;
 }
 
 export function formatPrice(pence: number, fraction: boolean = false) {
@@ -42,7 +43,7 @@ export function formatPrice(pence: number, fraction: boolean = false) {
   }).format(pence / 100);
 }
 
-export function Registry({ weddingSlug }: Props) {
+export function Registry({ weddingSlug, label }: Props) {
   const { theme } = useTheme();
   const [items, setItems] = useState<RegistryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -155,7 +156,7 @@ export function Registry({ weddingSlug }: Props) {
             className="font-label text-xs tracking-[0.5em] uppercase mb-3!"
             style={{ color: `${theme.gold}90` }}
           >
-            Wedding Registry
+            {label ?? "Wedding Registry"}
           </p>
           <h2
             className="font-display text-4xl font-light"

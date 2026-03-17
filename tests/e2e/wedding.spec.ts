@@ -1,24 +1,24 @@
 import { expect, test } from "@playwright/test";
 
-// ── Wedding invitation page (demo) ───────────────────────────────────────────
+// ── Event invitation page (demo) ───────────────────────────────────────────
 //
-// The /wedding/demo route always renders DEMO_WEDDING_CONFIG (Taiwo & Tayo)
+// The /event/demo route always renders DEMO_WEDDING_CONFIG (Taiwo & Tayo)
 // without a DB lookup or auth, making it a reliable E2E anchor.
 
-test.describe("Wedding invitation page (demo)", () => {
-  test("/wedding/demo loads without error", async ({ page }) => {
-    const response = await page.goto("/wedding/demo");
+test.describe("Event invitation page (demo)", () => {
+  test("event demo loads without error", async ({ page }) => {
+    const response = await page.goto("/event/demo");
     expect(response?.status()).toBe(200);
   });
 
   test("page title contains bride & groom names", async ({ page }) => {
-    await page.goto("/wedding/demo");
+    await page.goto("/event/demo");
     // The <title> set by generateMetadata for the demo slug
     await expect(page).toHaveTitle(/Taiwo.*Tayo|Tayo.*Taiwo/i);
   });
 
   test("curtain reveal animation container is present", async ({ page }) => {
-    await page.goto("/wedding/demo");
+    await page.goto("/event/demo");
     // VelvetCurtain renders a full-screen overlay — look for the click target
     // The curtain wraps in a fixed div; check for its presence before interaction
     const curtain = page
@@ -36,7 +36,7 @@ test.describe("Wedding invitation page (demo)", () => {
   test("RSVP section is visible after curtain open and date reveal", async ({
     page,
   }) => {
-    await page.goto("/wedding/demo");
+    await page.goto("/event/demo");
 
     // Step 1: Open the curtain
     await page.click("body");
@@ -117,14 +117,14 @@ test.describe("Wedding invitation page (demo)", () => {
   });
 });
 
-// ── Wedding invitation — password protected ───────────────────────────────────
+// ── Event invitation — password protected ───────────────────────────────────
 //
-// These tests require a published, password-protected wedding in the DB.
+// These tests require a published, password-protected event in the DB.
 // We use a seeded test slug `test-protected` — add this to your seed script
 // or run tests against a local dev environment with that record.
 // If the slug doesn't exist, the page returns 404 and tests are skipped.
 
-test.describe("Wedding invitation — password protected", () => {
+test.describe("Event invitation — password protected", () => {
   const PROTECTED_SLUG = "test-protected";
   const CORRECT_PASSWORD = "ceremony2026";
 
@@ -133,10 +133,10 @@ test.describe("Wedding invitation — password protected", () => {
     await page.context().clearCookies();
   });
 
-  test("navigating to a password-protected wedding shows the PasswordGate", async ({
+  test("navigating to a password-protected event shows the PasswordGate", async ({
     page,
   }) => {
-    const response = await page.goto(`/wedding/${PROTECTED_SLUG}`);
+    const response = await page.goto(`/event/${PROTECTED_SLUG}`);
 
     // If the slug doesn't exist in this environment, skip
     if (response?.status() === 404) {
@@ -154,7 +154,7 @@ test.describe("Wedding invitation — password protected", () => {
   });
 
   test("entering wrong password shows error message", async ({ page }) => {
-    const response = await page.goto(`/wedding/${PROTECTED_SLUG}`);
+    const response = await page.goto(`/event/${PROTECTED_SLUG}`);
     if (response?.status() === 404) {
       test.skip();
       return;
@@ -180,7 +180,7 @@ test.describe("Wedding invitation — password protected", () => {
   test("entering correct password dismisses the gate and shows invitation", async ({
     page,
   }) => {
-    const response = await page.goto(`/wedding/${PROTECTED_SLUG}`);
+    const response = await page.goto(`/event/${PROTECTED_SLUG}`);
     if (response?.status() === 404) {
       test.skip();
       return;
@@ -194,6 +194,13 @@ test.describe("Wedding invitation — password protected", () => {
       timeout: 5000,
     });
     await page.locator('button[type="submit"]').click();
+
+    // router.refresh() triggers an RSC re-render that swaps the gate for the WeddingEngine.
+    // Wait for positive evidence of the new content rather than asserting the old is gone,
+    // which races the refresh cycle.
+    await expect(page.locator("canvas").first()).toBeAttached({
+      timeout: 12000,
+    });
 
     // After correct password, router.refresh() is called and the gate disappears
     await expect(

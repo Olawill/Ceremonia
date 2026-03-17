@@ -17,6 +17,8 @@ interface FinaleProps {
   groom?: string;
   finaleTagLine?: string;
   date?: string;
+  finaleHeading?: string;
+  showCoupleIllustration?: boolean;
 }
 
 function BrideGroomSVG({
@@ -543,6 +545,8 @@ export function Finale({
   groom = "Tayo",
   finaleTagLine,
   date,
+  finaleHeading,
+  showCoupleIllustration,
 }: FinaleProps) {
   const { theme } = useTheme();
   const sectionRef = useRef<HTMLElement>(null);
@@ -619,13 +623,15 @@ export function Finale({
 
       <div ref={contentRef} className="relative z-10 space-y-6!">
         {/* Bride & Groom SVG */}
-        <div className="py-4">
-          <BrideGroomSVG
-            gold={theme.gold}
-            curtain={theme.curtain}
-            text={theme.text}
-          />
-        </div>
+        {showCoupleIllustration && (
+          <div className="py-4">
+            <BrideGroomSVG
+              gold={theme.gold}
+              curtain={theme.curtain}
+              text={theme.text}
+            />
+          </div>
+        )}
 
         <p
           className="font-display italic font-bold"
@@ -635,7 +641,7 @@ export function Finale({
             letterSpacing: "0.4em",
           }}
         >
-          {bride} &amp; {groom}
+          {groom ? `${bride} & ${groom}` : bride}
         </p>
 
         <div style={{ color: theme.gold, fontSize: 28 }}>✦ ◆ ✦</div>
@@ -648,9 +654,13 @@ export function Finale({
             letterSpacing: "0.04em",
           }}
         >
-          See You at
-          <br />
-          The Altar
+          {finaleHeading ?? (
+            <>
+              See You at
+              <br />
+              The Altar
+            </>
+          )}
         </h2>
 
         <div

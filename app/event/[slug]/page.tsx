@@ -7,8 +7,9 @@ import { db } from "@/db";
 import { users, weddings } from "@/db/schema";
 
 import { WeddingEngine } from "@/components/WeddingEngine";
-import { PasswordGate } from "@/components/wedding/PasswordGate";
+import { PasswordGate } from "@/components/event/PasswordGate";
 
+import { EventType, getVocabulary } from "@/types/event";
 import type { ThemeKey, WeddingTheme } from "@/types/theme";
 import type {
   AccommodationConfig,
@@ -47,6 +48,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       date: weddings.date,
       heroPhotoUrl: weddings.heroPhotoUrl,
       slug: weddings.slug,
+      eventType: weddings.eventType,
     })
     .from(weddings)
     .where(eq(weddings.slug, slug))
@@ -54,12 +56,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!wedding) {
     return {
-      title: "Wedding Invitation",
+      title: "Event Invitation",
       robots: { index: false, follow: false },
     };
   }
 
-  const title = `${wedding.bride} & ${wedding.groom} — Wedding Invitation`;
+  const vocab = getVocabulary((wedding.eventType as EventType) ?? "wedding");
+  const hostsStr = wedding.groom
+    ? `${wedding.bride} & ${wedding.groom}`
+    : wedding.bride;
+  const title = `${hostsStr} — ${vocab.eventLabel} Invitation`;
+
   const formattedDate = wedding.date
     ? new Date(wedding.date).toLocaleDateString("en-GB", {
         day: "numeric",
@@ -68,8 +75,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       })
     : null;
   const description = formattedDate
-    ? `You're invited to celebrate the wedding of ${wedding.bride} & ${wedding.groom} on ${formattedDate}.`
-    : `You're invited to celebrate the wedding of ${wedding.bride} & ${wedding.groom}.`;
+    ? `You're invited to celebrate the ${vocab.eventLabel.toLowerCase()} of ${hostsStr} on ${formattedDate}.`
+    : `You're invited to celebrate the ${vocab.eventLabel.toLowerCase()} of ${hostsStr}.`;
 
   return {
     title,
@@ -102,7 +109,14 @@ export async function generateStaticParams() {
     .from(weddings)
     .where(eq(weddings.published, true));
 
-  return allWeddings.map((w) => ({ slug: w.slug }));
+  const slugs = allWeddings.map((w) => ({ slug: w.slug }));
+
+  // Always pre-render the demo slug — it bypasses DB and serves DEMO_WEDDING_CONFIG
+  if (!slugs.find((s) => s.slug === "demo")) {
+    slugs.push({ slug: "demo" });
+  }
+
+  return slugs;
 }
 
 // Revalidate every 60 seconds — keeps it fast but fresh
@@ -146,8 +160,9 @@ export default async function WeddingPage({ params }: Props) {
   const config: WeddingConfig = {
     id: wedding.id,
     slug: wedding.slug,
+    eventType: (wedding.eventType as EventType) ?? "wedding",
     bride: wedding.bride,
-    groom: wedding.groom,
+    groom: wedding.groom ?? "",
     date: wedding.date,
     tagLine: wedding.tagLine ?? undefined,
     finaleTagLine: wedding.finaleTagLine ?? undefined,

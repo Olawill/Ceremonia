@@ -22,11 +22,11 @@ export interface StockAudio {
 
 export const stockRouter = new Elysia({ prefix: "/stock" })
 
-  // GET /api/stock/photos?q=wedding+arch&page=1
+  // GET /api/stock/photos?q=event+arch&page=1
   .get(
     "/photos",
     async ({ query, status }) => {
-      const q = query.q?.trim() || "wedding";
+      const q = query.q?.trim() || "event";
       const page = Math.max(1, parseInt(query.page ?? "1"));
 
       const [unsplashRes, pixabayRes] = await Promise.allSettled([
@@ -55,7 +55,7 @@ export const stockRouter = new Elysia({ prefix: "/stock" })
             id: `unsplash-${item.id}`,
             thumb: item.urls.small,
             full: item.urls.regular,
-            label: item.alt_description ?? item.description ?? "Wedding photo",
+            label: item.alt_description ?? item.description ?? "Event photo",
             source: "unsplash",
             authorName: item.user?.name,
             authorUrl: item.user?.links?.html,
@@ -71,7 +71,7 @@ export const stockRouter = new Elysia({ prefix: "/stock" })
             id: `pixabay-${item.id}`,
             thumb: item.previewURL,
             full: item.webformatURL,
-            label: item.tags?.split(",")[0]?.trim() ?? "Wedding photo",
+            label: item.tags?.split(",")[0]?.trim() ?? "Event photo",
             source: "pixabay",
           });
         }
@@ -95,7 +95,7 @@ export const stockRouter = new Elysia({ prefix: "/stock" })
   .get(
     "/audio",
     async ({ query, status }) => {
-      const q = query.q?.trim() || "wedding romantic piano";
+      const q = query.q?.trim() || "event romantic piano";
       const page = Math.max(1, parseInt(query.page ?? "1"));
 
       // Pixabay has a music API — free, same key
@@ -110,7 +110,7 @@ export const stockRouter = new Elysia({ prefix: "/stock" })
       const data = await res.json();
       const audio: StockAudio[] = (data.hits ?? []).map((item: any) => ({
         id: `pixabay-audio-${item.id}`,
-        label: item.title ?? "Wedding music",
+        label: item.title ?? "Event music",
         preview: item.audio?.["128"] ?? item.audio?.["64"] ?? item.url,
         full: item.audio?.["128"] ?? item.audio?.["64"] ?? item.url,
         source: "pixabay" as const,

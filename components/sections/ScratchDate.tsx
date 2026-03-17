@@ -9,11 +9,13 @@ import { formattedDate } from "@/lib/helper";
 interface ScratchDateProps {
   date?: string; // ISO "2026-07-12"
   onRevealed: () => void;
+  revealLabel?: string; // defaults to "Reveal Our Date"
 }
 
 export function ScratchDate({
   date = "2026-07-12",
   onRevealed,
+  revealLabel,
 }: ScratchDateProps) {
   const { theme } = useTheme();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -163,7 +165,7 @@ export function ScratchDate({
           A Special Surprise
         </p>
         <h2 className="font-display font-light text-[clamp(28px,5vw,52px)] text-(--theme-text) tracking-[0.08em]">
-          Reveal Our Date
+          {revealLabel ?? "Reveal Our Date"}
         </h2>
         {!revealed && (
           <p className="font-display italic text-lg font-semibold text-(--theme-gold) opacity-55">

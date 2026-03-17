@@ -14,9 +14,13 @@ export const metadata = { title: "Billing & Plans" };
 export default async function BillingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ success?: string; cancelled?: string }>;
+  searchParams: Promise<{
+    success?: string;
+    cancelled?: string;
+    priceId?: string;
+  }>;
 }) {
-  const { success, cancelled } = await searchParams;
+  const { success, cancelled, priceId } = await searchParams;
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
 
@@ -27,14 +31,17 @@ export default async function BillingPage({
     .limit(1);
 
   const plan = (user?.plan as Plan | undefined) ?? "free";
-  const hasStripe = !!user?.stripeCustomerId;
+  const hasActiveSubscription = !!user?.stripeCustomerId && plan !== "free";
+  const hasEverPaid = !!user?.stripeCustomerId; // has Stripe customer = went through checkout before
 
   return (
     <BillingClient
       currentPlan={plan}
-      hasStripeAccount={hasStripe}
+      hasStripeAccount={hasActiveSubscription}
+      hasEverPaid={hasEverPaid}
       paymentSuccess={success === "true"}
       paymentCancelled={cancelled === "true"}
+      successPriceId={priceId}
     />
   );
 }

@@ -11,7 +11,7 @@ export default function robots(): MetadataRoute.Robots {
           "/api/", // all API routes
           "/sign-in",
           "/sign-up",
-          "/wedding/preview", // editor preview iframe
+          "/event/preview", // editor preview iframe
         ],
       },
     ],

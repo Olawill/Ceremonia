@@ -11,6 +11,7 @@ import { env } from "@/env";
 
 import { PLAN_FEATURES } from "@/lib/plans";
 import { getPostHogClient } from "@/lib/posthog-server";
+import { EventType, getVocabulary } from "@/types/event";
 
 const resend = new Resend(env.RESEND_API_KEY);
 
@@ -50,12 +51,13 @@ export const rsvpRouter = new Elysia({ prefix: "/rsvp" })
           bride: weddings.bride,
           groom: weddings.groom,
           userId: weddings.userId,
+          eventType: weddings.eventType,
         })
         .from(weddings)
         .where(eq(weddings.id, body.weddingId))
         .limit(1);
 
-      if (!wedding) return status(404, { message: "Wedding not found" });
+      if (!wedding) return status(404, { message: "Event not found" });
       if (!wedding.rsvpEnabled)
         return status(403, { message: "RSVPs are closed" });
 
@@ -78,7 +80,7 @@ export const rsvpRouter = new Elysia({ prefix: "/rsvp" })
 
           if (total >= 20) {
             return status(403, {
-              message: "RSVP limit reached for this wedding",
+              message: "RSVP limit reached for this event",
             });
           }
         }
@@ -110,14 +112,17 @@ export const rsvpRouter = new Elysia({ prefix: "/rsvp" })
             .send({
               from: "rsvp@ceremonia.app",
               to: wedding.notificationEmail,
-              subject: `New RSVP from ${body.name} — ${wedding.bride} & ${wedding.groom}`,
+              subject: `New RSVP from ${body.name} — ${wedding.groom ? `${wedding.bride} & ${wedding.groom}` : wedding.bride}`,
               react: RSVPNotificationEmail({
                 guestName: body.name,
                 attendance: body.attendance as "yes" | "no",
                 guests: body.guests,
                 dietary: body.dietary,
                 bride: wedding.bride,
-                groom: wedding.groom,
+                groom: wedding.groom ?? "",
+                eventLabel: getVocabulary(
+                  (wedding.eventType as EventType) ?? "wedding",
+                ).eventLabel,
               }),
             })
             .catch(console.error);

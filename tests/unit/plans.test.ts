@@ -29,7 +29,7 @@ describe("PLAN_FEATURES", () => {
   });
 
   it("free plan has limited wedding count", () => {
-    expect(PLAN_FEATURES.free.maxWeddings).toBe(1);
+    expect(PLAN_FEATURES.free.maxEvents).toBe(1);
   });
 
   it("starter removes watermark", () => {
@@ -53,7 +53,7 @@ describe("PLAN_FEATURES", () => {
   });
 
   it("agency has unlimited weddings", () => {
-    expect(PLAN_FEATURES.agency.maxWeddings).toBe(Infinity);
+    expect(PLAN_FEATURES.agency.maxEvents).toBe(Infinity);
   });
 
   it("agency has white label", () => {
@@ -128,21 +128,21 @@ describe("PLAN_FEATURES — watermark", () => {
 
 // ── PLAN_FEATURES — wedding limits ────────────────────────────────────────────
 
-describe("PLAN_FEATURES — maxWeddings", () => {
+describe("PLAN_FEATURES — maxEvents", () => {
   it("free is capped at 1", () => {
-    expect(PLAN_FEATURES.free.maxWeddings).toBe(1);
+    expect(PLAN_FEATURES.free.maxEvents).toBe(1);
   });
 
   it("starter is capped at 1", () => {
-    expect(PLAN_FEATURES.starter.maxWeddings).toBe(1);
+    expect(PLAN_FEATURES.starter.maxEvents).toBe(1);
   });
 
   it("pro allows up to 5", () => {
-    expect(PLAN_FEATURES.pro.maxWeddings).toBe(5);
+    expect(PLAN_FEATURES.pro.maxEvents).toBe(5);
   });
 
   it("agency has unlimited weddings", () => {
-    expect(PLAN_FEATURES.agency.maxWeddings).toBe(Infinity);
+    expect(PLAN_FEATURES.agency.maxEvents).toBe(Infinity);
   });
 });
 

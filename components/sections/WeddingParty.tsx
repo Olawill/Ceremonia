@@ -12,7 +12,8 @@ gsap.registerPlugin(ScrollTrigger);
 interface Props {
   members: WeddingPartyMember[];
   bride: string;
-  groom: string;
+  groom?: string;
+  sectionLabel?: string;
 }
 
 const ROLE_LABELS: Record<WeddingPartyRole, string> = {
@@ -27,6 +28,12 @@ const ROLE_LABELS: Record<WeddingPartyRole, string> = {
   "father-of-bride": "Father of the Bride",
   "mother-of-groom": "Mother of the Groom",
   "father-of-groom": "Father of the Groom",
+  godparent: "Godparent",
+  godmother: "Godmother",
+  godfather: "Godfather",
+  parent: "Parent",
+  host: "Host",
+  guest_of_honour: "Guest of Honour",
   custom: "",
 };
 
@@ -97,7 +104,7 @@ function MemberCard({ member }: { member: WeddingPartyMember }) {
   );
 }
 
-export function WeddingParty({ members, bride, groom }: Props) {
+export function WeddingParty({ members, bride, groom, sectionLabel }: Props) {
   const { theme } = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -140,7 +147,7 @@ export function WeddingParty({ members, bride, groom }: Props) {
           className="font-label text-[11px] tracking-[0.6em] uppercase"
           style={{ color: theme.gold }}
         >
-          The Wedding Party
+          {sectionLabel ?? "The Wedding Party"}
         </p>
         <h2
           className="font-display text-[clamp(28px,5vw,48px)] tracking-[0.05em]"
@@ -196,7 +203,7 @@ export function WeddingParty({ members, bride, groom }: Props) {
                 className="font-label text-[10px] tracking-[0.5em] uppercase shrink-0"
                 style={{ color: `${theme.gold}80` }}
               >
-                {groom}&apos;s Side
+                {groom ? `${groom}'s Side` : "Their Side"}
               </p>
               <div
                 className="flex-1 h-px"

@@ -14,6 +14,7 @@ import { Field, Input, Textarea } from "@/components/ui/FormPrimitives";
 
 import { DatePicker } from "@/components/ui/DatePicker";
 import { ImageUploadField } from "@/components/ui/ImageUploadField";
+import { getVocabulary } from "@/types/event";
 import type {
   AccommodationConfig,
   AccommodationOption,
@@ -207,6 +208,7 @@ function OptionEditor({
 
 export function AccommodationEditor({ config, onChange }: Props) {
   const acc = config.accommodation ?? DEFAULT_CONFIG;
+  const vocab = getVocabulary(config.eventType);
 
   const update = (patch: Partial<AccommodationConfig>) =>
     onChange({ accommodation: { ...acc, ...patch } });
@@ -231,7 +233,7 @@ export function AccommodationEditor({ config, onChange }: Props) {
         onToggle={() =>
           onChange({ accommodationEnabled: !config.accommodationEnabled })
         }
-        disabledMessage="Enable to suggest hotels and accommodation options for your guests."
+        disabledMessage={`Enable to suggest hotels and accommodation options near your ${vocab.eventLabel.toLowerCase()} venue.`}
       />
 
       {config.accommodationEnabled && (

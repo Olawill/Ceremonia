@@ -3,7 +3,7 @@ import { SignUp } from "@clerk/nextjs";
 export const metadata = {
   title: "Create Account — Ceremonia",
   description:
-    "Create your Ceremonia account and start building your wedding invitation today.",
+    "Create your Ceremonia account and start building your event invitation today.",
 };
 
 export default function SignUpPage() {

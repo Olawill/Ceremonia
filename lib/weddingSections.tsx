@@ -15,6 +15,7 @@ import { TravelGuide } from "@/components/sections/TravelGuide";
 import { VenueDetails } from "@/components/sections/VenueDetails";
 import { WeddingMenu } from "@/components/sections/WeddingMenu";
 import { WeddingParty } from "@/components/sections/WeddingParty";
+import { getVocabulary } from "@/types/event";
 
 import {
   DEMO_WEDDING_CONFIG,
@@ -22,6 +23,7 @@ import {
   type VenueEvent,
   type WeddingConfig,
 } from "@/types/wedding";
+import { getHost1Name, getHost2Name } from "./eventHelpers";
 
 export interface WeddingSection {
   key: string;
@@ -34,6 +36,10 @@ export function buildSections(
   dateRevealed: boolean,
   onDateRevealed: () => void,
 ): WeddingSection[] {
+  const vocab = getVocabulary(config.eventType);
+  const host1 = getHost1Name(config);
+  const host2 = getHost2Name(config);
+
   const location: VenueEvent =
     config.venueDetails.find((d) => d.label === "Location") ??
     DEMO_WEDDING_CONFIG.venueDetails.find((d) => d.label === "Location") ??
@@ -46,10 +52,11 @@ export function buildSections(
       node: (
         <ParallaxHero
           key="hero"
-          bride={config.bride}
-          groom={config.groom}
+          bride={host1}
+          groom={host2}
           tagLine={config.tagLine}
           heroPhotoUrl={config.heroPhotoUrl}
+          topLabel={vocab.topLabel}
         />
       ),
     },
@@ -61,6 +68,7 @@ export function buildSections(
           key="scratch"
           date={config.date}
           onRevealed={onDateRevealed}
+          // revealLabel="" // TODO
         />
       ),
     },
@@ -73,7 +81,12 @@ export function buildSections(
       key: "countdown",
       label: "Countdown",
       node: (
-        <Countdown key="countdown" date={config.date} location={location} />
+        <Countdown
+          key="countdown"
+          date={config.date}
+          location={location}
+          eventLabel={vocab.eventLabel}
+        />
       ),
     },
     {
@@ -127,8 +140,9 @@ export function buildSections(
               <WeddingParty
                 key="weddingparty"
                 members={config.weddingParty}
-                bride={config.bride}
-                groom={config.groom}
+                bride={host1}
+                groom={host2}
+                sectionLabel={vocab.partyLabel}
               />
             ),
           },
@@ -178,7 +192,15 @@ export function buildSections(
     {
       key: "menu",
       label: "Menu",
-      node: <WeddingMenu key="menu" courses={config.menuCourses} />,
+      node: (
+        <WeddingMenu
+          key="menu"
+          courses={config.menuCourses}
+          label={vocab.menuLabel}
+          subLabel={vocab.menuSubLabel}
+          description={vocab.menuDescription}
+        />
+      ),
     },
     {
       key: "rsvp",
@@ -197,7 +219,13 @@ export function buildSections(
           {
             key: "registry",
             label: "Registry",
-            node: <Registry key="registry" weddingSlug={config.slug} />,
+            node: (
+              <Registry
+                key="registry"
+                weddingSlug={config.slug}
+                label={vocab.registryLabel}
+              />
+            ),
           },
         ]
       : []),
@@ -222,10 +250,14 @@ export function buildSections(
       node: (
         <Finale
           key="finale"
-          bride={config.bride}
-          groom={config.groom}
+          bride={host1}
+          groom={host2}
           finaleTagLine={config.finaleTagLine}
+          finaleHeading={vocab.finaleHeading}
           date={config.date}
+          showCoupleIllustration={
+            config.eventType === "wedding" || config.eventType === "engagement"
+          }
         />
       ),
     },
