@@ -34,7 +34,10 @@ export function ThemeProvider({
     null,
   );
 
-  const theme = customTheme ?? themes[themeKey];
+  const theme =
+    customTheme ??
+    themes[themeKey as Exclude<ThemeKey, "custom">] ??
+    themes.royal;
 
   const setThemeKey = (key: ThemeKey) => {
     setThemeKeyState(key);
@@ -53,7 +56,8 @@ export function ThemeProvider({
   useEffect(() => {
     if (customTheme) return;
     const root = document.documentElement;
-    const t = themes[themeKey];
+    const t = themes[themeKey as Exclude<ThemeKey, "custom">] ?? themes.royal;
+
     if (themeKey !== "royal") {
       document.documentElement.setAttribute("data-theme", themeKey);
     }
