@@ -2,7 +2,9 @@
 
 **Cinematic event invitations, beautifully hosted.**
 
-Ceremonia is a multi-tenant SaaS platform for creating and hosting interactive event invitations — weddings, birthday parties, baby showers, christenings, bridal showers, housewarmings, anniversaries, graduations, engagements, corporate events, and more. Every event gets its own hosted subdomain, a live-preview editor, RSVP management, and a cinematic curtain-reveal experience that guests will remember.
+Ceremonia is a multi-tenant SaaS platform for creating and hosting cinematic event invitations — weddings, birthdays, baby showers, christenings, bridal showers, housewarmings, anniversaries, graduations, engagements, corporate events, and more. Every event gets its own hosted subdomain, a live split-panel editor, 13 built-in themes, 7 curtain styles, RSVP management with email notifications, a gift registry, guest book, and a curtain-reveal experience guests will remember.
+
+Supports 11 event types with a full vocabulary system that adapts every label, heading, and section to the event context. Tiered pricing (Free → Starter → Pro → Agency) with Stripe subscriptions, plan-gated features, custom domains, white-label branding, and a theme marketplace for Agency subscribers.
 
 **Live demo:** [ceremonia.app/event/demo](https://ceremonia.app/event/demo)
 
