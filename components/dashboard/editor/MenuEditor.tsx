@@ -80,7 +80,12 @@ export function MenuEditor({ config, onChange }: Props) {
   } = useFieldArray({ control, name: "menuCourses" });
 
   useEffect(() => {
+    let mounted = false;
     const { unsubscribe } = watch((values) => {
+      if (!mounted) {
+        mounted = true;
+        return;
+      }
       if (values.menuCourses) {
         onChange({
           menuCourses: toCourses(

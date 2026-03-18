@@ -76,41 +76,67 @@ export function ThemeCustomiser({
   }, []);
 
   // Send live preview update to iframe whenever colors change
-  useEffect(() => {
-    if (!hasMountedRef.current) {
-      hasMountedRef.current = true;
-      return; // skip on mount — don't clobber the active built-in theme
-    }
+  // useEffect(() => {
+  //   if (!hasMountedRef.current) {
+  //     hasMountedRef.current = true;
+  //     return; // skip on mount — don't clobber the active built-in theme
+  //   }
 
-    const iframe = previewIframeRef.current;
-    if (!iframe?.contentWindow) return;
+  //   const iframe = previewIframeRef.current;
+  //   if (!iframe?.contentWindow) return;
 
-    const builtTheme: WeddingTheme = {
-      key: "royal", // key doesn't matter for custom
-      name: themeName,
-      ...colors,
-    };
+  //   const builtTheme: WeddingTheme = {
+  //     key: "royal", // key doesn't matter for custom
+  //     name: themeName,
+  //     ...colors,
+  //   };
 
-    iframe.contentWindow.postMessage(
-      { type: "THEME_UPDATE", theme: builtTheme },
-      "*",
-    );
-  }, [colors, previewIframeRef]);
+  //   iframe.contentWindow.postMessage(
+  //     { type: "THEME_UPDATE", theme: builtTheme },
+  //     "*",
+  //   );
+  // }, [colors, previewIframeRef]);
 
-  const updateColor = useCallback((key: keyof WeddingTheme, value: string) => {
-    setColors((prev) => ({ ...prev, [key]: value }));
-  }, []);
+  const sendThemePreview = useCallback(
+    (themeColors: Omit<WeddingTheme, "key" | "name">, name: string) => {
+      const iframe = previewIframeRef.current;
+      if (!iframe?.contentWindow) return;
+      iframe.contentWindow.postMessage(
+        {
+          type: "THEME_UPDATE",
+          theme: { key: "custom", name, ...themeColors } as WeddingTheme,
+        },
+        "*",
+      );
+    },
+    [previewIframeRef],
+  );
+
+  // const updateColor = useCallback((key: keyof WeddingTheme, value: string) => {
+  //   setColors((prev) => ({ ...prev, [key]: value }));
+  // }, []);
+
+  const updateColor = useCallback(
+    (key: keyof WeddingTheme, value: string) => {
+      setColors((prev) => {
+        const next = { ...prev, [key]: value };
+        sendThemePreview(next, themeName);
+        return next;
+      });
+    },
+    [sendThemePreview, themeName],
+  );
 
   const handleSave = async () => {
     setSaving(true);
     const builtTheme: WeddingTheme = {
-      key: "royal",
+      key: "custom",
       name: themeName,
       ...colors,
     };
 
     // Persist into wedding config so it's included in the next Save
-    onChange({ customTheme: builtTheme, themeKey: "royal" });
+    onChange({ customTheme: builtTheme, themeKey: "custom" });
 
     const { data, error } = await api["custom-themes"].post({
       name: themeName,
@@ -134,7 +160,8 @@ export function ThemeCustomiser({
   const applyTheme = (saved: SavedCustomTheme) => {
     setColors(saved.theme);
     setThemeName(saved.name);
-    onChange({ customTheme: saved.theme, themeKey: "royal" });
+    sendThemePreview(saved.theme, saved.name);
+    onChange({ customTheme: saved.theme, themeKey: "custom" });
   };
 
   const handleTogglePublic = async (id: string, isPublic: boolean) => {
@@ -215,7 +242,7 @@ export function ThemeCustomiser({
                     onChange({
                       customTheme: {
                         ...(config.customTheme ?? {
-                          key: "royal",
+                          key: "custom",
                           name: "custom",
                           ...DEFAULT_CUSTOM_THEME,
                         }),
@@ -257,7 +284,7 @@ export function ThemeCustomiser({
                     onChange({
                       customTheme: {
                         ...(config.customTheme ?? {
-                          key: "royal",
+                          key: "custom",
                           name: "custom",
                           ...DEFAULT_CUSTOM_THEME,
                         }),
@@ -286,7 +313,7 @@ export function ThemeCustomiser({
         Colours
       </p>
 
-      <div className="space-y-3">
+      <div className="space-y-3!">
         {COLOR_FIELDS.map(({ key, label }) => (
           <div key={key} className="flex items-center gap-3">
             <label

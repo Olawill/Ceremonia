@@ -11,7 +11,8 @@ export type ThemeKey =
   | "sakura"
   | "obsidian"
   | "terracotta"
-  | "sage";
+  | "sage"
+  | "custom";
 
 export interface WeddingTheme {
   key: ThemeKey;

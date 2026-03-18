@@ -145,7 +145,12 @@ export function TimelineEditor({ config, onChange }: Props) {
   });
 
   useEffect(() => {
+    let mounted = false;
     const { unsubscribe } = watch((values) => {
+      if (!mounted) {
+        mounted = true;
+        return;
+      }
       if (values.timeline) {
         onChange({ timeline: values.timeline as TimelineEvent[] });
       }

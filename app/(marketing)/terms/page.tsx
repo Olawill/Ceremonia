@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Terms of Service — Ceremonia",
   description:
-    "The terms and conditions governing your use of the Ceremonia wedding invitation platform.",
+    "The terms and conditions governing your use of the Ceremonia event invitation platform.",
   openGraph: {
     title: "Terms of Service — Ceremonia",
     description:
@@ -38,7 +38,7 @@ export default function TermsPage() {
             By creating an account or using any part of the Ceremonia platform,
             you agree to be bound by these Terms of Service ("Terms"). If you do
             not agree, do not use Ceremonia. These Terms apply to all users,
-            including couples, wedding planners, and Agency subscribers.
+            including couples, event planners, and Agency subscribers.
           </p>
         </section>
 
@@ -47,7 +47,7 @@ export default function TermsPage() {
             2. The service
           </h2>
           <p>
-            Ceremonia provides a hosted wedding invitation platform including an
+            Ceremonia provides a hosted event invitation platform including an
             invitation editor, RSVP collection, subdomain hosting, theme
             customisation, and related features. We reserve the right to modify,
             suspend, or discontinue any part of the service with reasonable
@@ -129,7 +129,7 @@ export default function TermsPage() {
             </li>
             <li>
               Collect or harvest guest RSVP data for purposes other than your
-              own wedding management.
+              own event management.
             </li>
           </ul>
         </section>
@@ -141,7 +141,7 @@ export default function TermsPage() {
           <p>
             When guests submit RSVPs through your invitation, you become the
             data controller for that guest data. You agree to use RSVP data only
-            for managing your wedding and to handle it in compliance with
+            for managing your event and to handle it in compliance with
             applicable privacy laws (including GDPR where applicable). Ceremonia
             acts as a data processor on your behalf for RSVP collection.
           </p>

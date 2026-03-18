@@ -4,12 +4,15 @@ import { StockPhoto } from "@/server/routers/stock";
 
 export const STOCK_PHOTO_CATEGORIES = [
   "All",
+  "Wedding",
   "Ceremony",
   "Reception",
   "Florals",
   "Details",
   "Couple",
+  "Venue",
 ] as const;
+
 export type PhotoCategory = (typeof STOCK_PHOTO_CATEGORIES)[number];
 
 export const STOCK_PHOTOS: {
@@ -18,6 +21,49 @@ export const STOCK_PHOTOS: {
   full: string;
   category: PhotoCategory;
 }[] = [
+  // Wedding
+  {
+    label: "Bride portrait",
+    category: "Wedding",
+    thumb:
+      "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=200&q=60",
+    full: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=1600&q=80",
+  },
+  {
+    label: "Wedding party",
+    category: "Wedding",
+    thumb:
+      "https://images.unsplash.com/photo-1519657337289-077653f724ed?w=200&q=60",
+    full: "https://images.unsplash.com/photo-1519657337289-077653f724ed?w=1600&q=80",
+  },
+  {
+    label: "First kiss",
+    category: "Wedding",
+    thumb:
+      "https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=200&q=60",
+    full: "https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=1600&q=80",
+  },
+  {
+    label: "Aisle walk",
+    category: "Wedding",
+    thumb:
+      "https://images.unsplash.com/photo-1606800052052-a08af7148866?w=200&q=60",
+    full: "https://images.unsplash.com/photo-1606800052052-a08af7148866?w=1600&q=80",
+  },
+  {
+    label: "Ring exchange",
+    category: "Wedding",
+    thumb:
+      "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?w=200&q=60",
+    full: "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?w=1600&q=80",
+  },
+  {
+    label: "Just married",
+    category: "Wedding",
+    thumb:
+      "https://images.unsplash.com/photo-1583939411023-14783179e581?w=200&q=60",
+    full: "https://images.unsplash.com/photo-1583939411023-14783179e581?w=1600&q=80",
+  },
   // Ceremony
   {
     label: "Garden arch",
@@ -104,34 +150,63 @@ export const STOCK_PHOTOS: {
       "https://images.unsplash.com/photo-1478146896981-b80fe463b330?w=200&q=60",
     full: "https://images.unsplash.com/photo-1478146896981-b80fe463b330?w=1600&q=80",
   },
+  // Venue
+  {
+    label: "Grand ballroom",
+    category: "Venue",
+    thumb:
+      "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=200&q=60",
+    full: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=1600&q=80",
+  },
+  {
+    label: "Garden estate",
+    category: "Venue",
+    thumb:
+      "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=200&q=60",
+    full: "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=1600&q=80",
+  },
+  {
+    label: "Rustic barn",
+    category: "Venue",
+    thumb:
+      "https://images.unsplash.com/photo-1510076857177-7470076d4098?w=200&q=60",
+    full: "https://images.unsplash.com/photo-1510076857177-7470076d4098?w=1600&q=80",
+  },
+  {
+    label: "Beachfront",
+    category: "Venue",
+    thumb:
+      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=200&q=60",
+    full: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1600&q=80",
+  },
   // Florals
   {
     label: "Bouquet",
     category: "Florals",
     thumb:
-      "https://images.unsplash.com/photo-1525543907401-4b4dac8e2a0a?w=200&q=60",
-    full: "https://images.unsplash.com/photo-1525543907401-4b4dac8e2a0a?w=1600&q=80",
+      "https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=200&q=60",
+    full: "https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=1600&q=80",
   },
   {
     label: "Rose centrepiece",
     category: "Florals",
     thumb:
-      "https://images.unsplash.com/photo-1487530811015-780da5f58a06?w=200&q=60",
-    full: "https://images.unsplash.com/photo-1487530811015-780da5f58a06?w=1600&q=80",
+      "https://images.unsplash.com/photo-1573059142655-5cea2972055e?q=60&w=200",
+    full: "https://images.unsplash.com/photo-1573059142655-5cea2972055e?q=80&w=1600",
   },
   {
     label: "Peony arch",
     category: "Florals",
     thumb:
-      "https://images.unsplash.com/photo-1490750967868-88df5691cc9d?w=200&q=60",
-    full: "https://images.unsplash.com/photo-1490750967868-88df5691cc9d?w=1600&q=80",
+      "https://images.unsplash.com/photo-1496661415325-ef852f9e8e7c?w=200&q=60",
+    full: "https://images.unsplash.com/photo-1496661415325-ef852f9e8e7c?w=1600&q=80",
   },
   {
     label: "Wild meadow",
     category: "Florals",
     thumb:
-      "https://images.unsplash.com/photo-1444930694458-01babf71acd5?w=200&q=60",
-    full: "https://images.unsplash.com/photo-1444930694458-01babf71acd5?w=1600&q=80",
+      "https://images.unsplash.com/photo-1595274426922-0c96f1d4c963?q=60&w=200",
+    full: "https://images.unsplash.com/photo-1595274426922-0c96f1d4c963?q=80&w=1600",
   },
   {
     label: "Buttonhole",
@@ -352,8 +427,12 @@ export const STOCK_AUDIO: {
   },
 ];
 
-export function getFallbackPhotos(): StockPhoto[] {
-  return STOCK_PHOTOS.map((p, i) => ({
+export function getFallbackPhotos(category?: PhotoCategory): StockPhoto[] {
+  const filtered =
+    category && category !== "All"
+      ? STOCK_PHOTOS.filter((p) => p.category === category)
+      : STOCK_PHOTOS;
+  return filtered.map((p, i) => ({
     id: `fallback-${i}`,
     thumb: p.thumb,
     full: p.full,

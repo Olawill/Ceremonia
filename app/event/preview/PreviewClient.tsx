@@ -10,7 +10,6 @@ import { WeddingTheme } from "@/types/theme";
 import type { WeddingConfig } from "@/types/wedding";
 import { DEMO_WEDDING_CONFIG } from "@/types/wedding";
 
-import { usePlan } from "@/hooks/usePlan";
 import { ThemeProvider, useTheme } from "@/lib/ThemeContext";
 
 interface Props {
@@ -25,7 +24,6 @@ function PreviewInner({
   config: WeddingConfig;
   onConfigChange: (c: WeddingConfig) => void;
 }) {
-  const { plan } = usePlan();
   const { setCustomTheme, setThemeKey } = useTheme();
 
   // Use refs so the handler never goes stale and the effect never re-runs
@@ -53,19 +51,11 @@ function PreviewInner({
   }, [setThemeKey]);
 
   useEffect(() => {
-    console.log("[PreviewClient] message listener registered");
     // Signal to the parent editor that this page is ready to receive config
     window.parent.postMessage({ type: "PREVIEW_READY" }, "*");
 
     const handler = (e: MessageEvent) => {
-      console.log("[PreviewClient] message received:", e.data?.type, e.data);
-
       if (e.data?.type === "PREVIEW_CONFIG" && e.data.config) {
-        console.log(
-          "[PreviewClient] applying PREVIEW_CONFIG, themeKey:",
-          e.data.config.themeKey,
-        );
-
         const incoming: WeddingConfig = e.data.config;
         onConfigChangeRef.current(e.data.config);
         // Re-apply custom theme if present — PREVIEW_CONFIG fires after every
@@ -75,7 +65,11 @@ function PreviewInner({
           setCustomThemeRef.current(incoming.customTheme);
         } else {
           // Built-in theme selected — clear custom, switch theme key
-          setThemeKeyRef.current(incoming.themeKey ?? "royal");
+          setThemeKeyRef.current(
+            incoming.themeKey === "custom"
+              ? "royal"
+              : (incoming.themeKey ?? "royal"),
+          );
         }
       }
 
@@ -111,7 +105,6 @@ function PreviewInner({
 }
 
 export function PreviewClient({ initialConfig }: Props) {
-  console.log("[PreviewClient] initialConfig:", initialConfig);
   const [config, setConfig] = useState<WeddingConfig>(
     initialConfig ?? DEMO_WEDDING_CONFIG,
   );

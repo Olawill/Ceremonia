@@ -4,6 +4,7 @@ import { SparklesIcon } from "lucide-react";
 import { Metadata } from "next";
 import Link from "next/link";
 
+import { DeleteEventButton } from "@/components/dashboard/DeleteEventButton";
 import { db } from "@/db";
 import { weddings } from "@/db/schema";
 import { EventType, getVocabulary } from "@/types/event";
@@ -55,7 +56,7 @@ export default async function DashboardPage() {
             <Link
               key={w.id}
               href={`/app/editor/${w.slug}`}
-              className="rounded-2xl p-8! border transition-all border-[#D4AF3750] bg-[#D4AF3705] hover:border-[#D4AF3770] group"
+              className="relative rounded-2xl p-8! border transition-all border-[#D4AF3750] bg-[#D4AF3705] hover:border-[#D4AF3770] group"
             >
               <p
                 className="font-display font-light mb-1!"
@@ -100,6 +101,16 @@ export default async function DashboardPage() {
                 >
                   {w.viewCount ?? 0} views
                 </span>
+              </div>
+
+              <div className="absolute top-3 right-3">
+                <DeleteEventButton
+                  slug={w.slug}
+                  eventLabel={
+                    getVocabulary((w.eventType as EventType) ?? "wedding")
+                      .eventLabel
+                  }
+                />
               </div>
             </Link>
           ))}

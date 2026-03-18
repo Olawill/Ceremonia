@@ -16,6 +16,7 @@ const STYLE_META: Record<
   DressCodeStyle,
   { label: string; icon: string; description: string }
 > = {
+  // existing entries unchanged
   "black-tie": {
     label: "Black Tie",
     icon: "🎩",
@@ -50,6 +51,42 @@ const STYLE_META: Record<
     label: "Casual",
     icon: "☀️",
     description: "Come comfortable — just celebrate with us",
+  },
+  // new entries
+  "african-formal": {
+    label: "African Formal",
+    icon: "🪘",
+    description: "Aso-ebi, agbada, kente & traditional dress welcome",
+  },
+  "south-asian-formal": {
+    label: "South Asian Formal",
+    icon: "🪷",
+    description: "Sarees, lehengas, sherwanis & formal kurta sets",
+  },
+  "east-asian-formal": {
+    label: "East Asian Formal",
+    icon: "🏮",
+    description: "Qipao, hanbok, kimono or formal Western dress",
+  },
+  "middle-eastern": {
+    label: "Middle Eastern",
+    icon: "🌙",
+    description: "Thobes, abayas, kaftans & elegant formal wear",
+  },
+  "latin-formal": {
+    label: "Latin Formal",
+    icon: "🌺",
+    description: "Guayaberas, huipil, or elegant festa attire",
+  },
+  "smart-traditional": {
+    label: "Smart Traditional",
+    icon: "🤝",
+    description: "Your finest cultural or formal attire — both celebrated",
+  },
+  traditional: {
+    label: "Traditional Attire",
+    icon: "👘",
+    description: "Dress in your cultural best — all traditions honoured",
   },
 };
 

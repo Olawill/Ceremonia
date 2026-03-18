@@ -63,7 +63,12 @@ export function RSVPSettings({ config, onChange }: Props) {
   const guestBookEnabled = useWatch({ control, name: "guestBookEnabled" });
 
   useEffect(() => {
+    let mounted = false;
     const { unsubscribe } = watch((values) => {
+      if (!mounted) {
+        mounted = true;
+        return;
+      }
       onChange(values as Partial<WeddingConfig>);
     });
     return unsubscribe;

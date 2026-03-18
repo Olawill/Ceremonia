@@ -87,13 +87,22 @@ export interface WeddingConfig {
 }
 
 export type DressCodeStyle =
+  // Western formal
   | "black-tie"
   | "black-tie-optional"
   | "cocktail"
   | "smart-casual"
   | "garden-party"
   | "beach-formal"
-  | "casual";
+  | "casual"
+  // Cultural / traditional
+  | "traditional" // catch-all for custom traditional attire
+  | "african-formal" // agbada, aso-ebi, kente, etc.
+  | "south-asian-formal" // sarees, lehengas, sherwanis, etc.
+  | "east-asian-formal" // qipao, hanbok, kimono, etc.
+  | "middle-eastern" // thobes, abayas, kaftan-formal
+  | "latin-formal" // guayabera, huipil, festa attire
+  | "smart-traditional"; // mix of traditional + smart — common at multicultural weddings
 
 export interface DressCodeConfig {
   style: DressCodeStyle;

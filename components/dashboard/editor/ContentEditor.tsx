@@ -10,6 +10,7 @@ import type { WeddingConfig } from "@/types/wedding";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { Field, Input, Textarea } from "@/components/ui/FormPrimitives";
 import { getVocabulary } from "@/types/event";
+import clsx from "clsx";
 
 const schema = z.object({
   bride: z.string().min(1, "Bride's name is required"),
@@ -38,6 +39,7 @@ export function ContentEditor({ config, onChange }: Props) {
     register,
     watch,
     setValue,
+    reset,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -55,11 +57,29 @@ export function ContentEditor({ config, onChange }: Props) {
 
   // Sync every field change up to parent EditorShell
   useEffect(() => {
+    let mounted = false;
     const { unsubscribe } = watch((values) => {
+      if (!mounted) {
+        mounted = true;
+        return;
+      }
       onChange(values as Partial<WeddingConfig>);
     });
     return unsubscribe;
   }, [watch, onChange]);
+
+  // Re-sync form when config is updated externally (e.g. after NewEventDialog confirms)
+  useEffect(() => {
+    reset({
+      bride: config.bride,
+      groom: config.groom,
+      date: config.date,
+      tagLine: config.tagLine ?? "",
+      finaleTagLine: config.finaleTagLine ?? "",
+      notificationEmail: (config as any).notificationEmail ?? "",
+      published: config.published,
+    });
+  }, [config.bride, config.groom, config.date]);
 
   return (
     <div className="space-y-5! font-semibold">
@@ -73,6 +93,7 @@ export function ContentEditor({ config, onChange }: Props) {
         <Field
           label={`${vocab.host1Label}'s Name`}
           error={errors.bride?.message}
+          className={clsx(!vocab.dualHost && "col-span-2")}
         >
           <Input
             {...register("bride")}

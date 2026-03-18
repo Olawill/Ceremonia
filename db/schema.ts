@@ -82,6 +82,9 @@ export const weddings = pgTable("weddings", {
   viewCount: integer("view_count").default(0),
   notificationEmail: text("notification_email"),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 });
 
 export const rsvps = pgTable("rsvps", {

@@ -62,7 +62,7 @@ export default function PrivacyPage() {
               email address, and authentication credentials managed by Clerk.
             </li>
             <li>
-              <strong className="text-[#F5F0E8]">Wedding data</strong> — names,
+              <strong className="text-[#F5F0E8]">Event data</strong> — names,
               dates, venues, photos, audio, and any other content you add to
               your invitation.
             </li>
@@ -139,11 +139,11 @@ export default function PrivacyPage() {
             5. Data retention
           </h2>
           <p>
-            We retain your account and wedding data for as long as your account
-            is active. If you delete your account, we will permanently delete
-            your data within 30 days, except where we are required to retain it
-            for legal or accounting purposes. RSVP data is retained for the same
-            period as the associated wedding.
+            We retain your account and event data for as long as your account is
+            active. If you delete your account, we will permanently delete your
+            data within 30 days, except where we are required to retain it for
+            legal or accounting purposes. RSVP data is retained for the same
+            period as the associated event.
           </p>
         </section>
 

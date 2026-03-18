@@ -64,6 +64,20 @@
       "when": 1773675446585,
       "tag": "0008_faulty_gunslinger",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1773757123852,
+      "tag": "0009_square_red_hulk",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1773788918080,
+      "tag": "0010_shocking_silvermane",
+      "breakpoints": true
     }
   ]
 }

@@ -2,11 +2,15 @@ import { auth } from "@clerk/nextjs/server";
 import { and, eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
+import { Suspense } from "react";
 
 import { db } from "@/db";
 import { weddings } from "@/db/schema";
 
-import { EditorShell } from "@/components/dashboard/editor/EditorShell";
+import {
+  EditorShell,
+  EditorSkeleton,
+} from "@/components/dashboard/editor/EditorShell";
 
 import { EventType, getVocabulary } from "@/types/event";
 import type { ThemeKey, WeddingTheme } from "@/types/theme";
@@ -58,7 +62,11 @@ export default async function EditorPage({ params }: Props) {
 
   // "new" slug → pass empty config, EditorShell handles creation
   if (slug === "new") {
-    return <EditorShell initialConfig={null} isNew />;
+    return (
+      <Suspense fallback={<EditorSkeleton />}>
+        <EditorShell initialConfig={null} isNew />
+      </Suspense>
+    );
   }
 
   const [wedding] = await db
@@ -110,5 +118,9 @@ export default async function EditorPage({ params }: Props) {
     travelItems: (wedding.travelItems as TravelItem[]) ?? [],
   };
 
-  return <EditorShell initialConfig={config} isNew={false} />;
+  return (
+    <Suspense fallback={<EditorSkeleton />}>
+      <EditorShell initialConfig={config} isNew={false} />
+    </Suspense>
+  );
 }

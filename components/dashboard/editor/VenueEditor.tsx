@@ -48,7 +48,12 @@ export function VenueEditor({ config, onChange }: Props) {
 
   // Sync up to parent on every change
   useEffect(() => {
+    let mounted = false;
     const { unsubscribe } = watch((values) => {
+      if (!mounted) {
+        mounted = true;
+        return;
+      }
       if (values.venueDetails) {
         onChange({ venueDetails: values.venueDetails as VenueEvent[] });
       }

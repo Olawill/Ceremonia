@@ -1,7 +1,7 @@
 import { env } from "@/env";
 import type { ThemeKey, WeddingTheme } from "@/types/theme";
 
-export const themes: Record<ThemeKey, WeddingTheme> = {
+export const themes: Record<Exclude<ThemeKey, "custom">, WeddingTheme> = {
   royal: {
     key: "royal",
     name: "Royal Crimson",
@@ -173,7 +173,8 @@ export const themes: Record<ThemeKey, WeddingTheme> = {
   },
 };
 
-export const defaultThemeKey: ThemeKey =
-  (env.NEXT_PUBLIC_WEDDING_THEME as ThemeKey | undefined) ?? "royal";
+export const defaultThemeKey: Exclude<ThemeKey, "custom"> =
+  (env.NEXT_PUBLIC_WEDDING_THEME as Exclude<ThemeKey, "custom"> | undefined) ??
+  "royal";
 
 export const activeTheme: WeddingTheme = themes[defaultThemeKey];

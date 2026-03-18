@@ -1,8 +1,9 @@
 "use client";
 
 import clsx from "clsx";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
+import { EventType, getVocabulary } from "@/types/event";
 import type { WeddingConfig } from "@/types/wedding";
 
 import { AccommodationEditor } from "@/components/dashboard/editor/AccommodationEditor";
@@ -20,7 +21,6 @@ import { TimelineEditor } from "@/components/dashboard/editor/TimelineEditor";
 import { TravelGuideEditor } from "@/components/dashboard/editor/TravelGuideEditor";
 import { VenueEditor } from "@/components/dashboard/editor/VenueEditor";
 import { WeddingPartyEditor } from "@/components/dashboard/editor/WeddingPartyEditor";
-import { EventType, getVocabulary } from "@/types/event";
 
 const getTabs = (eventType: EventType) => {
   const vocab = getVocabulary(eventType);
@@ -55,7 +55,22 @@ interface Props {
 }
 
 export function EditorSidebar({ config, onChange, previewIframeRef }: Props) {
-  const [activeTab, setActiveTab] = useState<TabId>("couple");
+  // const [activeTab, setActiveTab] = useState<TabId>("couple");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const activeTab = (searchParams.get("tab") as TabId | null) ?? "couple";
+
+  const setActiveTab = (tab: TabId) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (tab === "couple") {
+      params.delete("tab"); // default tab — keep URL clean
+    } else {
+      params.set("tab", tab);
+    }
+    router.replace(`?${params.toString()}`, { scroll: false });
+  };
+
   const TABS = getTabs(config.eventType);
 
   return (

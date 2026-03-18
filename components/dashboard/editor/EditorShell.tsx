@@ -105,12 +105,14 @@ export function EditorShell({ initialConfig, isNew }: Props) {
       notificationEmail: values.notificationEmail ?? "",
     }));
     setShowDialog(false);
+    setIsDirty(false);
   }, []);
 
   const handleSave = async () => {
     setSaveState("saving");
     try {
       const payload = {
+        eventType: config.eventType,
         bride: config.bride,
         groom: config.groom,
         tagLine: config.tagLine,
@@ -155,7 +157,6 @@ export function EditorShell({ initialConfig, isNew }: Props) {
           throw error;
         }
         setSaveState("saved");
-        setIsDirty(false);
         toast.success("Event created!");
         posthog.capture("event_created", {
           slug: data!.slug,
@@ -164,7 +165,10 @@ export function EditorShell({ initialConfig, isNew }: Props) {
           theme_key: config.themeKey,
         });
         // Navigate to the new slug so the URL is correct
-        startTransition(() => router.replace(`/app/editor/${data!.slug}`));
+        startTransition(() => {
+          setIsDirty(false);
+          router.replace(`/app/editor/${data!.slug}`);
+        });
       } else {
         const { error } = await api
           .events({ slug: config.slug })
@@ -197,6 +201,8 @@ export function EditorShell({ initialConfig, isNew }: Props) {
     }
   };
 
+  console.log({ isDirty, saveState, isNew });
+
   return (
     <div className="flex h-full overflow-hidden space-x-2!">
       {showDialog && <NewEventDialog onConfirm={handleNewEventConfirm} />}
@@ -212,7 +218,8 @@ export function EditorShell({ initialConfig, isNew }: Props) {
                   ? `${config.bride || "Host"} & ${config.groom}`
                   : config.bride || "Your Event"}
               </p>
-              {isDirty && saveState === "idle" && (
+              {((isDirty && saveState === "idle") ||
+                (isNew && saveState !== "saved")) && (
                 <span className="font-label text-[9px] tracking-widest uppercase text-[#D4AF3790] border-[#D4AF3780]">
                   Unsaved
                 </span>
@@ -353,6 +360,60 @@ export function EditorShell({ initialConfig, isNew }: Props) {
         </div>
         <div className="flex-1 overflow-hidden">
           <PreviewFrame config={config} iframeRef={previewIframeRef} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function EditorSkeleton() {
+  return (
+    <div className="flex h-screen bg-dash-bg overflow-hidden">
+      {/* Left — sidebar skeleton */}
+      <div className="w-80 shrink-0 flex flex-col border-r border-dash-border h-full">
+        {/* Header bar */}
+        <div className="px-6! py-3! border-b border-dash-border/10 flex items-center justify-between">
+          <div className="h-3 w-32 rounded-full bg-dash-surface animate-pulse" />
+          <div className="h-7 w-16 rounded-full bg-dash-surface animate-pulse" />
+        </div>
+
+        {/* Tab strip */}
+        <div className="flex items-end gap-1 border-b border-dash-border/10 px-2! pt-2! overflow-hidden">
+          {Array.from({ length: 7 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-2.5 rounded-full bg-dash-surface animate-pulse shrink-0"
+              style={{ width: `${28 + (i % 3) * 10}px`, marginBottom: "10px" }}
+            />
+          ))}
+        </div>
+
+        {/* Field skeletons */}
+        <div className="flex-1 p-4! space-y-5!">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="space-y-1.5">
+              <div className="h-2 w-20 rounded-full bg-dash-surface animate-pulse" />
+              <div className="h-9 w-full rounded-lg bg-dash-surface animate-pulse" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Right — preview skeleton */}
+      <div className="flex-1 flex flex-col bg-[#050505]">
+        {/* Preview header */}
+        <div className="px-6! py-2! border-b border-dash-border/10 flex items-center justify-between">
+          <div className="h-2.5 w-24 rounded-full bg-dash-surface animate-pulse" />
+          <div className="h-6 w-14 rounded-lg bg-dash-surface animate-pulse" />
+        </div>
+
+        {/* Preview body — curtain shimmer */}
+        <div className="flex-1 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4 opacity-20">
+            <div className="h-3 w-24 rounded-full bg-[#D4AF37] animate-pulse" />
+            <div className="h-8 w-48 rounded-full bg-[#D4AF37] animate-pulse" />
+            <div className="h-2 w-16 rounded-full bg-[#D4AF37] animate-pulse" />
+          </div>
         </div>
       </div>
     </div>

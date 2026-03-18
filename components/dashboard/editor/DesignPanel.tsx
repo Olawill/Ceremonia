@@ -39,15 +39,17 @@ export function DesignPanel({ config, onChange, previewIframeRef }: Props) {
       </p>
 
       <div className="grid grid-cols-3 gap-3!">
-        {(Object.keys(themes) as ThemeKey[])
+        {(Object.keys(themes) as Exclude<ThemeKey, "custom">[])
           .filter((_, i) => features.allBuiltInThemes || i < 3)
           .map((key) => {
             const t = themes[key];
-            const active = config.themeKey === key;
+            const active = !config.customTheme && config.themeKey === key;
             return (
               <button
                 key={key}
-                onClick={() => onChange({ themeKey: key })}
+                onClick={() =>
+                  onChange({ themeKey: key, customTheme: undefined })
+                }
                 className="flex flex-col items-center gap-2 p-3 rounded-xl border transition-all"
                 style={{
                   borderColor: active ? t.gold : "#D4AF3720",

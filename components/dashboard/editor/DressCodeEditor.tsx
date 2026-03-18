@@ -9,14 +9,78 @@ import type {
   WeddingConfig,
 } from "@/types/wedding";
 
-const STYLES: { value: DressCodeStyle; label: string; icon: string }[] = [
-  { value: "black-tie", label: "Black Tie", icon: "🎩" },
-  { value: "black-tie-optional", label: "Black Tie Optional", icon: "🥂" },
-  { value: "cocktail", label: "Cocktail", icon: "🍸" },
-  { value: "smart-casual", label: "Smart Casual", icon: "✨" },
-  { value: "garden-party", label: "Garden Party", icon: "🌸" },
-  { value: "beach-formal", label: "Beach Formal", icon: "🌊" },
-  { value: "casual", label: "Casual", icon: "☀️" },
+const STYLES: {
+  value: DressCodeStyle;
+  label: string;
+  icon: string;
+  group: string;
+}[] = [
+  // Western
+  { value: "black-tie", label: "Black Tie", icon: "🎩", group: "Western" },
+  {
+    value: "black-tie-optional",
+    label: "Black Tie Optional",
+    icon: "🥂",
+    group: "Western",
+  },
+  { value: "cocktail", label: "Cocktail", icon: "🍸", group: "Western" },
+  {
+    value: "smart-casual",
+    label: "Smart Casual",
+    icon: "✨",
+    group: "Western",
+  },
+  {
+    value: "garden-party",
+    label: "Garden Party",
+    icon: "🌸",
+    group: "Western",
+  },
+  {
+    value: "beach-formal",
+    label: "Beach Formal",
+    icon: "🌊",
+    group: "Western",
+  },
+  { value: "casual", label: "Casual", icon: "☀️", group: "Western" },
+  // Cultural
+  {
+    value: "african-formal",
+    label: "African Formal",
+    icon: "🪘",
+    group: "Cultural",
+  },
+  {
+    value: "south-asian-formal",
+    label: "South Asian Formal",
+    icon: "🪷",
+    group: "Cultural",
+  },
+  {
+    value: "east-asian-formal",
+    label: "East Asian Formal",
+    icon: "🏮",
+    group: "Cultural",
+  },
+  {
+    value: "middle-eastern",
+    label: "Middle Eastern",
+    icon: "🌙",
+    group: "Cultural",
+  },
+  {
+    value: "latin-formal",
+    label: "Latin Formal",
+    icon: "🌺",
+    group: "Cultural",
+  },
+  {
+    value: "smart-traditional",
+    label: "Smart Traditional",
+    icon: "🤝",
+    group: "Cultural",
+  },
+  { value: "traditional", label: "Traditional", icon: "👘", group: "Cultural" },
 ];
 
 interface Props {
@@ -78,22 +142,33 @@ export function DressCodeEditor({ config, onChange }: Props) {
       {config.dressCodeEnabled && (
         <>
           {/* Style picker */}
-          <div className="grid grid-cols-2 gap-2">
-            {STYLES.map(({ value, label, icon }) => (
-              <button
-                key={value}
-                onClick={() => update({ style: value })}
-                className="flex items-center gap-2 px-3! py-2.5! rounded-xl border font-display italic text-sm transition-all text-left cursor-pointer"
-                style={{
-                  borderColor: dc.style === value ? "#D4AF3790" : "#D4AF3740",
-                  background: dc.style === value ? "#D4AF3712" : "transparent",
-                  color: dc.style === value ? "#D4AF37" : "#F5F0E890",
-                }}
-              >
-                <span>{icon}</span> {label}
-              </button>
-            ))}
-          </div>
+          {(["Western", "Cultural"] as const).map((group) => (
+            <div key={group} className="space-y-2!">
+              <p className="font-label text-[10px] font-semibold tracking-[0.4em] uppercase text-[#D4AF3790]">
+                {group}
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {STYLES.filter((s) => s.group === group).map(
+                  ({ value, label, icon }) => (
+                    <button
+                      key={value}
+                      onClick={() => update({ style: value })}
+                      className="flex items-center gap-2 px-3! py-2.5! rounded-xl border font-display italic text-sm transition-all text-left cursor-pointer"
+                      style={{
+                        borderColor:
+                          dc.style === value ? "#D4AF3790" : "#D4AF3740",
+                        background:
+                          dc.style === value ? "#D4AF3712" : "transparent",
+                        color: dc.style === value ? "#D4AF37" : "#F5F0E890",
+                      }}
+                    >
+                      <span>{icon}</span> {label}
+                    </button>
+                  ),
+                )}
+              </div>
+            </div>
+          ))}
 
           <div className="h-px bg-[#D4AF3715]" />
 

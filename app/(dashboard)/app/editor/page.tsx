@@ -1,5 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
 import { db } from "@/db";
@@ -14,6 +14,7 @@ export default async function EditorIndexPage() {
     .select({ slug: weddings.slug })
     .from(weddings)
     .where(eq(weddings.userId, userId))
+    .orderBy(desc(weddings.updatedAt))
     .limit(1);
 
   redirect(first ? `/app/editor/${first.slug}` : "/app/editor/new");

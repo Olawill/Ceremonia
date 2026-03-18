@@ -10,7 +10,7 @@ import {
   UploadIcon,
   XIcon,
 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { PlanGate } from "@/components/ui/PlanGate";
 
@@ -25,6 +25,7 @@ import {
   PhotoCategory,
   STOCK_AUDIO,
   STOCK_AUDIO_CATEGORIES,
+  STOCK_PHOTO_CATEGORIES,
 } from "@/types/stocks";
 import type { WeddingConfig } from "@/types/wedding";
 
@@ -75,6 +76,42 @@ function UploadField({
   const [stockPage, setStockPage] = useState(1);
   const [stockLoading, setStockLoading] = useState(false);
   const [stockSearched, setStockSearched] = useState(false);
+
+  const [stockHasMore, setStockHasMore] = useState(false);
+  const [audioResults, setAudioResults] = useState<typeof STOCK_AUDIO>([]);
+  const [audioLoading, setAudioLoading] = useState(false);
+  const [audioHasMore, setAudioHasMore] = useState(false);
+  const [audioPage, setAudioPage] = useState(1);
+  const [audioFromFallback, setAudioFromFallback] = useState(false);
+
+  const [stockIsFromFallback, setStockIsFromFallback] = useState(false);
+
+  useEffect(() => {
+    if (
+      tab === "stock" &&
+      type === "photo" &&
+      stockResults.length === 0 &&
+      !stockSearched
+    ) {
+      setStockResults(getFallbackPhotos(photoCategory));
+      setStockIsFromFallback(true);
+    }
+  }, [tab]);
+
+  useEffect(() => {
+    if (tab !== "stock" || type !== "photo") return;
+    if (stockIsFromFallback) {
+      setStockResults(getFallbackPhotos(photoCategory));
+    } else if (stockSearched) {
+      searchStock(stockQuery, 1);
+    }
+  }, [photoCategory]);
+
+  useEffect(() => {
+    if (tab === "stock" && type === "audio" && audioResults.length === 0) {
+      searchAudio(audioCategory);
+    }
+  }, [tab]);
 
   // ── file upload ────────────────────────────────────────────────────────────
   const handleFile = async (file: File) => {
@@ -191,26 +228,86 @@ function UploadField({
     setStockSearched(true);
     try {
       const { data, error } = await api.stock.photos.get({
-        query: { q, page: String(page) },
+        query: {
+          q,
+          page: String(page),
+          category: photoCategory === "All" ? undefined : photoCategory,
+        },
       });
       if (error) {
-        if (page === 1) setStockResults(getFallbackPhotos());
+        if (page === 1) {
+          setStockResults(getFallbackPhotos());
+          setStockIsFromFallback(true);
+          setStockHasMore(false);
+        }
         return;
       }
       const incoming: StockPhoto[] = data.photos ?? [];
       if (incoming.length === 0 && page === 1) {
         setStockResults(getFallbackPhotos());
+        setStockIsFromFallback(true);
       } else if (page === 1) {
         setStockResults(incoming);
+        setStockIsFromFallback(false);
       } else {
         setStockResults((prev) => [...prev, ...incoming]);
+        setStockIsFromFallback(false);
+        setStockHasMore(false);
       }
       setStockPage(page);
+      setStockHasMore(data.hasMore ?? false);
     } catch {
       toast.error("Could not reach stock photo service");
-      if (page === 1) setStockResults(getFallbackPhotos());
+      if (page === 1) {
+        setStockResults(getFallbackPhotos());
+        setStockIsFromFallback(true);
+        setStockHasMore(false);
+      }
     } finally {
       setStockLoading(false);
+    }
+  };
+
+  const searchAudio = async (category: AudioCategory, page = 1) => {
+    setAudioLoading(true);
+    try {
+      const { data, error } = await api.stock.audio.get({
+        query: {
+          q: "wedding romantic",
+          category: category === "All" ? undefined : category,
+          page: String(page),
+        },
+      });
+      if (error || !data?.audio?.length) {
+        // Fallback to static list
+        setAudioResults(
+          STOCK_AUDIO.filter(
+            (a) => category === "All" || a.category === category,
+          ),
+        );
+        setAudioFromFallback(true);
+        setAudioHasMore(false);
+        return;
+      }
+      const incoming = data.audio;
+      if (page === 1) {
+        setAudioResults(incoming as any);
+      } else {
+        setAudioResults((prev) => [...prev, ...(incoming as any)]);
+      }
+      setAudioFromFallback(false);
+      setAudioHasMore(data.hasMore ?? false);
+      setAudioPage(page);
+    } catch {
+      setAudioResults(
+        STOCK_AUDIO.filter(
+          (a) => category === "All" || a.category === category,
+        ),
+      );
+      setAudioFromFallback(true);
+      setAudioHasMore(false);
+    } finally {
+      setAudioLoading(false);
     }
   };
 
@@ -370,110 +467,125 @@ function UploadField({
                   </span>
                 </div>
               )}
+
               {!uploading && type === "photo" && (
                 <div className="space-y-2!">
-                  <div className="flex gap-1.5!">
-                    <input
-                      type="text"
-                      value={stockQuery}
-                      onChange={(e) => setStockQuery(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") searchStock(stockQuery, 1);
-                      }}
-                      placeholder="Search event photos…"
-                      className="dash-input flex-1 text-xs py-1.5!"
-                    />
-                    <button
-                      onClick={() => searchStock(stockQuery, 1)}
-                      disabled={stockLoading}
-                      className="px-3! rounded-lg dash-btn-primary font-label text-[8px] tracking-[0.2em] uppercase disabled:opacity-40 flex items-center gap-1 cursor-pointer"
-                    >
-                      {stockLoading ? (
-                        <Loader2Icon className="size-3.5 animate-spin" />
-                      ) : (
-                        <SearchIcon className="size-3.5" />
-                      )}
-                    </button>
-                  </div>
-
-                  <div className="flex gap-1 flex-wrap">
-                    {[
-                      "wedding",
-                      "ceremony",
-                      "flowers",
-                      "couple",
-                      "venue",
-                      "reception",
-                    ].map((term) => (
-                      <button
-                        key={term}
-                        onClick={() => {
-                          setStockQuery(term);
-                          searchStock(term, 1);
-                        }}
-                        className={clsx(
-                          "px-2! py-0.5! rounded font-label text-[7px] tracking-widest uppercase transition-all border cursor-pointer",
-                          stockQuery === term
-                            ? "bg-[#D4AF3720] text-[#D4AF37] border-[#D4AF3760]"
-                            : "text-[#F5F0E880] hover:text-[#F5F0E8] border-transparent",
-                        )}
-                      >
-                        {term}
-                      </button>
-                    ))}
-                  </div>
-
-                  {!stockSearched && !stockLoading && (
-                    <p className="text-center font-label text-[8px] tracking-widest uppercase text-[#F5F0E830] py-6!">
-                      Search to browse free photos
-                    </p>
-                  )}
-                  {stockSearched &&
-                    !stockLoading &&
-                    stockResults.length === 0 && (
-                      <p className="text-center font-label text-[8px] tracking-widest uppercase text-[#F5F0E830] py-6!">
-                        No results
-                      </p>
-                    )}
-
-                  <div className="grid grid-cols-3 gap-1.5">
-                    {stockResults.map((p) => (
-                      <button
-                        key={p.id}
-                        onClick={() => handleStockPick(p.full)}
-                        title={p.label}
-                        className="relative group rounded-lg overflow-hidden aspect-4/3 cursor-pointer"
-                      >
-                        <img
-                          src={p.thumb}
-                          alt={p.label}
-                          className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                  <>
+                    <div className="flex gap-1.5!">
+                      <div className="relative flex-1">
+                        <input
+                          type="text"
+                          value={stockQuery}
+                          onChange={(e) => setStockQuery(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (
+                              e.key === "Enter" &&
+                              stockQuery.trim() &&
+                              !stockLoading
+                            )
+                              searchStock(stockQuery, 1);
+                          }}
+                          placeholder="Search event photos…"
+                          className="dash-input w-full text-xs py-1.5! disabled:opacity-50 pr-6!"
                         />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-end p-1.5! opacity-0 group-hover:opacity-100">
-                          <span className="font-label text-[8px] tracking-widest uppercase text-white/90 truncate">
-                            {p.label}
-                          </span>
-                        </div>
+                        {stockQuery && !stockLoading && (
+                          <button
+                            onClick={() => setStockQuery("")}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-[#D4AF3750] hover:text-[#D4AF37] transition-colors cursor-pointer"
+                            tabIndex={-1}
+                          >
+                            <XIcon className="size-3" />
+                          </button>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => {
+                          const q = stockQuery.trim();
+                          searchStock(q, 1);
+                          setStockQuery("");
+                        }}
+                        disabled={!stockQuery.trim() || stockLoading}
+                        className="px-3! rounded-lg dash-btn-primary font-label text-[8px] tracking-[0.2em] uppercase disabled:opacity-40 flex items-center gap-1 cursor-pointer"
+                      >
+                        {stockLoading ? (
+                          <Loader2Icon className="size-3.5 animate-spin" />
+                        ) : (
+                          <SearchIcon className="size-3.5" />
+                        )}
                       </button>
-                    ))}
-                  </div>
+                    </div>
 
-                  {stockResults.length > 0 && (
-                    <button
-                      onClick={() => searchStock(stockQuery, stockPage + 1)}
-                      disabled={stockLoading}
-                      className="w-full py-2! rounded-lg font-label text-[9px] tracking-[0.3em] uppercase text-[#D4AF3790] hover:text-[#D4AF37] border border-[#D4AF3740] hover:border-[#D4AF3760] transition-all disabled:opacity-40 flex items-center justify-center gap-1.5 cursor-pointer"
-                    >
-                      {stockLoading ? (
-                        <>
-                          <Loader2Icon className="size-3.5 animate-spin" />{" "}
-                          Loading…
-                        </>
-                      ) : (
-                        "Load more"
+                    {/* Category filter */}
+                    <div className="flex gap-1 flex-wrap">
+                      {STOCK_PHOTO_CATEGORIES.map((cat) => (
+                        <button
+                          key={cat}
+                          onClick={() => setPhotoCategory(cat)}
+                          className={clsx(
+                            "px-2! py-0.5! rounded font-label text-[7px] tracking-widest uppercase transition-all border cursor-pointer",
+                            photoCategory === cat
+                              ? "bg-[#D4AF3720] text-[#D4AF37] border-[#D4AF3760]"
+                              : "text-[#F5F0E880] hover:text-[#F5F0E8] border-transparent",
+                          )}
+                        >
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
+
+                    {stockSearched &&
+                      !stockLoading &&
+                      stockResults.length === 0 && (
+                        <p className="text-center font-label text-[8px] tracking-widest uppercase text-[#F5F0E870] py-6!">
+                          No results
+                        </p>
                       )}
-                    </button>
-                  )}
+
+                    <div className="overflow-y-auto max-h-64 space-y-2!">
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {stockResults.map((p) => (
+                          <button
+                            key={p.id}
+                            onClick={() => handleStockPick(p.full)}
+                            title={p.label}
+                            className="relative group rounded-lg overflow-hidden aspect-4/3 cursor-pointer"
+                          >
+                            <img
+                              src={p.thumb}
+                              alt={p.label}
+                              className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-end p-1.5! opacity-0 group-hover:opacity-100">
+                              <span className="font-label text-[8px] tracking-widest uppercase text-white/90 truncate">
+                                {p.label}
+                              </span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+
+                      {stockResults.length > 0 &&
+                        !stockIsFromFallback &&
+                        stockHasMore && (
+                          <button
+                            onClick={() =>
+                              searchStock(stockQuery, stockPage + 1)
+                            }
+                            disabled={stockLoading}
+                            className="w-full py-2! rounded-lg font-label text-[9px] tracking-[0.3em] uppercase text-[#D4AF3790] hover:text-[#D4AF37] border border-[#D4AF3740] hover:border-[#D4AF3760] transition-all disabled:opacity-40 flex items-center justify-center gap-1.5 cursor-pointer"
+                          >
+                            {stockLoading ? (
+                              <>
+                                <Loader2Icon className="size-3.5 animate-spin" />{" "}
+                                Loading…
+                              </>
+                            ) : (
+                              "Load more"
+                            )}
+                          </button>
+                        )}
+                    </div>
+                  </>
                 </div>
               )}
 
@@ -484,7 +596,10 @@ function UploadField({
                     {STOCK_AUDIO_CATEGORIES.map((cat) => (
                       <button
                         key={cat}
-                        onClick={() => setAudioCategory(cat)}
+                        onClick={() => {
+                          setAudioCategory(cat);
+                          searchAudio(cat, 1);
+                        }}
                         className={clsx(
                           "px-2! py-1! rounded-md font-label text-[8px] tracking-widest uppercase transition-all cursor-pointer",
                           audioCategory === cat
@@ -496,12 +611,18 @@ function UploadField({
                       </button>
                     ))}
                   </div>
-                  {/* List */}
-                  <div className="space-y-1.5!">
-                    {STOCK_AUDIO.filter(
-                      (a) =>
-                        audioCategory === "All" || a.category === audioCategory,
-                    ).map((a) => (
+
+                  {audioLoading && audioResults.length === 0 && (
+                    <div className="flex items-center justify-center gap-2 py-4! text-[#D4AF37]">
+                      <Loader2Icon className="size-3.5 animate-spin" />
+                      <span className="font-label text-[8px] tracking-widest uppercase">
+                        Loading…
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="overflow-y-auto max-h-64 space-y-1.5!">
+                    {audioResults.map((a) => (
                       <div
                         key={a.full}
                         className={clsx(
@@ -545,7 +666,32 @@ function UploadField({
                         </button>
                       </div>
                     ))}
+
+                    {audioHasMore && !audioFromFallback && (
+                      <button
+                        onClick={() =>
+                          searchAudio(audioCategory, audioPage + 1)
+                        }
+                        disabled={audioLoading}
+                        className="w-full py-2! rounded-lg font-label text-[9px] tracking-[0.3em] uppercase text-[#D4AF3790] hover:text-[#D4AF37] border border-[#D4AF3740] hover:border-[#D4AF3760] transition-all disabled:opacity-40 flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        {audioLoading ? (
+                          <>
+                            <Loader2Icon className="size-3.5 animate-spin" />{" "}
+                            Loading…
+                          </>
+                        ) : (
+                          "Load more"
+                        )}
+                      </button>
+                    )}
                   </div>
+
+                  {audioFromFallback && (
+                    <p className="font-label text-[7px] tracking-widest uppercase text-[#F5F0E820] text-center">
+                      Showing curated tracks
+                    </p>
+                  )}
                 </div>
               )}
             </div>
