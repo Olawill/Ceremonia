@@ -3,37 +3,37 @@ import { Elysia, t } from "elysia";
 import { Resend } from "resend";
 
 import { db } from "@/db";
-import { rsvps, users, weddings } from "@/db/schema";
+import { events, rsvps, users } from "@/db/schema";
 
 import { RSVPNotificationEmail } from "@/emails/RSVPNotification";
 
 import { env } from "@/env";
 
 import { PLAN_FEATURES } from "@/lib/plans";
+import { ingestUsage } from "@/lib/polar-usage";
 import { getPostHogClient } from "@/lib/posthog-server";
 import { EventType, getVocabulary } from "@/types/event";
 
 const resend = new Resend(env.RESEND_API_KEY);
 
 export const rsvpRouter = new Elysia({ prefix: "/rsvp" })
-  // GET /api/rsvp?weddingId=... — fetch RSVPs for a wedding (used by dashboard)
+  // GET /api/rsvp?eventId=... — fetch RSVPs for a event (used by dashboard)
   .get(
     "/",
     async ({ query, status }) => {
-      if (!query.weddingId)
-        return status(400, { message: "Missing weddingId" });
+      if (!query.eventId) return status(400, { message: "Missing eventId" });
 
       const result = await db
         .select()
         .from(rsvps)
-        .where(eq(rsvps.weddingId, query.weddingId))
+        .where(eq(rsvps.eventId, query.eventId))
         .orderBy(rsvps.createdAt);
 
       return result;
     },
     {
       query: t.Object({
-        weddingId: t.Optional(t.String()),
+        eventId: t.Optional(t.String()),
       }),
     },
   )
@@ -42,31 +42,31 @@ export const rsvpRouter = new Elysia({ prefix: "/rsvp" })
   .post(
     "/",
     async ({ body, status }) => {
-      // 1. Fetch wedding with owner info
-      const [wedding] = await db
+      // 1. Fetch event with owner info
+      const [event] = await db
         .select({
-          id: weddings.id,
-          rsvpEnabled: weddings.rsvpEnabled,
-          notificationEmail: weddings.notificationEmail,
-          bride: weddings.bride,
-          groom: weddings.groom,
-          userId: weddings.userId,
-          eventType: weddings.eventType,
+          id: events.id,
+          rsvpEnabled: events.rsvpEnabled,
+          notificationEmail: events.notificationEmail,
+          bride: events.bride,
+          groom: events.groom,
+          userId: events.userId,
+          eventType: events.eventType,
         })
-        .from(weddings)
-        .where(eq(weddings.id, body.weddingId))
+        .from(events)
+        .where(eq(events.id, body.eventId))
         .limit(1);
 
-      if (!wedding) return status(404, { message: "Event not found" });
-      if (!wedding.rsvpEnabled)
+      if (!event) return status(404, { message: "Event not found" });
+      if (!event.rsvpEnabled)
         return status(403, { message: "RSVPs are closed" });
 
       // 2. Check free plan RSVP cap (20 max)
-      if (wedding.userId) {
+      if (event.userId) {
         const [owner] = await db
           .select({ plan: users.plan })
           .from(users)
-          .where(eq(users.id, wedding.userId))
+          .where(eq(users.id, event.userId))
           .limit(1);
 
         const plan = owner?.plan ?? "free";
@@ -76,7 +76,7 @@ export const rsvpRouter = new Elysia({ prefix: "/rsvp" })
           const [{ total }] = await db
             .select({ total: count() })
             .from(rsvps)
-            .where(eq(rsvps.weddingId, body.weddingId));
+            .where(eq(rsvps.eventId, body.eventId));
 
           if (total >= 20) {
             return status(403, {
@@ -90,7 +90,7 @@ export const rsvpRouter = new Elysia({ prefix: "/rsvp" })
       const [rsvp] = await db
         .insert(rsvps)
         .values({
-          weddingId: body.weddingId,
+          eventId: body.eventId,
           name: body.name,
           attendance: body.attendance,
           guests: body.guests ?? 1,
@@ -99,33 +99,47 @@ export const rsvpRouter = new Elysia({ prefix: "/rsvp" })
         })
         .returning();
 
+      ingestUsage("rsvp_submitted", {
+        userId: event.userId, // the event owner, not the guest submitting
+        metadata: {
+          eventId: body.eventId,
+          attendance: body.attendance,
+          plan: ownerPlan,
+        },
+      }).catch(() => {});
+
       // 4. Send email notification (non-blocking)
-      if (wedding.notificationEmail && wedding.userId) {
+      if (event.notificationEmail && event.userId) {
         const [owner] = await db
           .select({ plan: users.plan })
           .from(users)
-          .where(eq(users.id, wedding.userId))
+          .where(eq(users.id, event.userId))
           .limit(1);
 
         if (PLAN_FEATURES[owner?.plan ?? "free"].rsvpEmails) {
           resend.emails
             .send({
               from: "rsvp@ceremonia.app",
-              to: wedding.notificationEmail,
-              subject: `New RSVP from ${body.name} — ${wedding.groom ? `${wedding.bride} & ${wedding.groom}` : wedding.bride}`,
+              to: event.notificationEmail,
+              subject: `New RSVP from ${body.name} — ${event.groom ? `${event.bride} & ${event.groom}` : event.bride}`,
               react: RSVPNotificationEmail({
                 guestName: body.name,
                 attendance: body.attendance as "yes" | "no",
                 guests: body.guests,
                 dietary: body.dietary,
-                bride: wedding.bride,
-                groom: wedding.groom ?? "",
+                bride: event.bride,
+                groom: event.groom ?? "",
                 eventLabel: getVocabulary(
-                  (wedding.eventType as EventType) ?? "wedding",
+                  (event.eventType as EventType) ?? "event",
                 ).eventLabel,
               }),
             })
             .catch(console.error);
+
+          ingestUsage("rsvp_email_sent", {
+            userId: event.userId,
+            metadata: { eventId: body.eventId, plan: ownerPlan },
+          }).catch(() => {});
         }
       }
 
@@ -133,7 +147,7 @@ export const rsvpRouter = new Elysia({ prefix: "/rsvp" })
     },
     {
       body: t.Object({
-        weddingId: t.String(),
+        eventId: t.String(),
         name: t.String({ minLength: 1 }),
         attendance: t.Union([t.Literal("yes"), t.Literal("no")]),
         guests: t.Optional(t.Number()),
@@ -143,31 +157,30 @@ export const rsvpRouter = new Elysia({ prefix: "/rsvp" })
     },
   )
 
-  // GET /api/rsvp/export?weddingId=... — CSV download (Pro)
+  // GET /api/rsvp/export?eventId=... — CSV download (Pro)
   .get(
     "/export",
     async ({ query, status }) => {
-      if (!query.weddingId)
-        return status(400, { message: "weddingId required" });
+      if (!query.eventId) return status(400, { message: "eventId required" });
 
-      // Verify the requesting user owns this wedding and is on Pro+
-      const [wedding] = await db
-        .select({ userId: weddings.userId })
-        .from(weddings)
-        .where(eq(weddings.id, query.weddingId))
+      // Verify the requesting user owns this event and is on Pro+
+      const [event] = await db
+        .select({ userId: events.userId })
+        .from(events)
+        .where(eq(events.id, query.eventId))
         .limit(1);
 
-      if (wedding?.userId) {
+      if (event?.userId) {
         const [owner] = await db
           .select({ plan: users.plan })
           .from(users)
-          .where(eq(users.id, wedding.userId))
+          .where(eq(users.id, event.userId))
           .limit(1);
 
         if (!PLAN_FEATURES[owner?.plan ?? "free"].csvExport) {
           const posthog = getPostHogClient();
           posthog.capture({
-            distinctId: wedding.userId,
+            distinctId: event.userId,
             event: "plan_limit_hit",
             properties: { feature: "csv_export", plan: owner?.plan },
           });
@@ -179,7 +192,7 @@ export const rsvpRouter = new Elysia({ prefix: "/rsvp" })
       const rows = await db
         .select()
         .from(rsvps)
-        .where(eq(rsvps.weddingId, query.weddingId))
+        .where(eq(rsvps.eventId, query.eventId))
         .orderBy(rsvps.createdAt);
 
       const header = "Name,Attendance,Guests,Dietary,Message,Submitted At\n";
@@ -201,13 +214,13 @@ export const rsvpRouter = new Elysia({ prefix: "/rsvp" })
       return new Response(csv, {
         headers: {
           "Content-Type": "text/csv",
-          "Content-Disposition": `attachment; filename="rsvps-${query.weddingId}.csv"`,
+          "Content-Disposition": `attachment; filename="rsvps-${query.eventId}.csv"`,
         },
       });
     },
     {
       query: t.Object({
-        weddingId: t.Optional(t.String()),
+        eventId: t.Optional(t.String()),
       }),
     },
   );

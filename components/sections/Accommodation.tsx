@@ -16,7 +16,7 @@ import { useEffect, useRef } from "react";
 
 import { formattedDeadlineDate } from "@/lib/helper";
 import { useTheme } from "@/lib/ThemeContext";
-import type { AccommodationConfig, AccommodationOption } from "@/types/wedding";
+import type { AccommodationConfig, AccommodationOption } from "@/types/event";
 
 gsap.registerPlugin(ScrollTrigger);
 

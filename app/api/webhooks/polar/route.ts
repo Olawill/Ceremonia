@@ -1,0 +1,140 @@
+import { getPostHogClient } from "@/lib/posthog-server";
+import { clerkClient } from "@clerk/nextjs/server";
+import { Webhooks } from "@polar-sh/nextjs";
+import { eq } from "drizzle-orm";
+
+import { db } from "@/db";
+import { users } from "@/db/schema";
+import { env } from "@/env";
+import { Plan, STARTER_ONCE_HOSTING_DAYS } from "@/lib/plans";
+import { CustomerStateSubscription } from "@polar-sh/sdk/models/components/customerstatesubscription.js";
+
+// Map Polar product IDs → plan names
+const PRODUCT_TO_PLAN: Record<string, Plan> = {
+  [env.NEXT_PUBLIC_POLAR_PRODUCT_STARTER_MONTHLY!]: "starter",
+  [env.NEXT_PUBLIC_POLAR_PRODUCT_STARTER_ONCE!]: "starter",
+  [env.NEXT_PUBLIC_POLAR_PRODUCT_PRO_MONTHLY!]: "pro",
+  [env.NEXT_PUBLIC_POLAR_PRODUCT_AGENCY_MONTHLY!]: "agency",
+};
+
+// One-time product IDs (need expiry logic)
+const ONE_TIME_PRODUCTS = new Set([
+  env.NEXT_PUBLIC_POLAR_PRODUCT_STARTER_ONCE!,
+]);
+
+async function syncUserFromState(
+  externalId: string, // this is the Clerk userId
+  polarCustomerId: string,
+  activeSubscriptions: CustomerStateSubscription[],
+  orders: Array<{ product: { id: string }; createdAt: string }>,
+) {
+  let plan: Plan = "free";
+  let starterIsOnce = false;
+
+  // Derive plan from active subscriptions first (subscriptions take priority)
+  for (const sub of activeSubscriptions) {
+    const mapped = PRODUCT_TO_PLAN[sub.productId];
+    if (mapped && mapped !== "free") {
+      plan = mapped;
+      break;
+    }
+  }
+
+  // If no active subscription, check for valid one-time purchases
+  let starterExpiresAt: Date | null = null;
+  if (plan === "free") {
+    for (const order of orders) {
+      if (ONE_TIME_PRODUCTS.has(order.product.id)) {
+        const purchasedAt = new Date(order.createdAt);
+        const expiresAt = new Date(purchasedAt);
+        expiresAt.setDate(expiresAt.getDate() + STARTER_ONCE_HOSTING_DAYS);
+
+        if (new Date() < expiresAt) {
+          plan = "starter";
+          starterExpiresAt = expiresAt;
+          starterIsOnce = true;
+        }
+        break;
+      }
+    }
+  }
+
+  // Write to DB
+  await db
+    .update(users)
+    .set({ plan, polarCustomerId, starterIsOnce })
+    .where(eq(users.id, externalId));
+
+  // Sync to Clerk publicMetadata for usePlan() hook
+  const clerk = await clerkClient();
+  await clerk.users.updateUserMetadata(externalId, {
+    publicMetadata: { plan },
+  });
+
+  return plan;
+}
+
+export const POST = Webhooks({
+  webhookSecret: env.POLAR_WEBHOOK_SECRET,
+
+  onCustomerStateChanged: async (payload) => {
+    const { data } = payload;
+
+    const externalId = data.externalId;
+    if (!externalId) return; // customer not linked to a Clerk user
+
+    const plan = await syncUserFromState(
+      externalId,
+      data.id,
+      data.activeSubscriptions ?? [],
+      [], // orders not in customer.state_changed — handled via starterIsOnce on order webhooks
+    );
+
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: externalId,
+      event: "polar_customer_state_changed",
+      properties: { plan, polar_customer_id: data.id },
+    });
+    await posthog.shutdown();
+  },
+
+  onOrderPaid: async (payload) => {
+    const { data } = payload;
+    const externalId = data.customer?.externalId;
+    if (!externalId) return;
+
+    const productId = data.product?.id;
+    if (!productId || !ONE_TIME_PRODUCTS.has(productId)) return;
+
+    // One-time Starter purchase — set plan and starterIsOnce flag
+    const purchasedAt = new Date(data.createdAt);
+    const expiresAt = new Date(purchasedAt);
+    expiresAt.setDate(expiresAt.getDate() + STARTER_ONCE_HOSTING_DAYS);
+
+    const isStillValid = new Date() < expiresAt;
+    const plan: Plan = isStillValid ? "starter" : "free";
+
+    await db
+      .update(users)
+      .set({
+        plan,
+        polarCustomerId: data.customer.id,
+        starterIsOnce: isStillValid,
+      })
+      .where(eq(users.id, externalId));
+
+    const clerk = await clerkClient();
+    await clerk.users.updateUserMetadata(externalId, {
+      publicMetadata: { plan },
+    });
+
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: externalId,
+      event: "payment_completed",
+      properties: { plan, polar_customer_id: data.customer.id },
+    });
+    await posthog.shutdown();
+  },
+});

@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 // ── Event invitation page (demo) ───────────────────────────────────────────
 //
-// The /event/demo route always renders DEMO_WEDDING_CONFIG (Taiwo & Tayo)
+// The /event/demo route always renders DEMO_EVENT_CONFIG (Taiwo & Tayo)
 // without a DB lookup or auth, making it a reliable E2E anchor.
 
 test.describe("Event invitation page (demo)", () => {
@@ -195,7 +195,7 @@ test.describe("Event invitation — password protected", () => {
     });
     await page.locator('button[type="submit"]').click();
 
-    // router.refresh() triggers an RSC re-render that swaps the gate for the WeddingEngine.
+    // router.refresh() triggers an RSC re-render that swaps the gate for the EventEngine.
     // Wait for positive evidence of the new content rather than asserting the old is gone,
     // which races the refresh cycle.
     await expect(page.locator("canvas").first()).toBeAttached({
@@ -207,7 +207,7 @@ test.describe("Event invitation — password protected", () => {
       page.locator("h1", { hasText: "Private Invitation" }),
     ).not.toBeVisible({ timeout: 8000 });
 
-    // The WeddingEngine (curtain) should now be visible
+    // The EventEngine (curtain) should now be visible
     await expect(page.locator("canvas").first()).toBeAttached();
   });
 });

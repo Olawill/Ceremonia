@@ -10,12 +10,12 @@ import {
 
 import { SectionToggle } from "@/components/dashboard/editor/SectionToggle";
 import { Field, Input, Textarea } from "@/components/ui/FormPrimitives";
+import type { EventConfig, TravelItem } from "@/types/event";
 import { getVocabulary } from "@/types/event";
-import type { TravelItem, WeddingConfig } from "@/types/wedding";
 
 interface Props {
-  config: WeddingConfig;
-  onChange: (patch: Partial<WeddingConfig>) => void;
+  config: EventConfig;
+  onChange: (patch: Partial<EventConfig>) => void;
 }
 
 const TYPE_OPTIONS: {

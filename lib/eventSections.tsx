@@ -1,6 +1,7 @@
 import { Accommodation } from "@/components/sections/Accommodation";
 import { Countdown } from "@/components/sections/Countdown";
 import { DressCode } from "@/components/sections/DressCode";
+import { EventMenu } from "@/components/sections/EventMenu";
 import { FAQ } from "@/components/sections/FAQ";
 import { Finale } from "@/components/sections/Finale";
 import { GuestBook } from "@/components/sections/GuestBook";
@@ -13,39 +14,38 @@ import { ScratchDate } from "@/components/sections/ScratchDate";
 import { Timeline } from "@/components/sections/Timeline";
 import { TravelGuide } from "@/components/sections/TravelGuide";
 import { VenueDetails } from "@/components/sections/VenueDetails";
-import { WeddingMenu } from "@/components/sections/WeddingMenu";
-import { WeddingParty } from "@/components/sections/WeddingParty";
 import { getVocabulary } from "@/types/event";
 
+import { EventParty } from "@/components/sections/EventParty";
 import {
-  DEMO_WEDDING_CONFIG,
+  DEMO_EVENT_CONFIG,
   FALLBACK_LOCATION,
+  type EventConfig,
   type VenueEvent,
-  type WeddingConfig,
-} from "@/types/wedding";
+} from "@/types/event";
 import { getHost1Name, getHost2Name } from "./eventHelpers";
 
-export interface WeddingSection {
+export interface EventSection {
   key: string;
   label: string;
   node: React.ReactElement;
 }
 
 export function buildSections(
-  config: WeddingConfig,
+  config: EventConfig,
   dateRevealed: boolean,
   onDateRevealed: () => void,
-): WeddingSection[] {
+): EventSection[] {
   const vocab = getVocabulary(config.eventType);
   const host1 = getHost1Name(config);
   const host2 = getHost2Name(config);
 
   const location: VenueEvent =
     config.venueDetails.find((d) => d.label === "Location") ??
-    DEMO_WEDDING_CONFIG.venueDetails.find((d) => d.label === "Location") ??
+    DEMO_EVENT_CONFIG.venueDetails.find((d) => d.label === "Location") ??
     FALLBACK_LOCATION;
 
-  const always: WeddingSection[] = [
+  const always: EventSection[] = [
     {
       key: "hero",
       label: "Opening",
@@ -76,7 +76,7 @@ export function buildSections(
 
   if (!dateRevealed) return always;
 
-  const revealed: WeddingSection[] = [
+  const revealed: EventSection[] = [
     {
       key: "countdown",
       label: "Countdown",
@@ -131,15 +131,15 @@ export function buildSections(
           },
         ]
       : []),
-    ...(config.weddingPartyEnabled && config.weddingParty?.length
+    ...(config.eventPartyEnabled && config.eventParty?.length
       ? [
           {
-            key: "weddingparty",
-            label: "Wedding Party",
+            key: "eventParty",
+            label: `${vocab.eventLabel} Party`,
             node: (
-              <WeddingParty
-                key="weddingparty"
-                members={config.weddingParty}
+              <EventParty
+                key="eventParty"
+                members={config.eventParty}
                 bride={host1}
                 groom={host2}
                 sectionLabel={vocab.partyLabel}
@@ -193,7 +193,7 @@ export function buildSections(
       key: "menu",
       label: "Menu",
       node: (
-        <WeddingMenu
+        <EventMenu
           key="menu"
           courses={config.menuCourses}
           label={vocab.menuLabel}
@@ -208,7 +208,7 @@ export function buildSections(
       node: (
         <RSVP
           key="rsvp"
-          weddingId={config.id}
+          eventId={config.id}
           enabled={config.rsvpEnabled}
           rsvpDeadline={config.rsvpDeadline}
         />
@@ -222,7 +222,7 @@ export function buildSections(
             node: (
               <Registry
                 key="registry"
-                weddingSlug={config.slug}
+                eventSlug={config.slug}
                 label={vocab.registryLabel}
               />
             ),
@@ -237,7 +237,7 @@ export function buildSections(
             node: (
               <GuestBook
                 key="guestbook"
-                weddingId={config.id ?? ""}
+                eventId={config.id ?? ""}
                 enabled={config.guestBookEnabled!}
               />
             ),

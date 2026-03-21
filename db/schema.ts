@@ -16,16 +16,17 @@ export const planEnum = pgEnum("plan", ["free", "starter", "pro", "agency"]);
 export const users = pgTable("users", {
   id: text("id").primaryKey(), // Clerk user ID
   email: text("email").notNull(),
-  stripeCustomerId: text("stripe_customer_id"),
+  polarCustomerId: text("polar_customer_id"),
   brandName: text("brand_name"),
   plan: planEnum("plan").default("free"),
+  starterIsOnce: boolean("starter_is_once").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const weddings = pgTable("weddings", {
+export const events = pgTable("events", {
   id: uuid("id").defaultRandom().primaryKey(),
   slug: text("slug").notNull().unique(),
-  eventType: text("event_type").default("wedding"),
+  eventType: text("event_type").default("event"),
   customDomain: text("custom_domain").unique(),
   userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
   bride: text("bride").notNull(),
@@ -57,9 +58,9 @@ export const weddings = pgTable("weddings", {
   accommodationEnabled: boolean("accommodation_enabled").default(false),
   accommodation: jsonb("accommodation"),
 
-  // Wedding Party
-  weddingPartyEnabled: boolean("wedding_party_enabled").default(false),
-  weddingParty: jsonb("wedding_party"),
+  // event Party
+  eventPartyEnabled: boolean("event_party_enabled").default(false),
+  eventParty: jsonb("event_party"),
 
   // FAQ
   faqEnabled: boolean("faq_enabled").default(false),
@@ -81,6 +82,7 @@ export const weddings = pgTable("weddings", {
 
   viewCount: integer("view_count").default(0),
   notificationEmail: text("notification_email"),
+  expiresAt: timestamp("expires_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -89,7 +91,7 @@ export const weddings = pgTable("weddings", {
 
 export const rsvps = pgTable("rsvps", {
   id: uuid("id").defaultRandom().primaryKey(),
-  weddingId: uuid("wedding_id").references(() => weddings.id, {
+  eventId: uuid("event_id").references(() => events.id, {
     onDelete: "cascade",
   }),
   name: text("name").notNull(),
@@ -102,8 +104,8 @@ export const rsvps = pgTable("rsvps", {
 
 export const guestbook = pgTable("guestbook", {
   id: uuid("id").defaultRandom().primaryKey(),
-  weddingId: uuid("wedding_id")
-    .references(() => weddings.id, { onDelete: "cascade" })
+  eventId: uuid("event_id")
+    .references(() => events.id, { onDelete: "cascade" })
     .notNull(),
   name: text("name").notNull(),
   message: text("message").notNull(),
@@ -121,9 +123,9 @@ export const customThemes = pgTable("custom_themes", {
 
 export const registryItems = pgTable("registry_items", {
   id: uuid("id").defaultRandom().primaryKey(),
-  weddingId: uuid("wedding_id")
+  eventId: uuid("event_id")
     .notNull()
-    .references(() => weddings.id, { onDelete: "cascade" }),
+    .references(() => events.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   description: text("description"),
   price: integer("price"), // in pence/cents, e.g. 4999 = £49.99
@@ -142,9 +144,9 @@ export const registryClaims = pgTable("registry_claims", {
   itemId: uuid("item_id")
     .notNull()
     .references(() => registryItems.id, { onDelete: "cascade" }),
-  weddingId: uuid("wedding_id")
+  eventId: uuid("event_id")
     .notNull()
-    .references(() => weddings.id, { onDelete: "cascade" }),
+    .references(() => events.id, { onDelete: "cascade" }),
   // Guest identity — no auth, just a name + session token
   guestName: text("guest_name").notNull(),
   // A short random token stored in the guest's localStorage so they can "unclaim"
@@ -159,13 +161,13 @@ export const registryClaims = pgTable("registry_claims", {
 // ─── Relations ───────────────────────────────────────────────────────────────
 
 export const usersRelations = relations(users, ({ many }) => ({
-  weddings: many(weddings),
+  events: many(events),
   customThemes: many(customThemes),
 }));
 
-export const weddingsRelations = relations(weddings, ({ one, many }) => ({
+export const eventsRelations = relations(events, ({ one, many }) => ({
   owner: one(users, {
-    fields: [weddings.userId],
+    fields: [events.userId],
     references: [users.id],
   }),
   rsvps: many(rsvps),
@@ -175,9 +177,9 @@ export const weddingsRelations = relations(weddings, ({ one, many }) => ({
 }));
 
 export const rsvpsRelations = relations(rsvps, ({ one }) => ({
-  wedding: one(weddings, {
-    fields: [rsvps.weddingId],
-    references: [weddings.id],
+  event: one(events, {
+    fields: [rsvps.eventId],
+    references: [events.id],
   }),
 }));
 
@@ -191,9 +193,9 @@ export const customThemesRelations = relations(customThemes, ({ one }) => ({
 export const registryItemsRelations = relations(
   registryItems,
   ({ one, many }) => ({
-    wedding: one(weddings, {
-      fields: [registryItems.weddingId],
-      references: [weddings.id],
+    event: one(events, {
+      fields: [registryItems.eventId],
+      references: [events.id],
     }),
     claims: many(registryClaims),
   }),
@@ -204,15 +206,15 @@ export const registryClaimsRelations = relations(registryClaims, ({ one }) => ({
     fields: [registryClaims.itemId],
     references: [registryItems.id],
   }),
-  wedding: one(weddings, {
-    fields: [registryClaims.weddingId],
-    references: [weddings.id],
+  event: one(events, {
+    fields: [registryClaims.eventId],
+    references: [events.id],
   }),
 }));
 
 export const guestbookRelations = relations(guestbook, ({ one }) => ({
-  wedding: one(weddings, {
-    fields: [guestbook.weddingId],
-    references: [weddings.id],
+  event: one(events, {
+    fields: [guestbook.eventId],
+    references: [events.id],
   }),
 }));

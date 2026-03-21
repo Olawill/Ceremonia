@@ -28,7 +28,7 @@ describe("PLAN_FEATURES", () => {
     expect(PLAN_FEATURES.free.watermark).toBe(true);
   });
 
-  it("free plan has limited wedding count", () => {
+  it("free plan has limited event count", () => {
     expect(PLAN_FEATURES.free.maxEvents).toBe(1);
   });
 
@@ -52,7 +52,7 @@ describe("PLAN_FEATURES", () => {
     expect(PLAN_FEATURES.pro.analytics).toBe(true);
   });
 
-  it("agency has unlimited weddings", () => {
+  it("agency has unlimited events", () => {
     expect(PLAN_FEATURES.agency.maxEvents).toBe(Infinity);
   });
 
@@ -126,7 +126,7 @@ describe("PLAN_FEATURES — watermark", () => {
   });
 });
 
-// ── PLAN_FEATURES — wedding limits ────────────────────────────────────────────
+// ── PLAN_FEATURES — event limits ────────────────────────────────────────────
 
 describe("PLAN_FEATURES — maxEvents", () => {
   it("free is capped at 1", () => {
@@ -141,7 +141,7 @@ describe("PLAN_FEATURES — maxEvents", () => {
     expect(PLAN_FEATURES.pro.maxEvents).toBe(5);
   });
 
-  it("agency has unlimited weddings", () => {
+  it("agency has unlimited events", () => {
     expect(PLAN_FEATURES.agency.maxEvents).toBe(Infinity);
   });
 });

@@ -4,24 +4,24 @@ import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
 
 import { db } from "@/db";
-import { weddings } from "@/db/schema";
+import { events } from "@/db/schema";
 
 import { verifyPassword } from "@/lib/password";
 import { getPostHogClient } from "@/lib/posthog-server";
 
-export async function unlockWedding(slug: string, password: string) {
-  const [wedding] = await db
-    .select({ password: weddings.password })
-    .from(weddings)
-    .where(eq(weddings.slug, slug))
+export async function unlockEvent(slug: string, password: string) {
+  const [event] = await db
+    .select({ password: events.password })
+    .from(events)
+    .where(eq(events.slug, slug))
     .limit(1);
 
-  if (!wedding?.password || !verifyPassword(password, wedding.password)) {
+  if (!event?.password || !verifyPassword(password, event.password)) {
     return { success: false };
   }
 
   const cookieStore = await cookies();
-  cookieStore.set(`wedding-${slug}-unlocked`, "1", {
+  cookieStore.set(`event-${slug}-unlocked`, "1", {
     httpOnly: true,
     sameSite: "lax",
     maxAge: 60 * 60 * 24, // 24 hours

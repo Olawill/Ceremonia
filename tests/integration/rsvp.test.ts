@@ -48,7 +48,7 @@ describe("POST /api/rsvp — unauthenticated access", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          weddingId: "00000000-0000-0000-0000-000000000000",
+          eventId: "00000000-0000-0000-0000-000000000000",
           name: "Jane Doe",
           attendance: "yes",
           guests: 2,
@@ -66,7 +66,7 @@ describe("POST /api/rsvp — unauthenticated access", () => {
       new Request("http://localhost/api/rsvp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ guests: 1 }), // missing weddingId, name, attendance
+        body: JSON.stringify({ guests: 1 }), // missing eventId, name, attendance
       }),
     );
     // Elysia returns 422 for schema validation failures
@@ -116,7 +116,7 @@ describe("POST /api/rsvp — unauthenticated access", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          weddingId: "wedding-123",
+          eventId: "wedding-123",
           name: "Guest 21",
           attendance: "yes",
         }),
@@ -150,7 +150,7 @@ describe("POST /api/rsvp — unauthenticated access", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          weddingId: "wedding-123",
+          eventId: "wedding-123",
           name: "Guest",
           attendance: "yes",
         }),
@@ -203,7 +203,7 @@ describe("POST /api/rsvp — unauthenticated access", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          weddingId: "wedding-123",
+          eventId: "wedding-123",
           name: "Happy Guest",
           attendance: "yes",
           guests: 2,
@@ -230,7 +230,7 @@ describe("GET /api/rsvp", () => {
     const mockRsvps = [
       {
         id: "rsvp-1",
-        weddingId: "wedding-1",
+        eventId: "wedding-1",
         name: "Alice",
         attendance: "yes",
         guests: 2,
@@ -246,7 +246,7 @@ describe("GET /api/rsvp", () => {
     });
 
     const res = await app.handle(
-      new Request("http://localhost/api/rsvp?weddingId=wedding-1", {
+      new Request("http://localhost/api/rsvp?eventId=wedding-1", {
         method: "GET",
       }),
     );
@@ -283,7 +283,7 @@ describe("GET /api/rsvp/export", () => {
       });
 
     const res = await app.handle(
-      new Request("http://localhost/api/rsvp/export?weddingId=wedding-123", {
+      new Request("http://localhost/api/rsvp/export?eventId=wedding-123", {
         method: "GET",
       }),
     );
@@ -329,7 +329,7 @@ describe("GET /api/rsvp/export", () => {
       });
 
     const res = await app.handle(
-      new Request("http://localhost/api/rsvp/export?weddingId=wedding-123", {
+      new Request("http://localhost/api/rsvp/export?eventId=wedding-123", {
         method: "GET",
       }),
     );

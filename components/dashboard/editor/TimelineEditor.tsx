@@ -6,11 +6,11 @@ import { useEffect, useRef, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 
-import type { TimelineEvent, WeddingConfig } from "@/types/wedding";
+import type { EventConfig, TimelineEvent } from "@/types/event";
 
 import { Field, Input, Textarea } from "@/components/ui/FormPrimitives";
 
-const WEDDING_ICONS = [
+const EVENT_ICONS = [
   "✦",
   "❧",
   "♡",
@@ -84,7 +84,7 @@ function IconPicker({
           style={{ minWidth: "200px" }}
         >
           <div className="grid grid-cols-6 gap-1">
-            {WEDDING_ICONS.map((icon) => (
+            {EVENT_ICONS.map((icon) => (
               <button
                 key={icon}
                 type="button"
@@ -122,8 +122,8 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 interface Props {
-  config: WeddingConfig;
-  onChange: (patch: Partial<WeddingConfig>) => void;
+  config: EventConfig;
+  onChange: (patch: Partial<EventConfig>) => void;
 }
 
 export function TimelineEditor({ config, onChange }: Props) {

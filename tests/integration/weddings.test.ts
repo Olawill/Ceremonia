@@ -103,13 +103,13 @@ describe("GET /api/events", () => {
     expect(Array.isArray(body)).toBe(true);
   });
 
-  it("returns list of weddings when authed", async () => {
+  it("returns list of events when authed", async () => {
     authed.mockResolvedValue("user-123");
-    const mockWeddings = [
+    const mockEvents = [
       { id: "w1", slug: "alice-bob", bride: "Alice", groom: "Bob" },
     ];
     mockDb.select.mockReturnValue({
-      from: () => ({ where: () => Promise.resolve(mockWeddings) }),
+      from: () => ({ where: () => Promise.resolve(mockEvents) }),
     });
     const res = await app.handle(
       new Request("http://localhost/api/events", { method: "GET" }),
@@ -132,7 +132,7 @@ describe("GET /api/events/:slug", () => {
     expect(res.status).toBe(401);
   });
 
-  it("returns 404 when wedding not found", async () => {
+  it("returns 404 when event not found", async () => {
     authed.mockResolvedValue("user-123");
     mockDb.select.mockReturnValue({
       from: () => ({
@@ -147,9 +147,9 @@ describe("GET /api/events/:slug", () => {
     expect(res.status).toBe(404);
   });
 
-  it("returns wedding when found", async () => {
+  it("returns event when found", async () => {
     authed.mockResolvedValue("user-123");
-    const mockWedding = {
+    const mockEvent = {
       id: "w1",
       slug: "alice-bob",
       bride: "Alice",
@@ -157,7 +157,7 @@ describe("GET /api/events/:slug", () => {
     };
     mockDb.select.mockReturnValue({
       from: () => ({
-        where: () => ({ limit: () => Promise.resolve([mockWedding]) }),
+        where: () => ({ limit: () => Promise.resolve([mockEvent]) }),
       }),
     });
     const res = await app.handle(
@@ -212,17 +212,17 @@ describe("POST /api/events", () => {
   it("appends timestamp to slug when slug already exists", async () => {
     authed.mockResolvedValue("user-123");
 
-    // Plan fetch → pro (no wedding limit hit)
+    // Plan fetch → pro (no event limit hit)
     mockDb.select
       .mockReturnValueOnce({
         from: () => ({
           where: () => ({ limit: () => Promise.resolve([{ plan: "pro" }]) }),
         }),
       })
-      // Wedding count → 0
+      // Event count → 0
       .mockReturnValueOnce({
         from: () => ({
-          where: () => Promise.resolve([{ weddingCount: 0 }]),
+          where: () => Promise.resolve([{ eventCount: 0 }]),
         }),
       })
       // Slug check → existing (forces timestamp suffix)
@@ -284,7 +284,7 @@ describe("POST /api/events", () => {
       })
       .mockReturnValueOnce({
         from: () => ({
-          where: () => Promise.resolve([{ weddingCount: 0 }]),
+          where: () => Promise.resolve([{ eventCount: 0 }]),
         }),
       })
       .mockReturnValueOnce({
@@ -343,7 +343,7 @@ describe("POST /api/events", () => {
       // 2. Event count → 0 (under the limit)
       .mockReturnValueOnce({
         from: () => ({
-          where: () => Promise.resolve([{ weddingCount: 0 }]),
+          where: () => Promise.resolve([{ eventCount: 0 }]),
         }),
       })
       // 3. Slug check → not taken
@@ -426,7 +426,7 @@ describe("DELETE /api/events/:slug", () => {
     expect(res.status).toBe(401);
   });
 
-  it("returns 200 when authed and wedding exists", async () => {
+  it("returns 200 when authed and event exists", async () => {
     authed.mockResolvedValue("user-123");
     const res = await app.handle(
       new Request("http://localhost/api/events/alice-bob", {
@@ -494,7 +494,7 @@ describe("PATCH /api/events/:slug plan gating", () => {
     expect(res.status).toBe(403);
   });
 
-  it("returns 404 when wedding not found during PATCH", async () => {
+  it("returns 404 when event not found during PATCH", async () => {
     authed.mockResolvedValue("user-123");
     // Plan fetch → pro (no gating)
     mockDb.select.mockReturnValue({
@@ -519,10 +519,10 @@ describe("PATCH /api/events/:slug plan gating", () => {
   });
 });
 
-// ── POST wedding count limit ───────────────────────────────────────────────────
+// ── POST event count limit ───────────────────────────────────────────────────
 
 describe("POST /api/events plan limit", () => {
-  it("returns 403 when free plan already has 1 wedding", async () => {
+  it("returns 403 when free plan already has 1 event", async () => {
     authed.mockResolvedValue("user-123");
 
     let selectCallCount = 0;
@@ -552,7 +552,7 @@ describe("POST /api/events plan limit", () => {
       })
       .mockReturnValueOnce({
         from: () => ({
-          where: () => Promise.resolve([{ weddingCount: 1 }]),
+          where: () => Promise.resolve([{ eventCount: 1 }]),
         }),
       });
 

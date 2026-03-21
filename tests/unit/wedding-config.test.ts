@@ -1,28 +1,32 @@
-import { EVENT_TYPES, getVocabulary } from "@/types/event";
-import { CURTAIN_STYLES, DEMO_WEDDING_CONFIG } from "@/types/wedding";
+import {
+  CURTAIN_STYLES,
+  DEMO_EVENT_CONFIG,
+  EVENT_TYPES,
+  getVocabulary,
+} from "@/types/event";
 import { describe, expect, it } from "vitest";
 
-describe("DEMO_WEDDING_CONFIG", () => {
+describe("DEMO_EVENT_CONFIG", () => {
   it("has required fields", () => {
-    expect(DEMO_WEDDING_CONFIG.bride).toBeTruthy();
-    expect(DEMO_WEDDING_CONFIG.groom).toBeTruthy();
-    expect(DEMO_WEDDING_CONFIG.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(DEMO_EVENT_CONFIG.bride).toBeTruthy();
+    expect(DEMO_EVENT_CONFIG.groom).toBeTruthy();
+    expect(DEMO_EVENT_CONFIG.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 
   it("has valid curtain style", () => {
-    expect(CURTAIN_STYLES).toContain(DEMO_WEDDING_CONFIG.curtainStyle);
+    expect(CURTAIN_STYLES).toContain(DEMO_EVENT_CONFIG.curtainStyle);
   });
 
   it("has a valid theme key", () => {
-    expect(DEMO_WEDDING_CONFIG.themeKey).toBeTruthy();
+    expect(DEMO_EVENT_CONFIG.themeKey).toBeTruthy();
   });
 
   it("timeline is an array", () => {
-    expect(Array.isArray(DEMO_WEDDING_CONFIG.timeline)).toBe(true);
+    expect(Array.isArray(DEMO_EVENT_CONFIG.timeline)).toBe(true);
   });
 
   it("menuCourses is an array", () => {
-    expect(Array.isArray(DEMO_WEDDING_CONFIG.menuCourses)).toBe(true);
+    expect(Array.isArray(DEMO_EVENT_CONFIG.menuCourses)).toBe(true);
   });
 });
 
@@ -43,7 +47,7 @@ describe("Event vocabulary", () => {
     expect(getVocabulary("birthday").dualHost).toBe(false);
   });
 
-  it("DEMO_WEDDING_CONFIG has eventType 'wedding'", () => {
-    expect(DEMO_WEDDING_CONFIG.eventType).toBe("wedding");
+  it("DEMO_EVENT_CONFIG has eventType 'wedding'", () => {
+    expect(DEMO_EVENT_CONFIG.eventType).toBe("wedding");
   });
 });

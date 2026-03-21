@@ -13,19 +13,20 @@ import { SectionToggle } from "@/components/dashboard/editor/SectionToggle";
 import { Field, Input } from "@/components/ui/FormPrimitives";
 
 import { ImageUploadField } from "@/components/ui/ImageUploadField";
-import { EventType, getVocabulary } from "@/types/event";
 import type {
-  WeddingConfig,
-  WeddingPartyMember,
-  WeddingPartyRole,
-} from "@/types/wedding";
+  EventConfig,
+  EventPartyMember,
+  EventPartyRole,
+  EventType,
+} from "@/types/event";
+import { getVocabulary } from "@/types/event";
 
 interface Props {
-  config: WeddingConfig;
-  onChange: (patch: Partial<WeddingConfig>) => void;
+  config: EventConfig;
+  onChange: (patch: Partial<EventConfig>) => void;
 }
 
-const ROLES: { value: WeddingPartyRole; label: string }[] = [
+const ROLES: { value: EventPartyRole; label: string }[] = [
   { value: "maid-of-honour", label: "Maid of Honour" },
   { value: "best-man", label: "Best Man" },
   { value: "bridesmaid", label: "Bridesmaid" },
@@ -42,7 +43,7 @@ const ROLES: { value: WeddingPartyRole; label: string }[] = [
 
 function getRoles(
   eventType: EventType,
-): { value: WeddingPartyRole; label: string }[] {
+): { value: EventPartyRole; label: string }[] {
   switch (eventType) {
     case "baby_shower":
       return [
@@ -68,7 +69,7 @@ function getRoles(
   }
 }
 
-const DEFAULT_MEMBER = (): WeddingPartyMember => ({
+const DEFAULT_MEMBER = (): EventPartyMember => ({
   id: nanoid(8),
   name: "",
   role: "bridesmaid",
@@ -81,9 +82,9 @@ function MemberEditor({
   onUpdate,
   onDelete,
 }: {
-  member: WeddingPartyMember;
+  member: EventPartyMember;
   eventType: EventType;
-  onUpdate: (patch: Partial<WeddingPartyMember>) => void;
+  onUpdate: (patch: Partial<EventPartyMember>) => void;
   onDelete: () => void;
 }) {
   const [expanded, setExpanded] = useState(!member.name);
@@ -220,16 +221,16 @@ function MemberEditor({
   );
 }
 
-export function WeddingPartyEditor({ config, onChange }: Props) {
-  const members = config.weddingParty ?? [];
+export function EventPartyEditor({ config, onChange }: Props) {
+  const members = config.eventParty ?? [];
   const vocab = getVocabulary(config.eventType);
 
-  const update = (updated: WeddingPartyMember[]) =>
-    onChange({ weddingParty: updated });
+  const update = (updated: EventPartyMember[]) =>
+    onChange({ eventParty: updated });
 
   const addMember = () => update([...members, DEFAULT_MEMBER()]);
 
-  const updateMember = (id: string, patch: Partial<WeddingPartyMember>) =>
+  const updateMember = (id: string, patch: Partial<EventPartyMember>) =>
     update(members.map((m) => (m.id === id ? { ...m, ...patch } : m)));
 
   const deleteMember = (id: string) =>
@@ -240,13 +241,13 @@ export function WeddingPartyEditor({ config, onChange }: Props) {
       {/* Enable toggle */}
       <SectionToggle
         label={vocab.partyLabel}
-        enabled={config.weddingPartyEnabled ?? false}
+        enabled={config.eventPartyEnabled ?? false}
         onToggle={() =>
-          onChange({ weddingPartyEnabled: !config.weddingPartyEnabled })
+          onChange({ eventPartyEnabled: !config.eventPartyEnabled })
         }
         disabledMessage={`Enable to introduce the ${vocab.partyLabel.toLowerCase()} for your ${vocab.eventLabel.toLowerCase()}.`}
       />
-      {config.weddingPartyEnabled && (
+      {config.eventPartyEnabled && (
         <>
           {members.length === 0 && (
             <div className="rounded-xl border border-dashed py-8! flex flex-col items-center gap-2 border-[#D4AF3760]">

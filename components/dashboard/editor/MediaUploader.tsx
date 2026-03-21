@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/useToast";
 
 import { StockPhoto } from "@/server/routers/stock";
 
+import type { EventConfig } from "@/types/event";
 import {
   AudioCategory,
   getFallbackPhotos,
@@ -27,15 +28,14 @@ import {
   STOCK_AUDIO_CATEGORIES,
   STOCK_PHOTO_CATEGORIES,
 } from "@/types/stocks";
-import type { WeddingConfig } from "@/types/wedding";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Tab = "upload" | "url" | "stock";
 
 interface Props {
-  config: WeddingConfig;
-  onChange: (patch: Partial<WeddingConfig>) => void;
+  config: EventConfig;
+  onChange: (patch: Partial<EventConfig>) => void;
 }
 
 interface UploadFieldProps {

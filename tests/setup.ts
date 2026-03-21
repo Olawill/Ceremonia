@@ -11,7 +11,7 @@ vi.mock("@/env", () => ({
     NEXT_PUBLIC_STRIPE_PRICE_AGENCY_MONTHLY: "price_agency_monthly",
     NEXT_PUBLIC_POSTHOG_KEY: "phc_test",
     NEXT_PUBLIC_POSTHOG_HOST: "https://app.posthog.com",
-    NEXT_PUBLIC_WEDDING_THEME: "royal",
+    NEXT_PUBLIC_EVENT_THEME: "royal",
     CLERK_SECRET_KEY: "sk_test_123",
     STRIPE_SECRET_KEY: "sk_test_stripe",
     STRIPE_WEBHOOK_SECRET: "whsec_test",

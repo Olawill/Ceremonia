@@ -11,7 +11,7 @@ import {
 } from "react-hook-form";
 import { z } from "zod";
 
-import type { Course, WeddingConfig } from "@/types/wedding";
+import type { Course, EventConfig } from "@/types/event";
 
 import { Field, Input } from "@/components/ui/FormPrimitives";
 import { getVocabulary } from "@/types/event";
@@ -39,11 +39,11 @@ interface CourseCardProps {
 }
 
 interface Props {
-  config: WeddingConfig;
-  onChange: (patch: Partial<WeddingConfig>) => void;
+  config: EventConfig;
+  onChange: (patch: Partial<EventConfig>) => void;
 }
 
-// Convert WeddingConfig Course[] → form shape
+// Convert EventConfig Course[] → form shape
 function toFormValues(courses: Course[]): FormValues["menuCourses"] {
   return courses.map((c) => ({
     course: c.course,
@@ -51,7 +51,7 @@ function toFormValues(courses: Course[]): FormValues["menuCourses"] {
   }));
 }
 
-// Convert form shape → WeddingConfig Course[]
+// Convert form shape → EventConfig Course[]
 function toCourses(courses: FormValues["menuCourses"]): Course[] {
   return courses.map((c) => ({
     course: c.course,

@@ -5,11 +5,12 @@ import { JSDOM } from "jsdom";
 import { nanoid } from "nanoid";
 
 import { db } from "@/db";
-import { registryClaims, registryItems, users, weddings } from "@/db/schema";
+import { events, registryClaims, registryItems, users } from "@/db/schema";
 
 import { type Plan, PLAN_FEATURES, planMeetsRequirement } from "@/lib/plans";
 import { getPostHogClient } from "@/lib/posthog-server";
 
+import { ingestUsage } from "@/lib/polar-usage";
 import { getAuthUserId } from "@/server/auth";
 import { scrapeUrl } from "../scrape-helper";
 
@@ -18,45 +19,41 @@ export const registryRouter = new Elysia({ prefix: "/registry" })
 
   // ── Owner routes (bearer auth required) ──────────────────────────
 
-  // GET /api/registry/:weddingId — list all items for a wedding (owner)
-  .get("/:weddingId", async ({ params, bearer, status }) => {
+  // GET /api/registry/:eventId — list all items for a event (owner)
+  .get("/:eventId", async ({ params, bearer, status }) => {
     const userId = await getAuthUserId(bearer);
     if (!userId) return status(401, { message: "Unauthorized" });
 
     // Verify ownership
-    const [wedding] = await db
-      .select({ id: weddings.id })
-      .from(weddings)
-      .where(
-        and(eq(weddings.id, params.weddingId), eq(weddings.userId, userId)),
-      )
+    const [event] = await db
+      .select({ id: events.id })
+      .from(events)
+      .where(and(eq(events.id, params.eventId), eq(events.userId, userId)))
       .limit(1);
-    if (!wedding) return status(404, { message: "Not found" });
+    if (!event) return status(404, { message: "Not found" });
 
     const items = await db
       .select()
       .from(registryItems)
-      .where(eq(registryItems.weddingId, params.weddingId))
+      .where(eq(registryItems.eventId, params.eventId))
       .orderBy(registryItems.sortOrder, registryItems.createdAt);
 
     return items;
   })
 
-  // POST /api/registry/:weddingId — add item (owner)
+  // POST /api/registry/:eventId — add item (owner)
   .post(
-    "/:weddingId",
+    "/:eventId",
     async ({ params, body, bearer, status }) => {
       const userId = await getAuthUserId(bearer);
       if (!userId) return status(401, { message: "Unauthorized" });
 
-      const [wedding] = await db
-        .select({ id: weddings.id })
-        .from(weddings)
-        .where(
-          and(eq(weddings.id, params.weddingId), eq(weddings.userId, userId)),
-        )
+      const [event] = await db
+        .select({ id: events.id })
+        .from(events)
+        .where(and(eq(events.id, params.eventId), eq(events.userId, userId)))
         .limit(1);
-      if (!wedding) return status(404, { message: "Not found" });
+      if (!event) return status(404, { message: "Not found" });
 
       // Fetch owner plan
       const [owner] = await db
@@ -73,7 +70,7 @@ export const registryRouter = new Elysia({ prefix: "/registry" })
         const [{ itemCount }] = await db
           .select({ itemCount: count() })
           .from(registryItems)
-          .where(eq(registryItems.weddingId, params.weddingId));
+          .where(eq(registryItems.eventId, params.eventId));
 
         if (itemCount >= features.registryItemLimit) {
           const posthog = getPostHogClient();
@@ -96,11 +93,16 @@ export const registryRouter = new Elysia({ prefix: "/registry" })
       const [item] = await db
         .insert(registryItems)
         .values({
-          weddingId: params.weddingId,
+          eventId: params.eventId,
           ...body,
           currency: body.currency ?? "USD",
         })
         .returning();
+
+      ingestUsage("registry_item_added", {
+        userId,
+        metadata: { eventId: params.eventId, plan },
+      }).catch(() => {});
 
       return item;
     },
@@ -129,20 +131,18 @@ export const registryRouter = new Elysia({ prefix: "/registry" })
 
       // Verify ownership via join
       const [item] = await db
-        .select({ weddingId: registryItems.weddingId })
+        .select({ eventId: registryItems.eventId })
         .from(registryItems)
         .where(eq(registryItems.id, params.itemId))
         .limit(1);
       if (!item) return status(404, { message: "Not found" });
 
-      const [wedding] = await db
-        .select({ id: weddings.id })
-        .from(weddings)
-        .where(
-          and(eq(weddings.id, item.weddingId), eq(weddings.userId, userId)),
-        )
+      const [event] = await db
+        .select({ id: events.id })
+        .from(events)
+        .where(and(eq(events.id, item.eventId), eq(events.userId, userId)))
         .limit(1);
-      if (!wedding) return status(403, { message: "Forbidden" });
+      if (!event) return status(403, { message: "Forbidden" });
 
       const [updated] = await db
         .update(registryItems)
@@ -176,18 +176,18 @@ export const registryRouter = new Elysia({ prefix: "/registry" })
     if (!userId) return status(401, { message: "Unauthorized" });
 
     const [item] = await db
-      .select({ weddingId: registryItems.weddingId })
+      .select({ eventId: registryItems.eventId })
       .from(registryItems)
       .where(eq(registryItems.id, params.itemId))
       .limit(1);
     if (!item) return status(404, { message: "Not found" });
 
-    const [wedding] = await db
-      .select({ id: weddings.id })
-      .from(weddings)
-      .where(and(eq(weddings.id, item.weddingId), eq(weddings.userId, userId)))
+    const [event] = await db
+      .select({ id: events.id })
+      .from(events)
+      .where(and(eq(events.id, item.eventId), eq(events.userId, userId)))
       .limit(1);
-    if (!wedding) return status(403, { message: "Forbidden" });
+    if (!event) return status(403, { message: "Forbidden" });
 
     await db.delete(registryItems).where(eq(registryItems.id, params.itemId));
     return { success: true };
@@ -407,6 +407,11 @@ export const registryRouter = new Elysia({ prefix: "/registry" })
         productUrls.map((productUrl) => scrapeUrl(productUrl)),
       );
 
+      ingestUsage("registry_scrape", {
+        userId,
+        metadata: { url: body.url, plan: user.plan ?? "free" },
+      }).catch(() => {});
+
       return {
         sourceUrl: url,
         retailer: hostname,
@@ -425,26 +430,26 @@ export const registryRouter = new Elysia({ prefix: "/registry" })
 
   // ── Public routes (no auth — guest-facing) ────────────────────────
 
-  // GET /api/registry/public/:slug — get registry for a wedding by slug (guests)
+  // GET /api/registry/public/:slug — get registry for a event by slug (guests)
   // Returns items with claim counts, but NOT claim tokens
   .get("/public/:slug", async ({ params, status }) => {
-    const [wedding] = await db
-      .select({ id: weddings.id })
-      .from(weddings)
-      .where(eq(weddings.slug, params.slug))
+    const [event] = await db
+      .select({ id: events.id })
+      .from(events)
+      .where(eq(events.slug, params.slug))
       .limit(1);
-    if (!wedding) return status(404, { message: "Not found" });
+    if (!event) return status(404, { message: "Not found" });
 
     const items = await db
       .select()
       .from(registryItems)
-      .where(eq(registryItems.weddingId, wedding.id))
+      .where(eq(registryItems.eventId, event.id))
       .orderBy(registryItems.sortOrder, registryItems.createdAt);
 
     const claims = await db
       .select()
       .from(registryClaims)
-      .where(eq(registryClaims.weddingId, wedding.id));
+      .where(eq(registryClaims.eventId, event.id));
 
     // Attach claim summary to each item — expose purchased count, not tokens
     const itemsWithClaims = items.map((item) => {
@@ -468,7 +473,7 @@ export const registryRouter = new Elysia({ prefix: "/registry" })
       const [item] = await db
         .select({
           quantity: registryItems.quantity,
-          weddingId: registryItems.weddingId,
+          eventId: registryItems.eventId,
         })
         .from(registryItems)
         .where(eq(registryItems.id, body.itemId))
@@ -491,7 +496,7 @@ export const registryRouter = new Elysia({ prefix: "/registry" })
         .insert(registryClaims)
         .values({
           itemId: body.itemId,
-          weddingId: item.weddingId,
+          eventId: item.eventId,
           guestName: body.guestName,
           claimToken,
           status: "reserved",

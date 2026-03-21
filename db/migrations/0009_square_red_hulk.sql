@@ -1,1 +1,0 @@
-ALTER TABLE "registry_items" ADD COLUMN "currency" text DEFAULT 'USD';

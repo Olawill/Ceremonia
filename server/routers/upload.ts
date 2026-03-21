@@ -7,6 +7,7 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 
 import { PLAN_FEATURES } from "@/lib/plans";
+import { ingestUsage } from "@/lib/polar-usage";
 import { getPostHogClient } from "@/lib/posthog-server";
 import { getAuthUserId } from "@/server/auth";
 
@@ -64,6 +65,15 @@ export const uploadRouter = new Elysia({ prefix: "/upload" })
       const blob = await put(`${type}s/${userId}/${Date.now()}.${ext}`, file, {
         access: "public",
       });
+
+      ingestUsage("media_uploaded", {
+        userId,
+        metadata: {
+          bytes: file.size,
+          type: file.type, // "image" or "audio"
+          plan: owner.plan ?? "free",
+        },
+      }).catch(() => {});
 
       return { url: blob.url };
     },

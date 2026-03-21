@@ -109,14 +109,14 @@ describe("GET /api/guestbook/:eventSlug", () => {
         id: "msg-1",
         name: "Jane",
         message: "Congratulations!",
-        weddingId: "event-1",
+        eventId: "event-1",
         createdAt: new Date().toISOString(),
       },
       {
         id: "msg-2",
         name: "Bob",
         message: "Best wishes!",
-        weddingId: "event-1",
+        eventId: "event-1",
         createdAt: new Date().toISOString(),
       },
     ];
@@ -204,7 +204,7 @@ describe("POST /api/guestbook/:eventSlug", () => {
       id: "msg-new",
       name: "Jane Doe",
       message: "Wishing you both all the happiness!",
-      weddingId: "event-1",
+      eventId: "event-1",
     };
     mockDb.insert.mockReturnValueOnce(insertReturning([created]));
     const r = await req("POST", "/james-sarah", validBody);
@@ -223,7 +223,7 @@ describe("POST /api/guestbook/:eventSlug", () => {
       id: "msg-new",
       name: "John",
       message: "Congrats!",
-      weddingId: "event-1",
+      eventId: "event-1",
     };
     mockDb.insert.mockReturnValueOnce(insertReturning([created]));
     const r = await req("POST", "/james-sarah", {

@@ -12,5 +12,18 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  postgres_polar:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    ports:
+      - "5438:5432"
+    environment:
+      POSTGRES_DB: ceremonia_pl
+      POSTGRES_USER: ceremonia
+      POSTGRES_PASSWORD: ceremonia_dev
+    volumes:
+      - postgres_polar_data:/var/lib/postgresql/data
+
 volumes:
   postgres_data:
+  postgres_polar_data:

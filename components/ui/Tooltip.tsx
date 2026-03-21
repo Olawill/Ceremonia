@@ -213,56 +213,6 @@ export function Tooltip<T extends React.ElementType = "button">({
   } as Partial<ChildProps>);
 
   return (
-    // <>
-    //   {trigger}
-    //   {mounted &&
-    //     visible &&
-    //     createPortal(
-    //       coords === null ? (
-    //         // Invisible measurement node — no position, no animation, just gets measured
-    //         <div
-    //           ref={measureRef}
-    //           aria-hidden="true"
-    //           style={{
-    //             position: "fixed",
-    //             visibility: "hidden",
-    //             top: -9999,
-    //             left: -9999,
-    //           }}
-    //           className={clsx(
-    //             "pointer-events-none max-w-[240px] px-3! py-2! rounded-xl",
-    //             "font-label text-[11px] tracking-[0.2em] uppercase",
-    //             className,
-    //           )}
-    //         >
-    //           {content}
-    //         </div>
-    //       ) : (
-    //         <div
-    //           ref={tooltipRef}
-    //           role="tooltip"
-    //           style={{ top: coords.top, left: coords.left }}
-    //           className={clsx(
-    //             "pointer-events-none fixed z-9999",
-    //             "max-w-[240px] px-3! py-2! rounded-xl",
-    //             "bg-dash-surface border border-dash-border shadow-xl",
-    //             "font-label text-[11px] tracking-[0.2em] uppercase text-dash-gold",
-    //             `animate-in fade-in zoom-in-95 duration-150 ${transformOriginClasses[position]}`,
-    //             className,
-    //           )}
-    //         >
-    //           {content}
-    //           <span
-    //             className={clsx(
-    //               "absolute w-2 h-2 rotate-45 bg-dash-surface",
-    //               arrowClasses[position],
-    //             )}
-    //           />
-    //         </div>
-    //       ),
-    //       document.body,
-    //     )}
-    // </>
     <>
       {trigger}
       {mounted &&

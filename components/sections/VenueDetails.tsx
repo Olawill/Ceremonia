@@ -1,7 +1,7 @@
 "use client";
 
 import { useTheme } from "@/lib/ThemeContext";
-import { VenueEvent } from "@/types/wedding";
+import { VenueEvent } from "@/types/event";
 import { useEffect, useRef, useState } from "react";
 
 interface VenueDetailsProps {

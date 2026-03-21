@@ -6,10 +6,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useApi } from "@/hooks/useApi";
 import { useToast } from "@/hooks/useToast";
 
-import type { WeddingTheme } from "@/types/theme";
-import type { WeddingConfig } from "@/types/wedding";
+import type { EventConfig } from "@/types/event";
+import { EventTheme } from "@/types/theme";
 
-const COLOR_FIELDS: { key: keyof WeddingTheme; label: string }[] = [
+const COLOR_FIELDS: { key: keyof EventTheme; label: string }[] = [
   { key: "curtain", label: "Curtain" },
   { key: "curtainDark", label: "Curtain Shadow" },
   { key: "curtainSheen", label: "Curtain Highlight" },
@@ -23,18 +23,18 @@ const COLOR_FIELDS: { key: keyof WeddingTheme; label: string }[] = [
 interface SavedCustomTheme {
   id: string;
   name: string;
-  theme: WeddingTheme;
+  theme: EventTheme;
   isPublic: boolean;
 }
 
 interface Props {
-  config: WeddingConfig;
-  onChange: (patch: Partial<WeddingConfig>) => void;
+  config: EventConfig;
+  onChange: (patch: Partial<EventConfig>) => void;
   previewIframeRef: React.RefObject<HTMLIFrameElement | null>;
   ownerPlan?: string;
 }
 
-const DEFAULT_CUSTOM_THEME: Omit<WeddingTheme, "key" | "name"> = {
+const DEFAULT_CUSTOM_THEME: Omit<EventTheme, "key" | "name"> = {
   curtain: "#6A0D17",
   curtainDark: "#3D0610",
   curtainSheen: "#9B1525",
@@ -58,7 +58,7 @@ export function ThemeCustomiser({
   const { api } = useApi();
   const { toast, handleApiError } = useToast();
   const [themeName, setThemeName] = useState("My Custom Theme");
-  const [colors, setColors] = useState<Omit<WeddingTheme, "key" | "name">>(
+  const [colors, setColors] = useState<Omit<EventTheme, "key" | "name">>(
     config.customTheme ?? DEFAULT_CUSTOM_THEME,
   );
   const [savedThemes, setSavedThemes] = useState<SavedCustomTheme[]>([]);
@@ -75,36 +75,14 @@ export function ThemeCustomiser({
     });
   }, []);
 
-  // Send live preview update to iframe whenever colors change
-  // useEffect(() => {
-  //   if (!hasMountedRef.current) {
-  //     hasMountedRef.current = true;
-  //     return; // skip on mount — don't clobber the active built-in theme
-  //   }
-
-  //   const iframe = previewIframeRef.current;
-  //   if (!iframe?.contentWindow) return;
-
-  //   const builtTheme: WeddingTheme = {
-  //     key: "royal", // key doesn't matter for custom
-  //     name: themeName,
-  //     ...colors,
-  //   };
-
-  //   iframe.contentWindow.postMessage(
-  //     { type: "THEME_UPDATE", theme: builtTheme },
-  //     "*",
-  //   );
-  // }, [colors, previewIframeRef]);
-
   const sendThemePreview = useCallback(
-    (themeColors: Omit<WeddingTheme, "key" | "name">, name: string) => {
+    (themeColors: Omit<EventTheme, "key" | "name">, name: string) => {
       const iframe = previewIframeRef.current;
       if (!iframe?.contentWindow) return;
       iframe.contentWindow.postMessage(
         {
           type: "THEME_UPDATE",
-          theme: { key: "custom", name, ...themeColors } as WeddingTheme,
+          theme: { key: "custom", name, ...themeColors } as EventTheme,
         },
         "*",
       );
@@ -112,12 +90,8 @@ export function ThemeCustomiser({
     [previewIframeRef],
   );
 
-  // const updateColor = useCallback((key: keyof WeddingTheme, value: string) => {
-  //   setColors((prev) => ({ ...prev, [key]: value }));
-  // }, []);
-
   const updateColor = useCallback(
-    (key: keyof WeddingTheme, value: string) => {
+    (key: keyof EventTheme, value: string) => {
       setColors((prev) => {
         const next = { ...prev, [key]: value };
         sendThemePreview(next, themeName);
@@ -129,13 +103,13 @@ export function ThemeCustomiser({
 
   const handleSave = async () => {
     setSaving(true);
-    const builtTheme: WeddingTheme = {
+    const builtTheme: EventTheme = {
       key: "custom",
       name: themeName,
       ...colors,
     };
 
-    // Persist into wedding config so it's included in the next Save
+    // Persist into event config so it's included in the next Save
     onChange({ customTheme: builtTheme, themeKey: "custom" });
 
     const { data, error } = await api["custom-themes"].post({

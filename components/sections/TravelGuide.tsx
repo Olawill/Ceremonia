@@ -5,7 +5,7 @@ import { useRef } from "react";
 
 import { useTheme } from "@/lib/ThemeContext";
 
-import { TravelItem } from "@/types/wedding";
+import { TravelItem } from "@/types/event";
 
 interface Props {
   items: TravelItem[];

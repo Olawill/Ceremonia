@@ -7,7 +7,7 @@ import { ChevronDownIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { useTheme } from "@/lib/ThemeContext";
-import type { FaqItem } from "@/types/wedding";
+import type { FaqItem } from "@/types/event";
 
 gsap.registerPlugin(ScrollTrigger);
 

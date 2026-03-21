@@ -1,78 +1,72 @@
-import { stripe } from "@/lib/stripe";
-import { bearer } from "@elysiajs/bearer";
-import { eq } from "drizzle-orm";
-import { Elysia, t } from "elysia";
-
 import { db } from "@/db";
 import { users } from "@/db/schema";
-
 import { env } from "@/env";
-import { getAuthUserId } from "@/server/auth";
-// import { PRICING, type Plan } from "@/lib/plans";
+import { polar } from "@/lib/polar";
+import bearer from "@elysiajs/bearer";
+import { eq } from "drizzle-orm";
+import { Elysia, t } from "elysia";
+import { getAuthUserId } from "../auth";
 
 export const billingRouter = new Elysia({ prefix: "/billing" })
   .use(bearer())
 
-  // POST /api/billing/checkout — create a Stripe Checkout session
+  // POST /api/billing/checkout
+  // Creates a Polar checkout session server-side and returns the redirect URL
   .post(
     "/checkout",
     async ({ body, bearer, status }) => {
       const userId = await getAuthUserId(bearer);
       if (!userId) return status(401, { message: "Unauthorized" });
 
-      // Ensure user row exists
       const [user] = await db
-        .select()
+        .select({ email: users.email })
         .from(users)
         .where(eq(users.id, userId))
         .limit(1);
 
-      if (!user) return status(404, { message: "User not found" });
+      // For upgrades, pass all upgradeable products so Polar renders a switcher
+      const products = body.allProducts ?? [body.productId];
 
-      const session = await stripe.checkout.sessions.create({
-        mode: body.mode,
-        customer: user.stripeCustomerId ?? undefined,
-        customer_email: user.stripeCustomerId ? undefined : user.email,
-        line_items: [{ price: body.priceId, quantity: 1 }],
-        success_url: `${env.NEXT_PUBLIC_APP_URL}/app/billing?success=true&priceId=${body.priceId}`,
-        cancel_url: `${env.NEXT_PUBLIC_APP_URL}/app/billing?cancelled=true`,
+      const session = await polar.checkouts.create({
+        products,
+        externalCustomerId: userId,
+        customerEmail: user?.email ?? undefined,
+        successUrl: `${env.NEXT_PUBLIC_APP_URL}/app/billing?success=true&productId=${body.productId}`,
         metadata: { userId },
-        subscription_data:
-          body.mode === "subscription" ? { metadata: { userId } } : undefined,
+        // Required for embedded checkout — must match the origin of BillingClient page
+        embedOrigin: env.NEXT_PUBLIC_APP_URL.replace(/\/$/, ""),
       });
 
       return { url: session.url };
     },
     {
       body: t.Object({
-        priceId: t.String(),
-        mode: t.Union([t.Literal("subscription"), t.Literal("payment")]),
+        productId: t.String(),
+        allProducts: t.Optional(t.Array(t.String())),
       }),
     },
   )
 
-  // POST /api/billing/portal — create a Stripe Customer Portal session
+  // POST /api/billing/portal
+  // Creates an authenticated Polar customer portal session and returns the URL
   .post("/portal", async ({ bearer, status }) => {
     const userId = await getAuthUserId(bearer);
     if (!userId) return status(401, { message: "Unauthorized" });
 
     const [user] = await db
-      .select({ stripeCustomerId: users.stripeCustomerId })
+      .select({ polarCustomerId: users.polarCustomerId })
       .from(users)
       .where(eq(users.id, userId))
       .limit(1);
 
-    if (!user?.stripeCustomerId) {
+    if (!user?.polarCustomerId) {
       return status(400, { message: "No billing account found" });
     }
 
-    const session = await stripe.billingPortal.sessions.create({
-      customer: user.stripeCustomerId,
-      return_url: `${env.NEXT_PUBLIC_APP_URL}/app/billing`,
-      ...(env.STRIPE_PORTAL_CONFIG_ID
-        ? { configuration: env.STRIPE_PORTAL_CONFIG_ID }
-        : {}),
+    const session = await polar.customerSessions.create({
+      customerId: user.polarCustomerId,
+      returnUrl: `${env.NEXT_PUBLIC_APP_URL}/app/billing`,
     });
 
-    return { url: session.url };
+    return { url: session.customerPortalUrl };
   });

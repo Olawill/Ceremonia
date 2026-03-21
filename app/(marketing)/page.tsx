@@ -2,13 +2,14 @@ import { auth } from "@clerk/nextjs/server";
 import clsx from "clsx";
 import { eq } from "drizzle-orm";
 import { StarIcon } from "lucide-react";
-import { Metadata, Route } from "next";
+import { Metadata } from "next";
 import Link from "next/link";
 
 import { db } from "@/db";
 import { users } from "@/db/schema";
 
-import { Plan, PRICING } from "@/lib/plans";
+import { Plan } from "@/lib/plans";
+import { HeroHeadline } from "./HeroHeadline";
 
 export const metadata: Metadata = {
   title: "Ceremonia — Beautiful Event Invitations",
@@ -50,7 +51,7 @@ const TIERS = [
   {
     name: "Starter",
     price: "$9/mo",
-    description: "For couples",
+    description: "For couples (or $29 one-time)",
     features: [
       "All themes",
       "Both curtain styles",
@@ -88,6 +89,12 @@ const TIERS = [
   },
 ];
 
+const PLAN_TO_PRODUCT: Record<string, string> = {
+  starter: "starter_monthly", // readable key — resolved in BillingClient
+  pro: "pro_monthly",
+  agency: "agency_monthly",
+};
+
 export default async function MarketingPage() {
   const { userId } = await auth();
 
@@ -101,21 +108,11 @@ export default async function MarketingPage() {
     userPlan = (user?.plan as Plan) ?? "free";
   }
 
-  const checkoutBase = userId
-    ? "/app/billing/checkout"
-    : "/sign-up?redirect_url=/app/billing/checkout";
-
   return (
     <div className="size-full text-[#F5F0E8] flex flex-col gap-2">
       {/* Hero */}
       <section className="min-h-screen flex flex-col items-center justify-center text-center px-6! pt-20 font-semibold">
-        <p className="font-label text-[12px] tracking-[0.5em] uppercase text-[#D4AF37] mb-6">
-          Event invitations, reimagined
-        </p>
-        <h1 className="font-display font-light text-[clamp(48px,8vw,96px)] leading-[1.05] tracking-[0.02em] mb-6 max-w-4xl">
-          Your love story,{" "}
-          <span className="italic text-[#D4AF37]">beautifully told</span>
-        </h1>
+        <HeroHeadline />
         <p className="font-display italic text-xl text-[#F5F0E8] mb-12! max-w-xl">
           Create a cinematic invitation your guests will never forget —
           weddings, birthdays, baby showers and more. Live editor, custom
@@ -196,11 +193,11 @@ export default async function MarketingPage() {
               </ul>
 
               {(() => {
-                const isCurrent = userPlan === tier.name.toLowerCase();
-                const isSubscribed = userPlan && userPlan !== "free";
+                const tierPlan = tier.name.toLowerCase() as Plan;
+                const isCurrent = userPlan === tierPlan;
 
-                // Current paid plan → Manage Subscription
-                if (isCurrent && isSubscribed) {
+                // Current plan badge
+                if (isCurrent && userPlan !== "free") {
                   return (
                     <Link
                       href="/app/billing"
@@ -211,65 +208,44 @@ export default async function MarketingPage() {
                   );
                 }
 
-                if (userId && tier.name !== "Free") {
-                  return null;
-                }
-
-                // Free plan card when user is on free → Upgrade (goes to billing)
-                if (tier.name === "Free" && userPlan === "free") {
-                  return (
-                    <Link
-                      href="/app/billing"
-                      className="text-center font-label font-semibold text-[12px] tracking-[0.4em] uppercase py-3! rounded-xl border border-[#D4AF3730] text-[#D4AF3780] hover:text-[#D4AF37] hover:border-[#D4AF3750] transition-colors"
-                    >
-                      Upgrade
-                    </Link>
-                  );
-                }
-
-                // Free plan card for unauthenticated users or non-free users → normal CTA
+                // Free tier
                 if (tier.name === "Free") {
                   return (
                     <Link
-                      href={(userId ? "/app/dashboard" : tier.href) as Route}
+                      href={
+                        userId
+                          ? userPlan === "free"
+                            ? "/app/billing"
+                            : "/app/dashboard"
+                          : "/sign-up"
+                      }
                       className="text-center font-label font-semibold text-[12px] tracking-[0.4em] uppercase py-3! rounded-xl border border-[#D4AF3730] text-[#D4AF3780] hover:text-[#D4AF37] hover:border-[#D4AF3750] transition-colors"
                     >
-                      {userId ? "Dashboard" : tier.cta}
+                      {userId
+                        ? userPlan === "free"
+                          ? "Current plan"
+                          : "Dashboard"
+                        : "Start free"}
                     </Link>
                   );
                 }
 
-                // Paid plan — build the checkout href dynamically using checkoutBase
-                const planKey = tier.name.toLowerCase() as keyof typeof PRICING;
-                const monthly = PRICING[planKey as keyof typeof PRICING] as any;
-                const dynamicHref = `${checkoutBase}?priceId=${monthly?.monthly?.priceId}&mode=subscription`;
-                const dynamicHrefOnce =
-                  "once" in (monthly ?? {})
-                    ? `${checkoutBase}?priceId=${monthly.once.priceId}&mode=payment`
-                    : null;
-
                 return (
-                  <>
-                    <Link
-                      href={dynamicHref}
-                      className={clsx(
-                        "text-center font-label font-semibold text-[12px] tracking-[0.4em] uppercase py-3! rounded-xl border transition-colors",
-                        tier.highlighted
-                          ? "border-[#D4AF3780] text-[#D4AF37] hover:bg-[#D4AF3710]"
-                          : "border-[#D4AF3730] text-[#D4AF3780] hover:text-[#D4AF37] hover:border-[#D4AF3750]",
-                      )}
-                    >
-                      {tier.cta}
-                    </Link>
-                    {dynamicHrefOnce && (
-                      <Link
-                        href={dynamicHrefOnce}
-                        className="text-center font-label font-semibold text-[12px] tracking-[0.3em] uppercase py-2! rounded-xl border border-[#D4AF37] text-[#D4AF3790] hover:text-[#D4AF37] transition-colors"
-                      >
-                        $29 one-time
-                      </Link>
+                  <Link
+                    href={
+                      userId
+                        ? `/app/billing?autoOpen=${PLAN_TO_PRODUCT[tier.name.toLowerCase()]}`
+                        : `/sign-up?redirect_url=/app/billing?autoOpen=${PLAN_TO_PRODUCT[tier.name.toLowerCase()]}`
+                    }
+                    className={clsx(
+                      "text-center font-label font-semibold text-[12px] tracking-[0.4em] uppercase py-3! rounded-xl border transition-colors",
+                      tier.highlighted
+                        ? "border-[#D4AF3780] text-[#D4AF37] hover:bg-[#D4AF3710]"
+                        : "border-[#D4AF3730] text-[#D4AF3780] hover:text-[#D4AF37] hover:border-[#D4AF3750]",
                     )}
-                  </>
+                  >
+                    {isCurrent ? "Current plan" : tier.cta}
+                  </Link>
                 );
               })()}
             </div>

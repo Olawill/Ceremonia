@@ -3,14 +3,15 @@ import { and, count, eq } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 
 import { db } from "@/db";
-import { users, weddings } from "@/db/schema";
+import { events, users } from "@/db/schema";
 
 import { hashPassword } from "@/lib/password";
-import { PLAN_FEATURES } from "@/lib/plans";
+import { computeEventExpiry, PLAN_FEATURES } from "@/lib/plans";
 
+import { ingestUsage } from "@/lib/polar-usage";
 import { getPostHogClient } from "@/lib/posthog-server";
 import { getAuthUserId } from "@/server/auth";
-import { CURTAIN_STYLES } from "@/types/wedding";
+import { CURTAIN_STYLES } from "@/types/event";
 
 // Zod-compatible Elysia schema for a VenueEvent
 const VenueEventSchema = t.Object({
@@ -61,8 +62,8 @@ const EventBodySchema = t.Object({
   dressCode: t.Optional(t.Any()),
   accommodationEnabled: t.Optional(t.Boolean()),
   accommodation: t.Optional(t.Any()),
-  weddingPartyEnabled: t.Optional(t.Boolean()),
-  weddingParty: t.Optional(t.Any()),
+  eventPartyEnabled: t.Optional(t.Boolean()),
+  eventParty: t.Optional(t.Any()),
   faqEnabled: t.Optional(t.Boolean()),
   faq: t.Optional(t.Any()),
   livestreamEnabled: t.Optional(t.Boolean()),
@@ -78,35 +79,35 @@ const EventBodySchema = t.Object({
 export const eventsRouter = new Elysia({ prefix: "/events" })
   .use(bearer())
 
-  // GET /api/events — list all weddings for current user
+  // GET /api/events — list all events for current user
   .get("/", async ({ bearer, status }) => {
     const userId = await getAuthUserId(bearer);
     if (!userId) return status(401, { message: "Unauthorized" });
 
     const result = await db
       .select()
-      .from(weddings)
-      .where(eq(weddings.userId, userId));
+      .from(events)
+      .where(eq(events.userId, userId));
 
     return result;
   })
 
-  // GET /api/events/:slug — get a single wedding (must be owner)
+  // GET /api/events/:slug — get a single event (must be owner)
   .get("/:slug", async ({ params, bearer, status }) => {
     const userId = await getAuthUserId(bearer);
     if (!userId) return status(401, { message: "Unauthorized" });
 
-    const [wedding] = await db
+    const [event] = await db
       .select()
-      .from(weddings)
-      .where(and(eq(weddings.slug, params.slug), eq(weddings.userId, userId)))
+      .from(events)
+      .where(and(eq(events.slug, params.slug), eq(events.userId, userId)))
       .limit(1);
 
-    if (!wedding) return status(404, { message: "Not found" });
-    return wedding;
+    if (!event) return status(404, { message: "Not found" });
+    return event;
   })
 
-  // POST /api/events — create new wedding
+  // POST /api/events — create new event
   .post(
     "/",
     async ({ body, bearer, status }) => {
@@ -114,19 +115,22 @@ export const eventsRouter = new Elysia({ prefix: "/events" })
       if (!userId) return status(401, { message: "Unauthorized" });
 
       const [owner] = await db
-        .select({ plan: users.plan })
+        .select({ plan: users.plan, starterIsOnce })
         .from(users)
         .where(eq(users.id, userId))
         .limit(1);
 
       const plan = owner?.plan ?? "free";
-      const features = PLAN_FEATURES[plan];
-      const [{ weddingCount }] = await db
-        .select({ weddingCount: count() })
-        .from(weddings)
-        .where(eq(weddings.userId, userId));
+      const isOnce = owner.starterIsOnce ?? false;
+      const expiresAt = computeEventExpiry(plan, isOnce);
 
-      if (weddingCount >= features.maxEvents) {
+      const features = PLAN_FEATURES[plan];
+      const [{ eventCount }] = await db
+        .select({ eventCount: count() })
+        .from(events)
+        .where(eq(events.userId, userId));
+
+      if (eventCount >= features.maxEvents) {
         const posthog = getPostHogClient();
         posthog.capture({
           distinctId: userId,
@@ -139,7 +143,7 @@ export const eventsRouter = new Elysia({ prefix: "/events" })
         });
         await posthog.shutdown();
         return status(403, {
-          message: `Your ${plan} plan allows a maximum of ${features.maxEvents} wedding(s). Please upgrade.`,
+          message: `Your ${plan} plan allows a maximum of ${features.maxEvents} event(s). Please upgrade.`,
         });
       }
 
@@ -150,9 +154,9 @@ export const eventsRouter = new Elysia({ prefix: "/events" })
         .replace(/(^-|-$)/g, "");
 
       const [existing] = await db
-        .select({ id: weddings.id })
-        .from(weddings)
-        .where(eq(weddings.slug, slug))
+        .select({ id: events.id })
+        .from(events)
+        .where(eq(events.slug, slug))
         .limit(1);
 
       const finalSlug = existing ? `${slug}-${Date.now()}` : slug;
@@ -160,16 +164,27 @@ export const eventsRouter = new Elysia({ prefix: "/events" })
       let created;
       try {
         [created] = await db
-          .insert(weddings)
+          .insert(events)
           .values({
             ...body,
             slug: finalSlug,
             groom: body.groom ?? "",
-            eventType: body.eventType ?? "wedding",
+            eventType: body.eventType ?? "event",
             userId,
             password: body.password ? hashPassword(body.password) : null,
+            expiresAt,
           })
           .returning();
+
+        // Non-blocking — don't await at the top level:
+        ingestUsage("event_created", {
+          userId,
+          metadata: {
+            eventType: body.eventType ?? "wedding",
+            plan: plan,
+            slug: finalSlug,
+          },
+        }).catch(() => {}); // already swallowed inside ingestUsage, but belt-and-suspenders
       } catch (e) {
         console.error("INSERT ERROR:", e);
         return status(500, { message: String(e) });
@@ -233,7 +248,7 @@ export const eventsRouter = new Elysia({ prefix: "/events" })
       }
 
       const [updated] = await db
-        .update(weddings)
+        .update(events)
         .set({
           ...body,
           ...(body.eventType !== undefined
@@ -245,7 +260,7 @@ export const eventsRouter = new Elysia({ prefix: "/events" })
             ? { customDomain: body.customDomain || null }
             : {}),
         })
-        .where(and(eq(weddings.slug, params.slug), eq(weddings.userId, userId)))
+        .where(and(eq(events.slug, params.slug), eq(events.userId, userId)))
         .returning();
 
       if (!updated) return status(404, { message: "Not found" });
@@ -260,8 +275,8 @@ export const eventsRouter = new Elysia({ prefix: "/events" })
     if (!userId) return status(401, { message: "Unauthorized" });
 
     await db
-      .delete(weddings)
-      .where(and(eq(weddings.slug, params.slug), eq(weddings.userId, userId)));
+      .delete(events)
+      .where(and(eq(events.slug, params.slug), eq(events.userId, userId)));
 
     return { success: true };
   });

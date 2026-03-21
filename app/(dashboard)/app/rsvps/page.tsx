@@ -3,7 +3,7 @@ import { eq, inArray } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
 import { db } from "@/db";
-import { rsvps, users, weddings } from "@/db/schema";
+import { events, rsvps, users } from "@/db/schema";
 
 import type { Plan } from "@/lib/plans";
 import { PLAN_FEATURES } from "@/lib/plans";
@@ -25,38 +25,38 @@ export default async function RSVPsPage() {
 
   const plan = (user?.plan ?? "free") as Plan;
 
-  // Get all weddings owned by user
-  const userWeddings = await db
+  // Get all events owned by user
+  const userEvents = await db
     .select({
-      id: weddings.id,
-      bride: weddings.bride,
-      groom: weddings.groom,
-      slug: weddings.slug,
-      eventType: weddings.eventType,
+      id: events.id,
+      bride: events.bride,
+      groom: events.groom,
+      slug: events.slug,
+      eventType: events.eventType,
     })
-    .from(weddings)
-    .where(eq(weddings.userId, userId));
+    .from(events)
+    .where(eq(events.userId, userId));
 
-  // Get all RSVPs for those weddings
-  const weddingIds = userWeddings.map((w) => w.id);
-  const allRsvps = weddingIds.length
+  // Get all RSVPs for those events
+  const eventIds = userEvents.map((w) => w.id);
+  const allRsvps = eventIds.length
     ? await db
         .select()
         .from(rsvps)
-        .where(inArray(rsvps.weddingId, weddingIds))
+        .where(inArray(rsvps.eventId, eventIds))
         .orderBy(rsvps.createdAt)
     : [];
 
-  // For multiple weddings, fetch all and merge
-  const rsvpsByWedding: Record<string, typeof allRsvps> = {};
-  for (const w of userWeddings) {
-    rsvpsByWedding[w.id] = allRsvps.filter((r) => r.weddingId === w.id);
+  // For multiple events, fetch all and merge
+  const rsvpsByEvent: Record<string, typeof allRsvps> = {};
+  for (const w of userEvents) {
+    rsvpsByEvent[w.id] = allRsvps.filter((r) => r.eventId === w.id);
   }
 
   return (
     <RSVPsClient
-      weddings={userWeddings}
-      rsvpsByWedding={rsvpsByWedding}
+      events={userEvents}
+      rsvpsByEvent={rsvpsByEvent}
       plan={plan}
       canExport={PLAN_FEATURES[plan].csvExport}
     />

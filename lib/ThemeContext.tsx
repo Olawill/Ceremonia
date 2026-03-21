@@ -1,7 +1,7 @@
 "use client";
 
 import { defaultThemeKey, themes } from "@/themes";
-import type { ThemeKey, WeddingTheme } from "@/types/theme";
+import type { EventTheme, ThemeKey } from "@/types/theme";
 import {
   createContext,
   useContext,
@@ -12,9 +12,9 @@ import {
 
 interface ThemeContextValue {
   themeKey: ThemeKey;
-  theme: WeddingTheme;
+  theme: EventTheme;
   setThemeKey: (key: ThemeKey) => void;
-  setCustomTheme: (theme: WeddingTheme) => void;
+  setCustomTheme: (theme: EventTheme) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -30,9 +30,7 @@ export function ThemeProvider({
     initialThemeKey ?? defaultThemeKey,
   );
 
-  const [customTheme, setCustomThemeState] = useState<WeddingTheme | null>(
-    null,
-  );
+  const [customTheme, setCustomThemeState] = useState<EventTheme | null>(null);
 
   const theme =
     customTheme ??
@@ -48,7 +46,7 @@ export function ThemeProvider({
     );
   };
 
-  const setCustomTheme = (t: WeddingTheme) => {
+  const setCustomTheme = (t: EventTheme) => {
     setCustomThemeState(t);
   };
 

@@ -1,6 +1,6 @@
 import { format, parseISO } from "date-fns";
 
-import { VenueEvent } from "@/types/wedding";
+import { VenueEvent } from "@/types/event";
 
 export const formattedDate = (date: string, dotted: boolean = false) => {
   const [year, month, day] = date.split("-").map(Number);
