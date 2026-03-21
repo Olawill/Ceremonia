@@ -32,7 +32,7 @@ interface ClaimRecord {
 }
 
 interface Props {
-  weddingSlug: string;
+  eventSlug: string;
   label?: string;
 }
 
@@ -50,7 +50,7 @@ export function formatPrice(
   }).format(minorUnits / 100);
 }
 
-export function Registry({ weddingSlug, label }: Props) {
+export function Registry({ eventSlug, label }: Props) {
   const { theme } = useTheme();
   const [items, setItems] = useState<RegistryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,29 +64,29 @@ export function Registry({ weddingSlug, label }: Props) {
   // Load persisted claims from localStorage
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(`registry-claims-${weddingSlug}`);
+      const stored = localStorage.getItem(`registry-claims-${eventSlug}`);
       if (stored) setMyClaims(JSON.parse(stored));
     } catch {}
-  }, [weddingSlug]);
+  }, [eventSlug]);
 
   const persistClaims = (updated: Record<string, ClaimRecord>) => {
     setMyClaims(updated);
     localStorage.setItem(
-      `registry-claims-${weddingSlug}`,
+      `registry-claims-${eventSlug}`,
       JSON.stringify(updated),
     );
   };
 
   // Fetch items
   useEffect(() => {
-    fetch(`/api/registry/public/${weddingSlug}`)
+    fetch(`/api/registry/public/${eventSlug}`)
       .then((r) => r.json())
       .then((data) => {
         setItems(data);
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [weddingSlug]);
+  }, [eventSlug]);
 
   const handleClaim = async (itemId: string) => {
     if (!guestName.trim()) {
@@ -104,7 +104,7 @@ export function Registry({ weddingSlug, label }: Props) {
       const { claimToken, claimId } = await res.json();
       persistClaims({ ...myClaims, [itemId]: { claimId, claimToken } });
       // Refresh items to update counts
-      const updated = await fetch(`/api/registry/public/${weddingSlug}`).then(
+      const updated = await fetch(`/api/registry/public/${eventSlug}`).then(
         (r) => r.json(),
       );
       setItems(updated);
@@ -124,7 +124,7 @@ export function Registry({ weddingSlug, label }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(claim),
       });
-      const updated = await fetch(`/api/registry/public/${weddingSlug}`).then(
+      const updated = await fetch(`/api/registry/public/${eventSlug}`).then(
         (r) => r.json(),
       );
       setItems(updated);
@@ -144,8 +144,8 @@ export function Registry({ weddingSlug, label }: Props) {
     const next = { ...myClaims };
     delete next[itemId];
     persistClaims(next);
-    const updated = await fetch(`/api/registry/public/${weddingSlug}`).then(
-      (r) => r.json(),
+    const updated = await fetch(`/api/registry/public/${eventSlug}`).then((r) =>
+      r.json(),
     );
     setItems(updated);
   };

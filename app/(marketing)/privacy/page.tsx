@@ -73,7 +73,7 @@ export default function PrivacyPage() {
             </li>
             <li>
               <strong className="text-[#F5F0E8]">Payment data</strong> — billing
-              details are processed by Stripe and never stored on our servers.
+              details are processed by Polar and never stored on our servers.
             </li>
             <li>
               <strong className="text-[#F5F0E8]">Usage data</strong> — page
@@ -91,7 +91,7 @@ export default function PrivacyPage() {
             <li>To provide, operate, and improve the Ceremonia platform.</li>
             <li>To send RSVP notification emails to couples via Resend.</li>
             <li>
-              To process payments and manage your subscription through Stripe.
+              To process payments and manage your subscription through Polar.
             </li>
             <li>To respond to support requests and account enquiries.</li>
             <li>To detect and prevent fraud or abuse.</li>
@@ -112,7 +112,7 @@ export default function PrivacyPage() {
               and user management.
             </li>
             <li>
-              <strong className="text-[#F5F0E8]">Stripe</strong> — payment
+              <strong className="text-[#F5F0E8]">Polar</strong> — payment
               processing.
             </li>
             <li>

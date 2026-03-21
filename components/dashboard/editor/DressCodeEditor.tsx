@@ -6,8 +6,8 @@ import { getVocabulary } from "@/types/event";
 import type {
   DressCodeConfig,
   DressCodeStyle,
-  WeddingConfig,
-} from "@/types/wedding";
+  EventConfig,
+} from "@/types/event";
 
 const STYLES: {
   value: DressCodeStyle;
@@ -84,8 +84,8 @@ const STYLES: {
 ];
 
 interface Props {
-  config: WeddingConfig;
-  onChange: (patch: Partial<WeddingConfig>) => void;
+  config: EventConfig;
+  onChange: (patch: Partial<EventConfig>) => void;
 }
 
 const DEFAULT_DRESS_CODE: DressCodeConfig = {

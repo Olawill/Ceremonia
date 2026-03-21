@@ -22,6 +22,10 @@ vi.mock("@/lib/posthog-server", () => ({
   }),
 }));
 
+vi.mock("@/lib/polar-usage", () => ({
+  ingestUsage: vi.fn().mockResolvedValue(undefined),
+}));
+
 // nanoid is used to generate claimTokens — fix it so we can assert on it
 vi.mock("nanoid", () => ({ nanoid: () => "test-claim-token-16" }));
 

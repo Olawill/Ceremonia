@@ -17,20 +17,20 @@ import { AudioPlayer } from "@/components/ui/AudioPlayer";
 
 import { useTheme } from "@/lib/ThemeContext";
 
-import { buildSections } from "@/lib/weddingSections";
-import { DEMO_WEDDING_CONFIG, WeddingConfig } from "@/types/wedding";
+import { buildSections } from "@/lib/eventSections";
+import { DEMO_EVENT_CONFIG, EventConfig } from "@/types/event";
 
-interface WeddingEngineProps {
-  config?: WeddingConfig;
+interface EventEngineProps {
+  config?: EventConfig;
   showWatermark?: boolean;
   brandName?: string;
 }
 
-export function WeddingEngine({
-  config = DEMO_WEDDING_CONFIG,
+export function EventEngine({
+  config = DEMO_EVENT_CONFIG,
   showWatermark,
   brandName,
-}: WeddingEngineProps) {
+}: EventEngineProps) {
   const { theme } = useTheme();
 
   const [activeIndex, setActiveIndex] = useState(0);

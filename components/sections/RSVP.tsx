@@ -26,14 +26,14 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 interface RSVPProps {
-  weddingId?: string;
+  eventId?: string;
   enabled?: boolean;
   rsvpDeadline?: string;
   eventLabel?: string;
 }
 
 export function RSVP({
-  weddingId = "demo",
+  eventId = "demo",
   enabled = true,
   rsvpDeadline,
   eventLabel,
@@ -64,9 +64,9 @@ export function RSVP({
   const attendance = watch("attendance");
 
   const onSubmit = async (data: FormValues) => {
-    if (weddingId && weddingId !== "demo") {
+    if (eventId && eventId !== "demo") {
       const { data: rsvpData, error } = await api.api.rsvp.post({
-        weddingId,
+        eventId,
         name: data.name,
         attendance: data.attendance,
         guests: data.guests ? Number(data.guests) : 1,
@@ -85,7 +85,7 @@ export function RSVP({
     }
 
     posthog.capture("rsvp_submitted", {
-      event_id: weddingId,
+      event_id: eventId,
       event_type: eventLabel,
       attendance: data.attendance,
       guests:

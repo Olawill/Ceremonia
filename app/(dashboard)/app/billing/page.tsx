@@ -17,31 +17,32 @@ export default async function BillingPage({
   searchParams: Promise<{
     success?: string;
     cancelled?: string;
-    priceId?: string;
+    productId?: string;
+    autoOpen?: string;
   }>;
 }) {
-  const { success, cancelled, priceId } = await searchParams;
+  const { success, cancelled, productId } = await searchParams;
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
 
   const [user] = await db
-    .select({ plan: users.plan, stripeCustomerId: users.stripeCustomerId })
+    .select({ plan: users.plan, polarCustomerId: users.polarCustomerId })
     .from(users)
     .where(eq(users.id, userId))
     .limit(1);
 
   const plan = (user?.plan as Plan | undefined) ?? "free";
-  const hasActiveSubscription = !!user?.stripeCustomerId && plan !== "free";
-  const hasEverPaid = !!user?.stripeCustomerId; // has Stripe customer = went through checkout before
+  const hasPolarAccount = plan !== "free";
+  const hasEverPaid = !!user?.polarCustomerId;
 
   return (
     <BillingClient
       currentPlan={plan}
-      hasStripeAccount={hasActiveSubscription}
+      hasPolarAccount={hasPolarAccount}
       hasEverPaid={hasEverPaid}
       paymentSuccess={success === "true"}
       paymentCancelled={cancelled === "true"}
-      successPriceId={priceId}
+      successProductId={productId}
     />
   );
 }

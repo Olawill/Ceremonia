@@ -3,12 +3,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── Mocks (must be before imports) ──────────────────────────────────────────
 
-vi.mock("@/lib/stripe", () => ({
-  stripe: {
-    checkout: { sessions: { create: vi.fn() } },
-    billingPortal: { sessions: { create: vi.fn() } },
-    customers: { create: vi.fn() },
-    subscriptions: { retrieve: vi.fn() },
+vi.mock("@/lib/polar", () => ({
+  polar: {
+    checkouts: { create: vi.fn() },
+    customerSessions: { create: vi.fn() },
+    customers: { create: vi.fn(), deleteExternal: vi.fn() },
   },
 }));
 

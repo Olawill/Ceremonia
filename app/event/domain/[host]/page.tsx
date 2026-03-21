@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
 import { db } from "@/db";
-import { weddings } from "@/db/schema";
+import { events } from "@/db/schema";
 import { EventType, getVocabulary } from "@/types/event";
 
 interface Props {
@@ -12,21 +12,21 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { host } = await params;
-  const [wedding] = await db
+  const [event] = await db
     .select({
-      bride: weddings.bride,
-      groom: weddings.groom,
-      eventType: weddings.eventType,
+      bride: events.bride,
+      groom: events.groom,
+      eventType: events.eventType,
     })
-    .from(weddings)
-    .where(eq(weddings.customDomain, host))
+    .from(events)
+    .where(eq(events.customDomain, host))
     .limit(1);
 
-  if (!wedding) return { title: "Event Invitation" };
-  const vocab = getVocabulary((wedding.eventType as EventType) ?? "wedding");
-  const hostsStr = wedding.groom
-    ? `${wedding.bride} & ${wedding.groom}`
-    : wedding.bride;
+  if (!event) return { title: "Event Invitation" };
+  const vocab = getVocabulary((event.eventType as EventType) ?? "wedding");
+  const hostsStr = event.groom
+    ? `${event.bride} & ${event.groom}`
+    : event.bride;
   return {
     title: `${hostsStr} — ${vocab.eventLabel} Invitation`,
     robots: { index: true, follow: false },
@@ -36,14 +36,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function CustomDomainPage({ params }: Props) {
   const { host } = await params;
 
-  const [wedding] = await db
-    .select({ slug: weddings.slug })
-    .from(weddings)
-    .where(eq(weddings.customDomain, host))
+  const [event] = await db
+    .select({ slug: events.slug })
+    .from(events)
+    .where(eq(events.customDomain, host))
     .limit(1);
 
-  if (!wedding) notFound();
+  if (!event) notFound();
 
   // Redirect to the slug route which has all the rendering logic
-  redirect(`/event/${wedding.slug}`);
+  redirect(`/event/${event.slug}`);
 }

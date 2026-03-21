@@ -5,18 +5,18 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useEffect, useRef } from "react";
 
 import { useTheme } from "@/lib/ThemeContext";
-import type { WeddingPartyMember, WeddingPartyRole } from "@/types/wedding";
+import type { EventPartyMember, EventPartyRole } from "@/types/event";
 
 gsap.registerPlugin(ScrollTrigger);
 
 interface Props {
-  members: WeddingPartyMember[];
+  members: EventPartyMember[];
   bride: string;
   groom?: string;
   sectionLabel?: string;
 }
 
-const ROLE_LABELS: Record<WeddingPartyRole, string> = {
+const ROLE_LABELS: Record<EventPartyRole, string> = {
   "maid-of-honour": "Maid of Honour",
   "best-man": "Best Man",
   bridesmaid: "Bridesmaid",
@@ -37,7 +37,7 @@ const ROLE_LABELS: Record<WeddingPartyRole, string> = {
   custom: "",
 };
 
-function MemberCard({ member }: { member: WeddingPartyMember }) {
+function MemberCard({ member }: { member: EventPartyMember }) {
   const { theme } = useTheme();
   const roleLabel =
     member.role === "custom"
@@ -104,7 +104,7 @@ function MemberCard({ member }: { member: WeddingPartyMember }) {
   );
 }
 
-export function WeddingParty({ members, bride, groom, sectionLabel }: Props) {
+export function EventParty({ members, bride, groom, sectionLabel }: Props) {
   const { theme } = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
 

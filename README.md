@@ -114,7 +114,7 @@ app/
       analytics/         → view counts, RSVP trends (Pro+)
       billing/           → plan management + Stripe checkout
       settings/          → account, brand name, delete account
-  wedding/
+  event/
     [slug]/              → hosted invitation page
     preview/             → iframe preview target for the editor
     domain/[host]/       → custom domain redirect handler
@@ -127,17 +127,17 @@ components/
   sections/              → invitation sections (Hero, Countdown, RSVP, etc.)
   curtain/               → 7 curtain reveal animations
   dashboard/editor/      → editor sidebar panels and shell
-  WeddingEngine.tsx      → main invitation renderer
+  EventEngine.tsx      → main invitation renderer
 
 lib/
-  weddingSections.tsx    → single source of truth for section ordering
+  eventSections.tsx    → single source of truth for section ordering
   ThemeContext.tsx        → CSS variable injection
   eventHelpers.ts         → getHost1Name, getHost2Name, getHostsLabel
 
 types/
   event.ts               → EventType, EventVocabulary, EVENT_VOCABULARY
-  wedding.ts             → WeddingConfig, all section config interfaces
-  theme.ts               → ThemeKey, WeddingTheme
+  wedding.ts             → EventConfig, all section config interfaces
+  theme.ts               → ThemeKey, EventTheme
 
 db/
   schema.ts              → Drizzle table definitions
@@ -145,7 +145,7 @@ db/
   seed.ts                → demo event seed
 
 server/
-  routers/               → Elysia route handlers (weddings, rsvp, upload, etc.)
+  routers/               → Elysia route handlers (events, rsvp, upload, etc.)
 
 emails/
   RSVPNotification.tsx   → React Email template for RSVP notifications
@@ -160,10 +160,10 @@ tests/
 
 ## Database Schema
 
-The core table is `weddings` (which stores all event types, not just weddings — the name is a legacy of the initial schema). Key columns:
+The core table is `events`. Key columns:
 
 ```
-weddings
+events
 ├── id                  uuid PK
 ├── slug                text UNIQUE         → subdomain
 ├── eventType           text DEFAULT 'wedding'
@@ -172,7 +172,7 @@ weddings
 ├── groom               text NOT NULL       → host2 display name (empty for single-host events)
 ├── date                date NOT NULL
 ├── themeKey            text
-├── customTheme         jsonb               → WeddingTheme object
+├── customTheme         jsonb               → EventTheme object
 ├── curtainStyle        text
 ├── timeline            jsonb               → TimelineEvent[]
 ├── menuCourses         jsonb               → Course[]
@@ -186,8 +186,8 @@ weddings
 ├── dressCode           jsonb               → DressCodeConfig
 ├── accommodationEnabled boolean
 ├── accommodation       jsonb               → AccommodationConfig
-├── weddingPartyEnabled boolean
-├── weddingParty        jsonb               → WeddingPartyMember[]
+├── eventPartyEnabled boolean
+├── eventParty        jsonb               → eventPartyMember[]
 ├── faqEnabled          boolean
 ├── faq                 jsonb               → FaqItem[]
 ├── livestreamEnabled   boolean
@@ -212,7 +212,7 @@ users
 
 rsvps
 ├── id                  uuid PK
-├── weddingId           uuid FK → weddings.id
+├── eventId           uuid FK → events.id
 ├── name                text
 ├── attendance          text                → yes | no
 ├── guests              integer
@@ -254,20 +254,20 @@ Slug generation is automatic from host names: `Emma` → `emma`, `Emma Turner` �
 
 ## The Invitation Engine
 
-`components/WeddingEngine.tsx` is the root of the public-facing invitation. It:
+`components/EventEngine.tsx` is the root of the public-facing invitation. It:
 
 1. Renders the curtain overlay (one of 7 styles: velvet, drape, sheer, cascade, iris, split, veil)
 2. Manages curtain-open state and communicates it to the parent frame via `postMessage`
 3. Renders `DustParticles` and `DrapeFrame` atmospheric effects
-4. Calls `buildSections()` from `lib/weddingSections.tsx` to get the ordered section list
+4. Calls `buildSections()` from `lib/eventSections.tsx` to get the ordered section list
 5. Renders each section in a scroll-snapping container with nav dots
 
-**Section ordering** (`lib/weddingSections.tsx`):
+**Section ordering** (`lib/eventSections.tsx`):
 
 ```
 ParallaxHero → ScratchDate → [after date reveal] →
 Countdown → Timeline → PhotoGallery → VenueDetails →
-DressCode → Accommodation → WeddingParty → FAQ →
+DressCode → Accommodation → eventParty → FAQ →
 Livestream → TravelGuide → WeddingMenu → RSVP →
 Registry → GuestBook → Finale
 ```
@@ -282,7 +282,7 @@ The editor is a split-panel interface: left sidebar (tabbed controls) + right if
 
 **`EditorShell.tsx`** orchestrates:
 
-- Holds `config: WeddingConfig` state
+- Holds `config: EventConfig` state
 - Sends `PREVIEW_CONFIG` postMessage to the iframe on every change
 - Debounce-free — the iframe applies changes via `postMessage` immediately
 - Auto-saves on demand; creates a new slug on first save
@@ -350,9 +350,9 @@ getVocabulary(eventType); // Returns EventVocabulary for the given type
 
 ### Where vocabulary is applied
 
-- `lib/weddingSections.tsx` — section headings, props passed to each section component
+- `lib/eventSections.tsx` — section headings, props passed to each section component
 - `components/sections/ParallaxHero.tsx` — `topLabel`, conditional `groom` render
-- `components/sections/WeddingParty.tsx` — `sectionLabel`
+- `components/sections/eventParty.tsx` — `sectionLabel`
 - `components/sections/WeddingMenu.tsx` — `label`, `subLabel`, `description`
 - `components/sections/Finale.tsx` — `finaleHeading`, `showCoupleIllustration`
 - `components/sections/Registry.tsx` — `label`
@@ -361,7 +361,7 @@ getVocabulary(eventType); // Returns EventVocabulary for the given type
 - `components/dashboard/editor/ContentEditor.tsx` — field labels, section heading
 - `components/dashboard/editor/EditorSidebar.tsx` — tab labels
 - `components/dashboard/editor/MenuEditor.tsx` — section heading
-- `components/dashboard/editor/WeddingPartyEditor.tsx` — section heading, role list
+- `components/dashboard/editor/eventPartyEditor.tsx` — section heading, role list
 - `components/dashboard/editor/NewEventDialog.tsx` — host field labels, event type picker
 - `app/event/[slug]/page.tsx` — `<title>`, OpenGraph, description
 - `app/(dashboard)/app/editor/[slug]/page.tsx` — editor page title
@@ -475,14 +475,14 @@ PostHog is used for both client-side and server-side event tracking. Events incl
 | Event                    | When                              |
 | ------------------------ | --------------------------------- |
 | `rsvp_submitted`         | Guest submits the RSVP form       |
-| `wedding_created`        | Host creates a new event          |
-| `wedding_saved`          | Host saves changes in the editor  |
+| `event_created`          | Host creates a new event          |
+| `event_saved`            | Host saves changes in the editor  |
 | `checkout_initiated`     | Host clicks to upgrade            |
 | `subscription_created`   | Stripe webhook — new subscription |
 | `subscription_cancelled` | Stripe webhook — cancellation     |
 | `payment_completed`      | Stripe webhook — one-time payment |
 | `plan_limit_hit`         | Any plan gate is triggered        |
-| `wedding_unlocked`       | Guest enters correct password     |
+| `event_unlocked`         | Guest enters correct password     |
 
 PostHog is proxied through `/api/ingest` to avoid ad blockers. Initialisation is deferred to avoid Turbopack timing issues.
 
@@ -504,8 +504,8 @@ PATCH  /api/events/:slug        → update event (plan-gated fields)
 DELETE /api/events/:slug        → delete event
 
 POST   /api/rsvp                  → submit RSVP (public)
-GET    /api/rsvp?weddingId=       → list RSVPs for event (owner)
-GET    /api/rsvp/export?weddingId= → CSV export (Pro+)
+GET    /api/rsvp?eventId=       → list RSVPs for event (owner)
+GET    /api/rsvp/export?eventId= → CSV export (Pro+)
 
 POST   /api/upload                → upload photo or audio
 POST   /api/upload/from-url       → import media from URL
@@ -513,8 +513,8 @@ POST   /api/upload/from-url       → import media from URL
 GET    /api/stock/photos          → search stock photos
 GET    /api/stock/audio           → search stock audio
 
-GET    /api/registry/:weddingId   → list registry items (owner)
-POST   /api/registry/:weddingId   → add item
+GET    /api/registry/:eventId   → list registry items (owner)
+POST   /api/registry/:eventId   → add item
 PATCH  /api/registry/:id          → update item
 DELETE /api/registry/:id          → delete item
 GET    /api/registry/public/:slug → public registry view
@@ -576,7 +576,7 @@ bun run test:unit:coverage # Coverage report
 
 **Integration tests** (`tests/integration/`) test the Elysia route handlers directly via `app.handle()`. The DB, Clerk auth, and Vercel Blob are mocked with Vitest. Coverage includes auth gating, plan gating, RSVP submission, upload validation, and all CRUD operations.
 
-**E2E tests** (`tests/e2e/`) use Playwright against a running dev/preview server. The `/event/demo` route is the primary anchor — it renders `DEMO_WEDDING_CONFIG` without auth or DB, making it a stable test target. Auth-gated dashboard tests require `tests/e2e/.auth/user.json` (generated by `auth.setup.ts`).
+**E2E tests** (`tests/e2e/`) use Playwright against a running dev/preview server. The `/event/demo` route is the primary anchor — it renders `DEMO_EVENT_CONFIG` without auth or DB, making it a stable test target. Auth-gated dashboard tests require `tests/e2e/.auth/user.json` (generated by `auth.setup.ts`).
 
 ---
 
@@ -726,6 +726,6 @@ The app uses ISR (`revalidate = 60`) on invitation pages, so published event pag
 
 **`postMessage` as the iframe contract** — all editor↔preview communication flows through typed message events. The preview iframe never re-mounts when config changes; it receives `PREVIEW_CONFIG` messages and applies them in place. This preserves curtain-open and date-revealed state across edits.
 
-**Single source of truth** — `lib/weddingSections.tsx` is the only place that decides which sections exist and in what order. `types/event.ts` is the only place that defines event-type vocabulary. Neither is duplicated anywhere else.
+**Single source of truth** — `lib/eventSections.tsx` is the only place that decides which sections exist and in what order. `types/event.ts` is the only place that defines event-type vocabulary. Neither is duplicated anywhere else.
 
 **Plan sync via Clerk publicMetadata** — Stripe webhook handlers write plan changes to both the DB and Clerk `publicMetadata`. This means the client-side `usePlan()` hook always reads a fresh value without an extra DB round-trip.

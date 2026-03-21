@@ -17,16 +17,15 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useApi } from "@/hooks/useApi";
 import { useToast } from "@/hooks/useToast";
 
-import { EventType } from "@/types/event";
-import type { WeddingConfig } from "@/types/wedding";
-import { DEMO_WEDDING_CONFIG } from "@/types/wedding";
+import type { EventConfig } from "@/types/event";
+import { DEMO_EVENT_CONFIG, EventType } from "@/types/event";
 
 import { EditorSidebar } from "@/components/dashboard/editor/EditorSidebar";
 import { NewEventDialog } from "@/components/dashboard/editor/NewEventDialog";
 import { PreviewFrame } from "@/components/dashboard/editor/PreviewFrame";
 
 interface Props {
-  initialConfig: WeddingConfig | null;
+  initialConfig: EventConfig | null;
   isNew: boolean;
 }
 
@@ -47,8 +46,8 @@ export function EditorShell({ initialConfig, isNew }: Props) {
   const previewIframeRef = useRef<HTMLIFrameElement>(null);
 
   // Live config state — every sidebar change updates this
-  const [config, setConfig] = useState<WeddingConfig>(
-    initialConfig ?? { ...DEMO_WEDDING_CONFIG, id: "", slug: "" },
+  const [config, setConfig] = useState<EventConfig>(
+    initialConfig ?? { ...DEMO_EVENT_CONFIG, id: "", slug: "" },
   );
   const [saveState, setSaveState] = useState<
     "idle" | "saving" | "saved" | "error"
@@ -89,7 +88,7 @@ export function EditorShell({ initialConfig, isNew }: Props) {
     };
   }, [previewOpen]);
 
-  const updateConfig = useCallback((patch: Partial<WeddingConfig>) => {
+  const updateConfig = useCallback((patch: Partial<EventConfig>) => {
     setConfig((prev) => ({ ...prev, ...patch }));
     setIsDirty(true);
   }, []);
@@ -136,8 +135,8 @@ export function EditorShell({ initialConfig, isNew }: Props) {
         dressCode: config.dressCode,
         accommodationEnabled: config.accommodationEnabled,
         accommodation: config.accommodation,
-        weddingPartyEnabled: config.weddingPartyEnabled,
-        weddingParty: config.weddingParty,
+        eventPartyEnabled: config.eventPartyEnabled,
+        eventParty: config.eventParty,
         faqEnabled: config.faqEnabled,
         faq: config.faq,
         livestreamEnabled: config.livestreamEnabled,

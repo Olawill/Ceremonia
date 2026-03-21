@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 
-import type { WeddingConfig } from "@/types/wedding";
+import type { EventConfig } from "@/types/event";
 
 import { DatePicker } from "@/components/ui/DatePicker";
 import { Field, Input } from "@/components/ui/FormPrimitives";
@@ -36,8 +36,8 @@ const schema = z
 type FormValues = z.infer<typeof schema>;
 
 interface Props {
-  config: WeddingConfig;
-  onChange: (patch: Partial<WeddingConfig>) => void;
+  config: EventConfig;
+  onChange: (patch: Partial<EventConfig>) => void;
 }
 
 export function RSVPSettings({ config, onChange }: Props) {
@@ -69,7 +69,7 @@ export function RSVPSettings({ config, onChange }: Props) {
         mounted = true;
         return;
       }
-      onChange(values as Partial<WeddingConfig>);
+      onChange(values as Partial<EventConfig>);
     });
     return unsubscribe;
   }, [watch, onChange]);

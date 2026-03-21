@@ -14,7 +14,7 @@ export type ThemeKey =
   | "sage"
   | "custom";
 
-export interface WeddingTheme {
+export interface EventTheme {
   key: ThemeKey;
   name: string;
   /** CSS custom property values – applied as data-theme attribute */

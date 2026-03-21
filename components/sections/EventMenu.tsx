@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 
 import { useTheme } from "@/lib/ThemeContext";
-import { Course } from "@/types/wedding";
+import { Course } from "@/types/event";
 
-interface WeddingMenuProps {
+interface EventMenuProps {
   courses?: Course[];
   label?: string;
   subLabel?: string; // e.g. "Dinner Banquet" | "Party Food" | "Brunch"
@@ -977,12 +977,12 @@ function TableSVG({
   );
 }
 
-export function WeddingMenu({
+export function EventMenu({
   courses,
   label,
   subLabel,
   description,
-}: WeddingMenuProps) {
+}: EventMenuProps) {
   const { theme } = useTheme();
   const ref = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);

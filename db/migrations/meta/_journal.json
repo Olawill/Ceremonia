@@ -5,78 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1772597652638,
-      "tag": "0000_perfect_war_machine",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1772602089753,
-      "tag": "0001_tearful_micromacro",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1772919925861,
-      "tag": "0002_simple_mordo",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1772939005606,
-      "tag": "0003_bumpy_clea",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1772940263625,
-      "tag": "0004_rich_spectrum",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1772941330288,
-      "tag": "0005_living_lady_deathstrike",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1773586932317,
-      "tag": "0006_cultured_iron_lad",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1773626272079,
-      "tag": "0007_cold_fabian_cortez",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "7",
-      "when": 1773675446585,
-      "tag": "0008_faulty_gunslinger",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "7",
-      "when": 1773757123852,
-      "tag": "0009_square_red_hulk",
-      "breakpoints": true
-    },
-    {
-      "idx": 10,
-      "version": "7",
-      "when": 1773788918080,
-      "tag": "0010_shocking_silvermane",
+      "when": 1773951395740,
+      "tag": "0000_mean_paibok",
       "breakpoints": true
     }
   ]

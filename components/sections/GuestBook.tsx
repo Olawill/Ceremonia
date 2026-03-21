@@ -14,16 +14,12 @@ interface Message {
 }
 
 interface Props {
-  weddingId: string;
+  eventId: string;
   enabled: boolean;
   existingMessages?: Message[];
 }
 
-export function GuestBook({
-  weddingId,
-  enabled,
-  existingMessages = [],
-}: Props) {
+export function GuestBook({ eventId, enabled, existingMessages = [] }: Props) {
   const { theme } = useTheme();
   const { api } = useApi();
   const { toast, handleApiError } = useToast();
@@ -39,12 +35,10 @@ export function GuestBook({
     if (!name.trim() || !message.trim()) return;
     setSubmitting(true);
 
-    const { data, error } = await api
-      .guestbook({ weddingSlug: weddingId })
-      .post({
-        name: name.trim(),
-        message: message.trim(),
-      });
+    const { data, error } = await api.guestbook({ eventSlug: eventId }).post({
+      name: name.trim(),
+      message: message.trim(),
+    });
 
     if (error) {
       handleApiError(error, "Failed to send your message");

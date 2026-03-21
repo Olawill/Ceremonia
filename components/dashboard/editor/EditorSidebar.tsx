@@ -3,13 +3,14 @@
 import clsx from "clsx";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import type { EventConfig } from "@/types/event";
 import { EventType, getVocabulary } from "@/types/event";
-import type { WeddingConfig } from "@/types/wedding";
 
 import { AccommodationEditor } from "@/components/dashboard/editor/AccommodationEditor";
 import { ContentEditor } from "@/components/dashboard/editor/ContentEditor";
 import { DesignPanel } from "@/components/dashboard/editor/DesignPanel";
 import { DressCodeEditor } from "@/components/dashboard/editor/DressCodeEditor";
+import { EventPartyEditor } from "@/components/dashboard/editor/EventPartyEditor";
 import { FaqEditor } from "@/components/dashboard/editor/FaqEditor";
 import { LivestreamEditor } from "@/components/dashboard/editor/LivestreamEditor";
 import { MediaUploader } from "@/components/dashboard/editor/MediaUploader";
@@ -20,7 +21,6 @@ import { RSVPSettings } from "@/components/dashboard/editor/RSVPSettings";
 import { TimelineEditor } from "@/components/dashboard/editor/TimelineEditor";
 import { TravelGuideEditor } from "@/components/dashboard/editor/TravelGuideEditor";
 import { VenueEditor } from "@/components/dashboard/editor/VenueEditor";
-import { WeddingPartyEditor } from "@/components/dashboard/editor/WeddingPartyEditor";
 
 const getTabs = (eventType: EventType) => {
   const vocab = getVocabulary(eventType);
@@ -49,8 +49,8 @@ const getTabs = (eventType: EventType) => {
 type TabId = ReturnType<typeof getTabs>[number]["id"];
 
 interface Props {
-  config: WeddingConfig;
-  onChange: (patch: Partial<WeddingConfig>) => void;
+  config: EventConfig;
+  onChange: (patch: Partial<EventConfig>) => void;
   previewIframeRef: React.RefObject<HTMLIFrameElement | null>;
 }
 
@@ -130,7 +130,7 @@ export function EditorSidebar({ config, onChange, previewIframeRef }: Props) {
           <AccommodationEditor config={config} onChange={onChange} />
         </div>
         <div className={activeTab === "party" ? "p-2 space-y-6" : "hidden"}>
-          <WeddingPartyEditor config={config} onChange={onChange} />
+          <EventPartyEditor config={config} onChange={onChange} />
         </div>
         <div className={activeTab === "faq" ? "p-2 space-y-6" : "hidden"}>
           <FaqEditor config={config} onChange={onChange} />

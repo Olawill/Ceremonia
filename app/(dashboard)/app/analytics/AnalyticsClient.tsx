@@ -2,7 +2,7 @@
 
 import { EventType, getVocabulary } from "@/types/event";
 
-interface Wedding {
+interface Event {
   id: string;
   bride: string;
   groom: string | null;
@@ -14,17 +14,17 @@ interface Wedding {
 }
 
 interface RSVP {
-  weddingId: string | null;
+  eventId: string | null;
   attendance: string;
   guests: number | null;
 }
 
 interface Props {
-  weddings: Wedding[];
+  events: Event[];
   rsvps: RSVP[];
 }
 
-export function AnalyticsClient({ weddings, rsvps }: Props) {
+export function AnalyticsClient({ events, rsvps }: Props) {
   return (
     <div className="p-8! w-full mx-auto space-y-8!">
       <div>
@@ -37,7 +37,7 @@ export function AnalyticsClient({ weddings, rsvps }: Props) {
       </div>
 
       <div className="space-y-4!">
-        {weddings.length === 0 && (
+        {events.length === 0 && (
           <div className="text-center py-20! rounded-xl border border-[#ffffff80]">
             <p className="font-display font-semibold text-2xl text-[#F5F0E880]">
               No events yet
@@ -45,8 +45,8 @@ export function AnalyticsClient({ weddings, rsvps }: Props) {
           </div>
         )}
 
-        {weddings.map((w) => {
-          const wRsvps = rsvps.filter((r) => r.weddingId === w.id);
+        {events.map((w) => {
+          const wRsvps = rsvps.filter((r) => r.eventId === w.id);
           const attending = wRsvps.filter((r) => r.attendance === "yes");
           const totalGuests = attending.reduce(
             (s, r) => s + (r.guests ?? 1),

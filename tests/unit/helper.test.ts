@@ -7,13 +7,28 @@ import { describe, expect, it } from "vitest";
 
 describe("formattedDate", () => {
   it("formats without dots by default", () => {
-    const result = formattedDate("2026-07-12");
+    const result = formattedDate("2026-07-12", false, "en-GB");
     expect(result).toBe("12 July 2026");
   });
 
   it("formats with dots when dotted=true", () => {
-    const result = formattedDate("2026-07-12", true);
+    const result = formattedDate("2026-07-12", true, "en-GB");
     expect(result).toBe("12 • July • 2026");
+  });
+
+  it("accepts a Date object", () => {
+    expect(formattedDate(new Date(2026, 6, 12), false, "en-GB")).toBe(
+      "12 July 2026",
+    );
+  });
+
+  it("accepts an explicit locale", () => {
+    // US locale — "July 12, 2026"
+    expect(formattedDate("2026-07-12", false, "en-US")).toBe("July 12, 2026");
+  });
+
+  it("dotted with explicit locale", () => {
+    expect(formattedDate("2026-07-12", true, "en-US")).toBe("July • 12 • 2026");
   });
 });
 

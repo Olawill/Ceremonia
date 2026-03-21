@@ -4,9 +4,12 @@ import { SparklesIcon } from "lucide-react";
 import { Metadata } from "next";
 import Link from "next/link";
 
-import { DeleteEventButton } from "@/components/dashboard/DeleteEventButton";
 import { db } from "@/db";
-import { weddings } from "@/db/schema";
+
+import { DeleteEventButton } from "@/components/dashboard/DeleteEventButton";
+
+import { events } from "@/db/schema";
+import { getExpiryStatus } from "@/lib/helper";
 import { EventType, getVocabulary } from "@/types/event";
 
 export const metadata: Metadata = { title: "My Events" };
@@ -15,8 +18,8 @@ export default async function DashboardPage() {
   const { userId } = await auth();
 
   // Direct DB read in server component — no fetch, no loading state
-  const myWeddings = userId
-    ? await db.select().from(weddings).where(eq(weddings.userId, userId))
+  const myEvents = userId
+    ? await db.select().from(events).where(eq(events.userId, userId))
     : [];
 
   return (
@@ -36,7 +39,7 @@ export default async function DashboardPage() {
         </h1>
       </div>
 
-      {myWeddings.length === 0 ? (
+      {myEvents.length === 0 ? (
         <div className="rounded-2xl p-16! text-center border border-[#D4AF3720] bg-[#D4AF3706] space-y-4!">
           <p className="font-display italic font-semibold text-2xl mb-6 text-[#F5F0E8]">
             No events yet
@@ -52,7 +55,7 @@ export default async function DashboardPage() {
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
-          {myWeddings.map((w) => (
+          {myEvents.map((w) => (
             <Link
               key={w.id}
               href={`/app/editor/${w.slug}`}
@@ -80,7 +83,7 @@ export default async function DashboardPage() {
               >
                 {w.slug}.ceremonia.app
               </p>
-              <div className="flex gap-3">
+              <div className="flex gap-3 flex-wrap">
                 <span
                   className="font-label text-[10px] tracking-widest uppercase px-3! py-1! rounded-full"
                   style={{
@@ -101,6 +104,30 @@ export default async function DashboardPage() {
                 >
                   {w.viewCount ?? 0} views
                 </span>
+
+                {/* ── Expiry badges ── */}
+                {(() => {
+                  const status = getExpiryStatus(w.expiresAt);
+                  if (status === "expired")
+                    return (
+                      <span className="font-label text-[10px] tracking-widest uppercase px-3! py-1! rounded-full bg-red-500/10 text-red-400 border border-red-500/20">
+                        Expired
+                      </span>
+                    );
+                  if (status === "expiring-soon")
+                    return (
+                      <span className="font-label text-[10px] tracking-widest uppercase px-3! py-1! rounded-full bg-[#C4A35A]/10 text-[#C4A35A] border border-[#C4A35A]/20">
+                        Expires soon
+                      </span>
+                    );
+                  if (status === "expiring-month")
+                    return (
+                      <span className="font-label text-[10px] tracking-widest uppercase px-3! py-1! rounded-full bg-[#C4A35A]/6 text-[#C4A35A]/70 border border-[#C4A35A]/10">
+                        Expiring
+                      </span>
+                    );
+                  return null;
+                })()}
               </div>
 
               <div className="absolute top-3 right-3">
@@ -117,7 +144,7 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {myWeddings.length > 0 && (
+      {myEvents.length > 0 && (
         <Link
           href="/app/editor/new"
           className="inline-flex items-center gap-2 mt-8! font-label text-xs

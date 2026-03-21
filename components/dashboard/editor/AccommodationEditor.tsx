@@ -14,16 +14,16 @@ import { Field, Input, Textarea } from "@/components/ui/FormPrimitives";
 
 import { DatePicker } from "@/components/ui/DatePicker";
 import { ImageUploadField } from "@/components/ui/ImageUploadField";
-import { getVocabulary } from "@/types/event";
 import type {
   AccommodationConfig,
   AccommodationOption,
-  WeddingConfig,
-} from "@/types/wedding";
+  EventConfig,
+} from "@/types/event";
+import { getVocabulary } from "@/types/event";
 
 interface Props {
-  config: WeddingConfig;
-  onChange: (patch: Partial<WeddingConfig>) => void;
+  config: EventConfig;
+  onChange: (patch: Partial<EventConfig>) => void;
 }
 
 const DEFAULT_OPTION = (): AccommodationOption => ({

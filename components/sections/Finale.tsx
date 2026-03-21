@@ -8,7 +8,7 @@ import { useTheme } from "@/lib/ThemeContext";
 import { fireConfetti } from "@/lib/confetti";
 
 import { formattedDate } from "@/lib/helper";
-import { DEMO_WEDDING_CONFIG } from "@/types/wedding";
+import { DEMO_EVENT_CONFIG } from "@/types/event";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -552,7 +552,7 @@ export function Finale({
   const sectionRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const displayDate = date ?? DEMO_WEDDING_CONFIG.date;
+  const displayDate = date ?? DEMO_EVENT_CONFIG.date;
 
   useEffect(() => {
     if (!sectionRef.current || !contentRef.current) return;

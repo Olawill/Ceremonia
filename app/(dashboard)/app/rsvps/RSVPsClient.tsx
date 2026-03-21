@@ -1,12 +1,14 @@
 "use client";
 
-import type { Plan } from "@/lib/plans";
-import { EventType, getVocabulary } from "@/types/event";
 import clsx from "clsx";
 import { DownloadIcon } from "lucide-react";
 import { useState } from "react";
 
-interface Wedding {
+import type { Plan } from "@/lib/plans";
+
+import { EventType, getVocabulary } from "@/types/event";
+
+interface Event {
   id: string;
   bride: string;
   groom: string | null;
@@ -16,7 +18,7 @@ interface Wedding {
 
 interface RSVP {
   id: string;
-  weddingId: string | null;
+  eventId: string | null;
   name: string;
   attendance: string;
   guests: number | null;
@@ -26,30 +28,23 @@ interface RSVP {
 }
 
 interface Props {
-  weddings: Wedding[];
-  rsvpsByWedding: Record<string, RSVP[]>;
+  events: Event[];
+  rsvpsByEvent: Record<string, RSVP[]>;
   plan: Plan;
   canExport: boolean;
 }
 
-export function RSVPsClient({
-  weddings,
-  rsvpsByWedding,
-  plan,
-  canExport,
-}: Props) {
-  const [selectedWeddingId, setSelectedWeddingId] = useState(
-    weddings[0]?.id ?? "",
-  );
+export function RSVPsClient({ events, rsvpsByEvent, plan, canExport }: Props) {
+  const [selectedEventId, setSelectedEventId] = useState(events[0]?.id ?? "");
 
-  const selectedWedding = weddings.find((w) => w.id === selectedWeddingId);
-  const rows = rsvpsByWedding[selectedWeddingId] ?? [];
+  const selectedEvent = events.find((w) => w.id === selectedEventId);
+  const rows = rsvpsByEvent[selectedEventId] ?? [];
   const attending = rows.filter((r) => r.attendance === "yes");
   const declining = rows.filter((r) => r.attendance === "no");
   const totalGuests = attending.reduce((sum, r) => sum + (r.guests ?? 1), 0);
 
   const handleExport = () => {
-    window.open(`/api/rsvp/export?weddingId=${selectedWeddingId}`, "_blank");
+    window.open(`/api/rsvp/export?eventId=${selectedEventId}`, "_blank");
   };
 
   return (
@@ -63,7 +58,7 @@ export function RSVPsClient({
           <p className="text-lg font-display italic font-semibold text-[#F5F0E890] mt-1!">
             Guest responses for your{" "}
             {getVocabulary(
-              (selectedWedding?.eventType as EventType) ?? "wedding",
+              (selectedEvent?.eventType as EventType) ?? "wedding",
             ).eventLabel.toLowerCase()}
           </p>
         </div>
@@ -79,16 +74,16 @@ export function RSVPsClient({
         )}
       </div>
 
-      {/* Wedding selector (if multiple) */}
-      {weddings.length > 1 && (
+      {/* event selector (if multiple) */}
+      {events.length > 1 && (
         <div className="flex gap-2 flex-wrap">
-          {weddings.map((w) => (
+          {events.map((w) => (
             <button
               key={w.id}
-              onClick={() => setSelectedWeddingId(w.id)}
+              onClick={() => setSelectedEventId(w.id)}
               className={clsx(
                 "px-4 py-2 rounded-lg font-label text-[11px] tracking-[0.3em] uppercase transition-colors border",
-                selectedWeddingId === w.id
+                selectedEventId === w.id
                   ? "border-[#D4AF37] text-[#D4AF37] bg-[#D4AF3710]"
                   : "border-[#ffffff15] text-[#F5F0E880] hover:border-[#D4AF3740]",
               )}

@@ -2,15 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { buildSections } from "@/lib/weddingSections";
-import type { WeddingConfig } from "@/types/wedding";
+import { buildSections } from "@/lib/eventSections";
+import type { EventConfig } from "@/types/event";
 
 interface Props {
-  config: WeddingConfig;
+  config: EventConfig;
   iframeRef: React.RefObject<HTMLIFrameElement | null>;
 }
 
-function buildUrl(config: WeddingConfig): string {
+function buildUrl(config: EventConfig): string {
   return `/event/preview?initial=${encodeURIComponent(
     btoa(
       Array.from(new TextEncoder().encode(JSON.stringify(config)))

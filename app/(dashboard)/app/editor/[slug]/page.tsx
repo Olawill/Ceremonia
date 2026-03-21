@@ -5,28 +5,27 @@ import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { db } from "@/db";
-import { weddings } from "@/db/schema";
 
 import {
   EditorShell,
   EditorSkeleton,
 } from "@/components/dashboard/editor/EditorShell";
 
-import { EventType, getVocabulary } from "@/types/event";
-import type { ThemeKey, WeddingTheme } from "@/types/theme";
+import { events } from "@/db/schema";
 import type {
   AccommodationConfig,
   Course,
   CurtainStyle,
   DressCodeConfig,
+  EventConfig,
+  EventPartyMember,
   FaqItem,
   TimelineEvent,
   TravelItem,
   VenueEvent,
-  WeddingConfig,
-  WeddingPartyMember,
-} from "@/types/wedding";
-import { DEMO_WEDDING_CONFIG } from "@/types/wedding";
+} from "@/types/event";
+import { DEMO_EVENT_CONFIG, EventType, getVocabulary } from "@/types/event";
+import type { EventTheme, ThemeKey } from "@/types/theme";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -36,21 +35,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   if (slug === "new") return { title: "New Event" };
 
-  const [wedding] = await db
+  const [event] = await db
     .select({
-      bride: weddings.bride,
-      groom: weddings.groom,
-      eventType: weddings.eventType,
+      bride: events.bride,
+      groom: events.groom,
+      eventType: events.eventType,
     })
-    .from(weddings)
-    .where(eq(weddings.slug, slug))
+    .from(events)
+    .where(eq(events.slug, slug))
     .limit(1);
 
-  if (!wedding) return { title: "Editor" };
-  const vocab = getVocabulary((wedding.eventType as EventType) ?? "wedding");
-  const hostsStr = wedding.groom
-    ? `${wedding.bride} & ${wedding.groom}`
-    : wedding.bride;
+  if (!event) return { title: "Editor" };
+  const vocab = getVocabulary((event.eventType as EventType) ?? "wedding");
+  const hostsStr = event.groom
+    ? `${event.bride} & ${event.groom}`
+    : event.bride;
   return { title: `Editing ${hostsStr} — ${vocab.eventLabel}` };
 }
 
@@ -69,53 +68,52 @@ export default async function EditorPage({ params }: Props) {
     );
   }
 
-  const [wedding] = await db
+  const [event] = await db
     .select()
-    .from(weddings)
-    .where(and(eq(weddings.slug, slug), eq(weddings.userId, userId)))
+    .from(events)
+    .where(and(eq(events.slug, slug), eq(events.userId, userId)))
     .limit(1);
 
-  if (!wedding) notFound();
+  if (!event) notFound();
 
-  const config: WeddingConfig = {
-    id: wedding.id,
-    slug: wedding.slug,
-    eventType: (wedding.eventType as EventType) ?? "wedding",
-    bride: wedding.bride,
-    groom: wedding.groom ?? "",
-    tagLine: wedding.tagLine ?? undefined,
-    date: wedding.date,
+  const config: EventConfig = {
+    id: event.id,
+    slug: event.slug,
+    eventType: (event.eventType as EventType) ?? "wedding",
+    bride: event.bride,
+    groom: event.groom ?? "",
+    tagLine: event.tagLine ?? undefined,
+    date: event.date,
     venueDetails:
-      (wedding.venueDetails as VenueEvent[]) ??
-      DEMO_WEDDING_CONFIG.venueDetails,
-    themeKey: (wedding.themeKey as ThemeKey) ?? "royal",
-    customTheme: wedding.customTheme as WeddingTheme | undefined,
-    curtainStyle: (wedding.curtainStyle as CurtainStyle) ?? "velvet",
-    audioUrl: wedding.audioUrl ?? undefined,
-    heroPhotoUrl: wedding.heroPhotoUrl ?? undefined,
-    guestBookEnabled: wedding.guestBookEnabled ?? false,
-    timeline: (wedding.timeline as TimelineEvent[]) ?? [],
-    menuCourses: (wedding.menuCourses as Course[]) ?? [],
-    rsvpEnabled: wedding.rsvpEnabled ?? true,
-    rsvpDeadline: wedding.rsvpDeadline ?? undefined,
-    published: wedding.published ?? false,
-    passwordProtected: wedding.passwordProtected ?? false,
-    dressCodeEnabled: wedding.dressCodeEnabled ?? false,
-    dressCode: wedding.dressCode as DressCodeConfig | undefined,
-    accommodationEnabled: wedding.accommodationEnabled ?? false,
-    accommodation: wedding.accommodation as AccommodationConfig | undefined,
-    weddingPartyEnabled: wedding.weddingPartyEnabled ?? false,
-    weddingParty: wedding.weddingParty as WeddingPartyMember[] | undefined,
-    faqEnabled: wedding.faqEnabled ?? false,
-    faq: wedding.faq as FaqItem[] | undefined,
-    livestreamEnabled: wedding.livestreamEnabled ?? false,
-    livestreamUrl: wedding.livestreamUrl ?? undefined,
-    livestreamTitle: wedding.livestreamTitle ?? undefined,
-    livestreamNote: wedding.livestreamNote ?? undefined,
-    photoGalleryEnabled: wedding.photoGalleryEnabled ?? false,
-    galleryPhotos: (wedding.galleryPhotos as string[]) ?? [],
-    travelGuideEnabled: wedding.travelGuideEnabled ?? false,
-    travelItems: (wedding.travelItems as TravelItem[]) ?? [],
+      (event.venueDetails as VenueEvent[]) ?? DEMO_EVENT_CONFIG.venueDetails,
+    themeKey: (event.themeKey as ThemeKey) ?? "royal",
+    customTheme: event.customTheme as EventTheme | undefined,
+    curtainStyle: (event.curtainStyle as CurtainStyle) ?? "velvet",
+    audioUrl: event.audioUrl ?? undefined,
+    heroPhotoUrl: event.heroPhotoUrl ?? undefined,
+    guestBookEnabled: event.guestBookEnabled ?? false,
+    timeline: (event.timeline as TimelineEvent[]) ?? [],
+    menuCourses: (event.menuCourses as Course[]) ?? [],
+    rsvpEnabled: event.rsvpEnabled ?? true,
+    rsvpDeadline: event.rsvpDeadline ?? undefined,
+    published: event.published ?? false,
+    passwordProtected: event.passwordProtected ?? false,
+    dressCodeEnabled: event.dressCodeEnabled ?? false,
+    dressCode: event.dressCode as DressCodeConfig | undefined,
+    accommodationEnabled: event.accommodationEnabled ?? false,
+    accommodation: event.accommodation as AccommodationConfig | undefined,
+    eventPartyEnabled: event.eventPartyEnabled ?? false,
+    eventParty: event.eventParty as EventPartyMember[] | undefined,
+    faqEnabled: event.faqEnabled ?? false,
+    faq: event.faq as FaqItem[] | undefined,
+    livestreamEnabled: event.livestreamEnabled ?? false,
+    livestreamUrl: event.livestreamUrl ?? undefined,
+    livestreamTitle: event.livestreamTitle ?? undefined,
+    livestreamNote: event.livestreamNote ?? undefined,
+    photoGalleryEnabled: event.photoGalleryEnabled ?? false,
+    galleryPhotos: (event.galleryPhotos as string[]) ?? [],
+    travelGuideEnabled: event.travelGuideEnabled ?? false,
+    travelItems: (event.travelItems as TravelItem[]) ?? [],
   };
 
   return (

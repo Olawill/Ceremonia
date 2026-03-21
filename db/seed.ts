@@ -1,4 +1,4 @@
-// import { DEMO_WEDDING_CONFIG } from "@/types/wedding";
+// import { DEMO_EVENT_CONFIG } from "@/types/wedding";
 // import { db } from "./index";
 // import { weddings } from "./schema";
 
@@ -10,15 +10,15 @@
 //     .values({
 //       slug: "demo",
 //       userId: null,
-//       bride: DEMO_WEDDING_CONFIG.bride,
-//       groom: DEMO_WEDDING_CONFIG.groom,
-//       tagLine: DEMO_WEDDING_CONFIG.tagLine,
-//       date: DEMO_WEDDING_CONFIG.date,
-//       venueDetails: DEMO_WEDDING_CONFIG.venueDetails,
-//       themeKey: DEMO_WEDDING_CONFIG.themeKey,
-//       curtainStyle: DEMO_WEDDING_CONFIG.curtainStyle,
-//       timeline: DEMO_WEDDING_CONFIG.timeline,
-//       menuCourses: DEMO_WEDDING_CONFIG.menuCourses,
+//       bride: DEMO_EVENT_CONFIG.bride,
+//       groom: DEMO_EVENT_CONFIG.groom,
+//       tagLine: DEMO_EVENT_CONFIG.tagLine,
+//       date: DEMO_EVENT_CONFIG.date,
+//       venueDetails: DEMO_EVENT_CONFIG.venueDetails,
+//       themeKey: DEMO_EVENT_CONFIG.themeKey,
+//       curtainStyle: DEMO_EVENT_CONFIG.curtainStyle,
+//       timeline: DEMO_EVENT_CONFIG.timeline,
+//       menuCourses: DEMO_EVENT_CONFIG.menuCourses,
 //       rsvpEnabled: true,
 //       published: true,
 //     })
@@ -34,41 +34,41 @@
 // });
 
 import { hashPassword } from "@/lib/password";
-import { DEMO_WEDDING_CONFIG } from "@/types/wedding";
+import { DEMO_EVENT_CONFIG } from "@/types/event";
 import { eq } from "drizzle-orm";
 import { db } from "./index";
-import { registryItems, weddings } from "./schema";
+import { events, registryItems } from "./schema";
 
 async function main() {
   console.log("🌱 Seeding database...");
 
   await db
-    .insert(weddings)
+    .insert(events)
     .values({
       slug: "demo",
       eventType: "wedding",
       userId: null,
-      bride: DEMO_WEDDING_CONFIG.bride,
-      groom: DEMO_WEDDING_CONFIG.groom,
-      tagLine: DEMO_WEDDING_CONFIG.tagLine,
-      finaleTagLine: DEMO_WEDDING_CONFIG.finaleTagLine,
-      date: DEMO_WEDDING_CONFIG.date,
-      venueDetails: DEMO_WEDDING_CONFIG.venueDetails,
-      themeKey: DEMO_WEDDING_CONFIG.themeKey,
-      curtainStyle: DEMO_WEDDING_CONFIG.curtainStyle,
-      timeline: DEMO_WEDDING_CONFIG.timeline,
-      menuCourses: DEMO_WEDDING_CONFIG.menuCourses,
-      rsvpEnabled: DEMO_WEDDING_CONFIG.rsvpEnabled,
-      passwordProtected: DEMO_WEDDING_CONFIG.passwordProtected,
+      bride: DEMO_EVENT_CONFIG.bride,
+      groom: DEMO_EVENT_CONFIG.groom,
+      tagLine: DEMO_EVENT_CONFIG.tagLine,
+      finaleTagLine: DEMO_EVENT_CONFIG.finaleTagLine,
+      date: DEMO_EVENT_CONFIG.date,
+      venueDetails: DEMO_EVENT_CONFIG.venueDetails,
+      themeKey: DEMO_EVENT_CONFIG.themeKey,
+      curtainStyle: DEMO_EVENT_CONFIG.curtainStyle,
+      timeline: DEMO_EVENT_CONFIG.timeline,
+      menuCourses: DEMO_EVENT_CONFIG.menuCourses,
+      rsvpEnabled: DEMO_EVENT_CONFIG.rsvpEnabled,
+      passwordProtected: DEMO_EVENT_CONFIG.passwordProtected,
       published: true,
     })
     .onConflictDoNothing();
 
   // Fetch the demo wedding id for registry items
   const [demoWedding] = await db
-    .select({ id: weddings.id })
-    .from(weddings)
-    .where(eq(weddings.slug, "demo"))
+    .select({ id: events.id })
+    .from(events)
+    .where(eq(events.slug, "demo"))
     .limit(1);
 
   if (demoWedding) {
@@ -76,7 +76,7 @@ async function main() {
       .insert(registryItems)
       .values([
         {
-          weddingId: demoWedding.id,
+          eventId: demoWedding.id,
           title: "KitchenAid Stand Mixer",
           description: "5qt tilt-head model in Empire Red",
           price: 44999,
@@ -87,7 +87,7 @@ async function main() {
           sortOrder: 1,
         },
         {
-          weddingId: demoWedding.id,
+          eventId: demoWedding.id,
           title: "Le Creuset Casserole Dish",
           description: "28cm round casserole in Volcanic",
           price: 27500,
@@ -98,7 +98,7 @@ async function main() {
           sortOrder: 2,
         },
         {
-          weddingId: demoWedding.id,
+          eventId: demoWedding.id,
           title: "Honeymoon Fund",
           description:
             "Help us celebrate our first adventure together in Tuscany",
@@ -109,7 +109,7 @@ async function main() {
           sortOrder: 3,
         },
         {
-          weddingId: demoWedding.id,
+          eventId: demoWedding.id,
           title: "Linen Bedding Set",
           description: "King size natural linen duvet cover and pillowcases",
           price: 18999,
@@ -125,7 +125,7 @@ async function main() {
 
   // Seed a password-protected wedding for E2E tests
   await db
-    .insert(weddings)
+    .insert(events)
     .values({
       slug: "test-protected",
       userId: null,

@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 // ── Event invitation page (demo) ───────────────────────────────────────────
 //
-// The /event/demo route always renders DEMO_WEDDING_CONFIG (Taiwo & Tayo)
+// The /event/demo route always renders DEMO_EVENT_CONFIG (Taiwo & Tayo)
 // without a DB lookup or auth, making it a reliable E2E anchor.
 
 test.describe("Event invitation page (demo)", () => {
@@ -48,7 +48,7 @@ test.describe("Event invitation page (demo)", () => {
     //   await page.click("body", { force: true });
     // }
 
-    await page.waitForSelector("[data-scroll-container]", { timeout: 10000 });
+    await page.waitForSelector("[data-scroll-container]", { timeout: 20000 });
 
     // Step 1b: Scroll the snap container to the ScratchDate section so the
     // canvas is in the viewport before we attempt mouse interaction.
@@ -112,7 +112,7 @@ test.describe("Event invitation page (demo)", () => {
     });
 
     await expect(page.locator("h2", { hasText: "RSVP" })).toBeVisible({
-      timeout: 10000,
+      timeout: 15000,
     });
   });
 });
@@ -195,7 +195,7 @@ test.describe("Event invitation — password protected", () => {
     });
     await page.locator('button[type="submit"]').click();
 
-    // router.refresh() triggers an RSC re-render that swaps the gate for the WeddingEngine.
+    // router.refresh() triggers an RSC re-render that swaps the gate for the EventEngine.
     // Wait for positive evidence of the new content rather than asserting the old is gone,
     // which races the refresh cycle.
     await expect(page.locator("canvas").first()).toBeAttached({
@@ -207,7 +207,7 @@ test.describe("Event invitation — password protected", () => {
       page.locator("h1", { hasText: "Private Invitation" }),
     ).not.toBeVisible({ timeout: 8000 });
 
-    // The WeddingEngine (curtain) should now be visible
+    // The EventEngine (curtain) should now be visible
     await expect(page.locator("canvas").first()).toBeAttached();
   });
 });

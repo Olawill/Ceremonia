@@ -5,10 +5,10 @@ import { LogOutIcon, Trash2Icon, UserIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { useApi } from "@/hooks/useApi";
 import type { Plan } from "@/lib/plans";
-import { toast } from "sonner";
 
 interface Props {
   email: string;

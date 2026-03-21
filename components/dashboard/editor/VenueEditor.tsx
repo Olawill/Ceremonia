@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 
-import type { VenueEvent, WeddingConfig } from "@/types/wedding";
+import type { EventConfig, VenueEvent } from "@/types/event";
 
 import { Field, Input } from "@/components/ui/FormPrimitives";
 import { PlusIcon, XIcon } from "lucide-react";
@@ -25,8 +25,8 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 interface Props {
-  config: WeddingConfig;
-  onChange: (patch: Partial<WeddingConfig>) => void;
+  config: EventConfig;
+  onChange: (patch: Partial<EventConfig>) => void;
 }
 
 export function VenueEditor({ config, onChange }: Props) {

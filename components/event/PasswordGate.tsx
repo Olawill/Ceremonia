@@ -1,6 +1,6 @@
 "use client";
 
-import { unlockWedding } from "@/app/event/[slug]/actions";
+import { unlockEvent } from "@/app/event/[slug]/actions";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
@@ -18,7 +18,7 @@ export function PasswordGate({ slug }: Props) {
     // const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     startTransition(async () => {
-      const result = await unlockWedding(slug, input);
+      const result = await unlockEvent(slug, input);
       if (result.success) {
         router.refresh(); // Re-render the page — server will now see the cookie
       } else {

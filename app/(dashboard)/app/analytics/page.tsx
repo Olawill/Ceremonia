@@ -3,7 +3,7 @@ import { eq, inArray } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
 import { db } from "@/db";
-import { rsvps, users, weddings } from "@/db/schema";
+import { events, rsvps, users } from "@/db/schema";
 
 import type { Plan } from "@/lib/plans";
 import { PLAN_FEATURES } from "@/lib/plans";
@@ -40,16 +40,16 @@ export default async function AnalyticsPage() {
     );
   }
 
-  const userWeddings = await db
+  const userEvents = await db
     .select()
-    .from(weddings)
-    .where(eq(weddings.userId, userId));
+    .from(events)
+    .where(eq(events.userId, userId));
 
-  const weddingIds = userWeddings.map((w) => w.id);
+  const eventIds = userEvents.map((w) => w.id);
 
-  const allRsvps = weddingIds.length
-    ? await db.select().from(rsvps).where(inArray(rsvps.weddingId, weddingIds))
+  const allRsvps = eventIds.length
+    ? await db.select().from(rsvps).where(inArray(rsvps.eventId, eventIds))
     : [];
 
-  return <AnalyticsClient weddings={userWeddings} rsvps={allRsvps} />;
+  return <AnalyticsClient events={userEvents} rsvps={allRsvps} />;
 }

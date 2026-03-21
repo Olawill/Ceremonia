@@ -111,29 +111,60 @@ export function planMeetsRequirement(
   return PLAN_ORDER.indexOf(userPlan) >= PLAN_ORDER.indexOf(requiredPlan);
 }
 
+/** Hosting duration in days. null = no expiry (active subscription) */
+export const PLAN_HOSTING_DAYS: Record<Plan, number | null> = {
+  free: 365, // 12 months
+  starter: null, // active subscription = no expiry
+  pro: null,
+  agency: null,
+};
+
+/**
+ * For one-time Starter purchases specifically.
+ * Subscriptions use PLAN_HOSTING_DAYS (null = no expiry).
+ */
+export const STARTER_ONCE_HOSTING_DAYS = 365; // 12 months
+
+/**
+ * Computes the expiry date for a newly created event.
+ * Pass isOnce=true for one-time Starter purchases.
+ */
+export function computeEventExpiry(plan: Plan, isOnce = false): Date | null {
+  if (isOnce && plan === "starter") {
+    const d = new Date();
+    d.setDate(d.getDate() + STARTER_ONCE_HOSTING_DAYS);
+    return d;
+  }
+  const days = PLAN_HOSTING_DAYS[plan];
+  if (days === null) return null;
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
 export const PRICING = {
   starter: {
     monthly: {
-      priceId: env.NEXT_PUBLIC_STRIPE_PRICE_STARTER_MONTHLY!,
+      productId: env.NEXT_PUBLIC_POLAR_PRODUCT_STARTER_MONTHLY,
       amount: 9,
       label: "$9/mo",
     },
     once: {
-      priceId: env.NEXT_PUBLIC_STRIPE_PRICE_STARTER_ONCE!,
+      productId: env.NEXT_PUBLIC_POLAR_PRODUCT_STARTER_ONCE,
       amount: 29,
       label: "$29 once",
     },
   },
   pro: {
     monthly: {
-      priceId: env.NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY!,
+      productId: env.NEXT_PUBLIC_POLAR_PRODUCT_PRO_MONTHLY,
       amount: 19,
       label: "$19/mo",
     },
   },
   agency: {
     monthly: {
-      priceId: env.NEXT_PUBLIC_STRIPE_PRICE_AGENCY_MONTHLY!,
+      productId: env.NEXT_PUBLIC_POLAR_PRODUCT_AGENCY_MONTHLY,
       amount: 79,
       label: "$79/mo",
     },

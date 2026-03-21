@@ -22,8 +22,8 @@ import { formatPrice } from "@/components/sections/Registry";
 import { useApi } from "@/hooks/useApi";
 import { useToast } from "@/hooks/useToast";
 
+import type { EventConfig } from "@/types/event";
 import { getVocabulary } from "@/types/event";
-import type { WeddingConfig } from "@/types/wedding";
 
 interface RegistryItem {
   id: string;
@@ -59,8 +59,8 @@ interface ScrapedItem {
 }
 
 interface Props {
-  config: WeddingConfig;
-  onChange: (patch: Partial<WeddingConfig>) => void;
+  config: EventConfig;
+  onChange: (patch: Partial<EventConfig>) => void;
 }
 
 const RETAILER_SUGGESTIONS = [
@@ -117,7 +117,7 @@ export function RegistryEditor({ config, onChange }: Props) {
 
   const fetchItems = async () => {
     if (!config.id) return;
-    const { data } = await api.registry({ weddingId: config.id }).get();
+    const { data } = await api.registry({ eventId: config.id }).get();
     if (data) setItems(data as RegistryItem[]);
     setLoading(false);
   };
@@ -219,7 +219,7 @@ export function RegistryEditor({ config, onChange }: Props) {
 
     const results = await Promise.allSettled(
       selected.map((item) =>
-        api.registry({ weddingId: config.id! }).post({
+        api.registry({ eventId: config.id! }).post({
           title: item.editTitle || item.title || "Gift",
           description: item.description || undefined,
           price: item.editPrice
@@ -255,7 +255,7 @@ export function RegistryEditor({ config, onChange }: Props) {
   const handleManualAdd = async () => {
     if (!newItem.title.trim() || !config.id) return;
     setSavingNew(true);
-    const { error } = await api.registry({ weddingId: config.id }).post({
+    const { error } = await api.registry({ eventId: config.id }).post({
       title: newItem.title.trim(),
       description: newItem.description || undefined,
       price: newItem.price

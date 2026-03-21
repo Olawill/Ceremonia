@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import type { MetadataRoute } from "next";
 
 import { db } from "@/db";
-import { weddings } from "@/db/schema";
+import { events } from "@/db/schema";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const BASE = process.env.NEXT_PUBLIC_APP_URL!;
@@ -47,15 +47,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Published wedding pages — these are the main SEO value
+  // Published event pages — these are the main SEO value
   const publishedEvents = await db
     .select({
-      slug: weddings.slug,
-      updatedAt: weddings.createdAt,
-      passwordProtected: weddings.passwordProtected,
+      slug: events.slug,
+      updatedAt: events.createdAt,
+      passwordProtected: events.passwordProtected,
     })
-    .from(weddings)
-    .where(eq(weddings.published, true));
+    .from(events)
+    .where(eq(events.published, true));
 
   const eventRoutes: MetadataRoute.Sitemap = publishedEvents
     // Exclude password-protected invitations — they're private

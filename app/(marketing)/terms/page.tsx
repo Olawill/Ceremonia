@@ -78,7 +78,7 @@ export default function TermsPage() {
             4. Subscriptions and billing
           </h2>
           <p className="mb-4!">
-            Paid plans are billed monthly or as a one-time payment via Stripe.
+            Paid plans are billed monthly or as a one-time payment via Polar.
             Subscriptions renew automatically unless cancelled before the
             renewal date. Refunds are offered at our discretion within 7 days of
             a charge if the service was not used substantively. One-time

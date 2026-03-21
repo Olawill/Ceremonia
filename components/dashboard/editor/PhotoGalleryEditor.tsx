@@ -5,12 +5,12 @@ import { PlusIcon, Trash2Icon } from "lucide-react";
 import { SectionToggle } from "@/components/dashboard/editor/SectionToggle";
 import { ImageUploadField } from "@/components/ui/ImageUploadField";
 
+import type { EventConfig } from "@/types/event";
 import { getVocabulary } from "@/types/event";
-import type { WeddingConfig } from "@/types/wedding";
 
 interface Props {
-  config: WeddingConfig;
-  onChange: (patch: Partial<WeddingConfig>) => void;
+  config: EventConfig;
+  onChange: (patch: Partial<EventConfig>) => void;
 }
 
 export function PhotoGalleryEditor({ config, onChange }: Props) {

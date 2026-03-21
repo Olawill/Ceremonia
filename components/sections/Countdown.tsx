@@ -6,10 +6,10 @@ import { createCountDownLoaction, formattedDate } from "@/lib/helper";
 import { useTheme } from "@/lib/ThemeContext";
 
 import {
-  DEMO_WEDDING_CONFIG,
+  DEMO_EVENT_CONFIG,
   FALLBACK_LOCATION,
   VenueEvent,
-} from "@/types/wedding";
+} from "@/types/event";
 import clsx from "clsx";
 
 interface TimeLeft {
@@ -25,8 +25,8 @@ interface CoundownProps {
   eventLabel?: string;
 }
 
-function getTimeLeft(weddingDate: Date): TimeLeft {
-  const diff = weddingDate.getTime() - Date.now();
+function getTimeLeft(eventDate: Date): TimeLeft {
+  const diff = eventDate.getTime() - Date.now();
   if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
   return {
     days: Math.floor(diff / (1000 * 60 * 60 * 24)),
@@ -120,7 +120,7 @@ export function Countdown({
   const ref = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
 
-  const displayDate = date ?? DEMO_WEDDING_CONFIG.date;
+  const displayDate = date ?? DEMO_EVENT_CONFIG.date;
   const [year, month, day] = displayDate.split("-").map(Number);
   // Month is 0-indexed in the Date constructor
   const local = new Date(year, month - 1, day);

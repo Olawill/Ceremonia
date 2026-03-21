@@ -1,7 +1,7 @@
 "use client";
 
 import { useTheme } from "@/lib/ThemeContext";
-import type { DressCodeConfig, DressCodeStyle } from "@/types/wedding";
+import type { DressCodeConfig, DressCodeStyle } from "@/types/event";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useEffect, useRef } from "react";

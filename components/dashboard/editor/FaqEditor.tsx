@@ -12,11 +12,11 @@ import { useState } from "react";
 import { SectionToggle } from "@/components/dashboard/editor/SectionToggle";
 import { Field, Input, Textarea } from "@/components/ui/FormPrimitives";
 
-import type { FaqItem, WeddingConfig } from "@/types/wedding";
+import type { EventConfig, FaqItem } from "@/types/event";
 
 interface Props {
-  config: WeddingConfig;
-  onChange: (patch: Partial<WeddingConfig>) => void;
+  config: EventConfig;
+  onChange: (patch: Partial<EventConfig>) => void;
 }
 
 const DEFAULT_ITEM = (): FaqItem => ({
