@@ -499,7 +499,7 @@ export function BillingClient({
               {/* Feature list */}
               <ul className="space-y-2! flex-1">
                 {tier.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2">
+                  <li key={f} className="flex items-center justify-start gap-2">
                     <StarIcon className="size-3 text-dash-gold fill-dash-gold shrink-0 mt-0.5" />
                     <span className="font-display italic text-dash-text/70">
                       {f}

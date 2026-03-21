@@ -1,20 +1,16 @@
 import { count, eq } from "drizzle-orm";
 import { Elysia, t } from "elysia";
-import { Resend } from "resend";
 
 import { db } from "@/db";
 import { events, rsvps, users } from "@/db/schema";
 
 import { RSVPNotificationEmail } from "@/emails/RSVPNotification";
 
-import { env } from "@/env";
-
-import { PLAN_FEATURES } from "@/lib/plans";
+import { Plan, PLAN_FEATURES } from "@/lib/plans";
 import { ingestUsage } from "@/lib/polar-usage";
 import { getPostHogClient } from "@/lib/posthog-server";
+import { resend } from "@/lib/resend";
 import { EventType, getVocabulary } from "@/types/event";
-
-const resend = new Resend(env.RESEND_API_KEY);
 
 export const rsvpRouter = new Elysia({ prefix: "/rsvp" })
   // GET /api/rsvp?eventId=... — fetch RSVPs for a event (used by dashboard)
@@ -61,7 +57,9 @@ export const rsvpRouter = new Elysia({ prefix: "/rsvp" })
       if (!event.rsvpEnabled)
         return status(403, { message: "RSVPs are closed" });
 
-      // 2. Check free plan RSVP cap (20 max)
+      // 2. Check free plan RSVP cap (20 max) + resolve owner plan once
+      let ownerPlan: Plan = "free";
+
       if (event.userId) {
         const [owner] = await db
           .select({ plan: users.plan })
@@ -69,8 +67,8 @@ export const rsvpRouter = new Elysia({ prefix: "/rsvp" })
           .where(eq(users.id, event.userId))
           .limit(1);
 
-        const plan = owner?.plan ?? "free";
-        const features = PLAN_FEATURES[plan];
+        ownerPlan = owner?.plan ?? "free";
+        const features = PLAN_FEATURES[ownerPlan];
 
         if (!features.unlimitedRsvps) {
           const [{ total }] = await db
@@ -100,7 +98,7 @@ export const rsvpRouter = new Elysia({ prefix: "/rsvp" })
         .returning();
 
       ingestUsage("rsvp_submitted", {
-        userId: event.userId, // the event owner, not the guest submitting
+        userId: event.userId ?? "", // the event owner, not the guest submitting
         metadata: {
           eventId: body.eventId,
           attendance: body.attendance,
@@ -110,13 +108,7 @@ export const rsvpRouter = new Elysia({ prefix: "/rsvp" })
 
       // 4. Send email notification (non-blocking)
       if (event.notificationEmail && event.userId) {
-        const [owner] = await db
-          .select({ plan: users.plan })
-          .from(users)
-          .where(eq(users.id, event.userId))
-          .limit(1);
-
-        if (PLAN_FEATURES[owner?.plan ?? "free"].rsvpEmails) {
+        if (PLAN_FEATURES[ownerPlan].rsvpEmails) {
           resend.emails
             .send({
               from: "rsvp@ceremonia.app",

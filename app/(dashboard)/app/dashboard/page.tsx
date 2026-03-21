@@ -9,6 +9,7 @@ import { db } from "@/db";
 import { DeleteEventButton } from "@/components/dashboard/DeleteEventButton";
 
 import { events } from "@/db/schema";
+import { getExpiryStatus } from "@/lib/helper";
 import { EventType, getVocabulary } from "@/types/event";
 
 export const metadata: Metadata = { title: "My Events" };
@@ -82,7 +83,7 @@ export default async function DashboardPage() {
               >
                 {w.slug}.ceremonia.app
               </p>
-              <div className="flex gap-3">
+              <div className="flex gap-3 flex-wrap">
                 <span
                   className="font-label text-[10px] tracking-widest uppercase px-3! py-1! rounded-full"
                   style={{
@@ -103,6 +104,30 @@ export default async function DashboardPage() {
                 >
                   {w.viewCount ?? 0} views
                 </span>
+
+                {/* ── Expiry badges ── */}
+                {(() => {
+                  const status = getExpiryStatus(w.expiresAt);
+                  if (status === "expired")
+                    return (
+                      <span className="font-label text-[10px] tracking-widest uppercase px-3! py-1! rounded-full bg-red-500/10 text-red-400 border border-red-500/20">
+                        Expired
+                      </span>
+                    );
+                  if (status === "expiring-soon")
+                    return (
+                      <span className="font-label text-[10px] tracking-widest uppercase px-3! py-1! rounded-full bg-[#C4A35A]/10 text-[#C4A35A] border border-[#C4A35A]/20">
+                        Expires soon
+                      </span>
+                    );
+                  if (status === "expiring-month")
+                    return (
+                      <span className="font-label text-[10px] tracking-widest uppercase px-3! py-1! rounded-full bg-[#C4A35A]/6 text-[#C4A35A]/70 border border-[#C4A35A]/10">
+                        Expiring
+                      </span>
+                    );
+                  return null;
+                })()}
               </div>
 
               <div className="absolute top-3 right-3">

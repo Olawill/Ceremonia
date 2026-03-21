@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq, gt, isNull, or } from "drizzle-orm";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
@@ -9,6 +9,7 @@ import { events, users } from "@/db/schema";
 import { EventEngine } from "@/components/EventEngine";
 import { PasswordGate } from "@/components/event/PasswordGate";
 
+import { EventExpiredPage } from "@/components/event/EventExpiredPage";
 import type {
   AccommodationConfig,
   Course,
@@ -106,7 +107,12 @@ export async function generateStaticParams() {
   const allEvents = await db
     .select({ slug: events.slug })
     .from(events)
-    .where(eq(events.published, true));
+    .where(
+      and(
+        eq(events.published, true),
+        or(isNull(events.expiresAt), gt(events.expiresAt, new Date())),
+      ),
+    );
 
   const slugs = allEvents.map((w) => ({ slug: w.slug }));
 
@@ -137,6 +143,13 @@ export default async function EventPage({ params }: Props) {
 
   if (!event || !event.published) {
     notFound();
+  }
+
+  // Check expiry — expiresAt is null for active subscriptions (never expires)
+  if (event.expiresAt && new Date() > new Date(event.expiresAt)) {
+    // Don't 404 — render a dedicated expired page so the owner
+    // understands what happened and can upgrade
+    return <EventExpiredPage expiresAt={new Date(event.expiresAt)} />;
   }
 
   const [owner] = event.userId

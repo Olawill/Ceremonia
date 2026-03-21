@@ -15,6 +15,19 @@ describe("formattedDate", () => {
     const result = formattedDate("2026-07-12", true);
     expect(result).toBe("12 • July • 2026");
   });
+
+  it("accepts a Date object", () => {
+    expect(formattedDate(new Date(2026, 6, 12))).toBe("12 July 2026");
+  });
+
+  it("accepts an explicit locale", () => {
+    // US locale — "July 12, 2026"
+    expect(formattedDate("2026-07-12", false, "en-US")).toBe("July 12, 2026");
+  });
+
+  it("dotted with explicit locale", () => {
+    expect(formattedDate("2026-07-12", true, "en-US")).toBe("July • 12 • 2026");
+  });
 });
 
 describe("formattedDeadlineDate", () => {

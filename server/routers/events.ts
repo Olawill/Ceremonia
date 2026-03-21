@@ -115,7 +115,7 @@ export const eventsRouter = new Elysia({ prefix: "/events" })
       if (!userId) return status(401, { message: "Unauthorized" });
 
       const [owner] = await db
-        .select({ plan: users.plan, starterIsOnce })
+        .select({ plan: users.plan, starterIsOnce: users.starterIsOnce })
         .from(users)
         .where(eq(users.id, userId))
         .limit(1);
