@@ -16,7 +16,7 @@ export const planEnum = pgEnum("plan", ["free", "starter", "pro", "agency"]);
 export const users = pgTable("users", {
   id: text("id").primaryKey(), // Clerk user ID
   email: text("email").notNull(),
-  polarCustomerId: text("polar_customer_id"),
+  polarCustomerId: text("polar_customer_id").unique(),
   brandName: text("brand_name"),
   plan: planEnum("plan").default("free"),
   starterIsOnce: boolean("starter_is_once").default(false),
@@ -91,9 +91,11 @@ export const events = pgTable("events", {
 
 export const rsvps = pgTable("rsvps", {
   id: uuid("id").defaultRandom().primaryKey(),
-  eventId: uuid("event_id").references(() => events.id, {
-    onDelete: "cascade",
-  }),
+  eventId: uuid("event_id")
+    .notNull()
+    .references(() => events.id, {
+      onDelete: "cascade",
+    }),
   name: text("name").notNull(),
   attendance: text("attendance").notNull(),
   guests: integer("guests").default(1),

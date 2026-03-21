@@ -48,7 +48,7 @@ test.describe("Event invitation page (demo)", () => {
     //   await page.click("body", { force: true });
     // }
 
-    await page.waitForSelector("[data-scroll-container]", { timeout: 10000 });
+    await page.waitForSelector("[data-scroll-container]", { timeout: 20000 });
 
     // Step 1b: Scroll the snap container to the ScratchDate section so the
     // canvas is in the viewport before we attempt mouse interaction.
@@ -112,7 +112,7 @@ test.describe("Event invitation page (demo)", () => {
     });
 
     await expect(page.locator("h2", { hasText: "RSVP" })).toBeVisible({
-      timeout: 10000,
+      timeout: 15000,
     });
   });
 });

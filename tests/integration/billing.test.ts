@@ -28,6 +28,19 @@ vi.mock("@/env", () => ({
   env: {
     NEXT_PUBLIC_APP_URL: "http://localhost:3000",
     POLAR_SERVER: "sandbox",
+    RESEND_API_KEY: "re_test_placeholder",
+    BLOB_READ_WRITE_TOKEN: "vercel_blob_placeholder",
+    CLERK_SECRET_KEY: "sk_test_placeholder",
+    CLERK_WEBHOOK_SIGNING_SECRET: "whsec_placeholder",
+    POLAR_ACCESS_TOKEN: "polar_test_placeholder",
+    POLAR_WEBHOOK_SECRET: "polar_webhook_placeholder",
+    NEXT_PUBLIC_ROOT_DOMAIN: "ceremonia.app",
+    NEXT_PUBLIC_POSTHOG_KEY: "phc_placeholder",
+    NEXT_PUBLIC_POSTHOG_HOST: "https://app.posthog.com",
+    NEXT_PUBLIC_POLAR_PRODUCT_STARTER_MONTHLY: "prod_starter_monthly",
+    NEXT_PUBLIC_POLAR_PRODUCT_STARTER_ONCE: "prod_starter_once",
+    NEXT_PUBLIC_POLAR_PRODUCT_PRO_MONTHLY: "prod_pro_monthly",
+    NEXT_PUBLIC_POLAR_PRODUCT_AGENCY_MONTHLY: "prod_agency_monthly",
   },
 }));
 
@@ -226,6 +239,7 @@ describe("POST /api/billing/portal", () => {
 
     expect(mockPolar.customerSessions.create).toHaveBeenCalledWith({
       customerId: "polar_cus_abc123",
+      returnUrl: "http://localhost:3000/app/billing",
     });
   });
 

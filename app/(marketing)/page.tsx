@@ -235,7 +235,7 @@ export default async function MarketingPage() {
                     href={
                       userId
                         ? `/app/billing?autoOpen=${PLAN_TO_PRODUCT[tier.name.toLowerCase()]}`
-                        : `/sign-up?redirect_url=/app/billing?autoOpen=${PLAN_TO_PRODUCT[tier.name.toLowerCase()]}`
+                        : `/sign-up?redirect_url=${encodeURIComponent(`/app/billing?autoOpen=${PLAN_TO_PRODUCT[tier.name.toLowerCase()]}`)}`
                     }
                     className={clsx(
                       "text-center font-label font-semibold text-[12px] tracking-[0.4em] uppercase py-3! rounded-xl border transition-colors",

@@ -7,17 +7,19 @@ import { describe, expect, it } from "vitest";
 
 describe("formattedDate", () => {
   it("formats without dots by default", () => {
-    const result = formattedDate("2026-07-12");
+    const result = formattedDate("2026-07-12", false, "en-GB");
     expect(result).toBe("12 July 2026");
   });
 
   it("formats with dots when dotted=true", () => {
-    const result = formattedDate("2026-07-12", true);
+    const result = formattedDate("2026-07-12", true, "en-GB");
     expect(result).toBe("12 • July • 2026");
   });
 
   it("accepts a Date object", () => {
-    expect(formattedDate(new Date(2026, 6, 12))).toBe("12 July 2026");
+    expect(formattedDate(new Date(2026, 6, 12), false, "en-GB")).toBe(
+      "12 July 2026",
+    );
   });
 
   it("accepts an explicit locale", () => {

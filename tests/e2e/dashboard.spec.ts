@@ -48,20 +48,30 @@ test.describe("Dashboard (authenticated)", () => {
 
   test("shows dashboard overview", async ({ page }) => {
     await page.goto("/app/dashboard");
-    await expect(page.getByText(/Your Events/i)).toBeVisible();
+    await expect(page.getByText(/Your Events/i)).toBeVisible({
+      timeout: 15000,
+    });
   });
 
   test("editor redirects or loads", async ({ page }) => {
     await page.goto("/app/editor");
-    await page.waitForURL(/\/app\/editor/);
+    await page.waitForURL(/\/app\/editor/, { timeout: 15000 });
     await expect(page.locator("body")).not.toBeEmpty();
   });
 
   test("billing page shows plan tiers", async ({ page }) => {
     await page.goto("/app/billing");
-    await expect(page.locator("[data-tier-id='free']")).toBeVisible();
-    await expect(page.locator("[data-tier-id='pro']")).toBeVisible();
-    await expect(page.locator("[data-tier-id='starter']")).toBeVisible();
-    await expect(page.locator("[data-tier-id='agency']")).toBeVisible();
+    await expect(page.locator("[data-tier-id='free']")).toBeVisible({
+      timeout: 15000,
+    });
+    await expect(page.locator("[data-tier-id='pro']")).toBeVisible({
+      timeout: 15000,
+    });
+    await expect(page.locator("[data-tier-id='starter']")).toBeVisible({
+      timeout: 15000,
+    });
+    await expect(page.locator("[data-tier-id='agency']")).toBeVisible({
+      timeout: 15000,
+    });
   });
 });

@@ -2,6 +2,7 @@ import { and, gt, isNotNull, lt } from "drizzle-orm";
 
 import { db } from "@/db";
 import { events } from "@/db/schema";
+import { formattedDate } from "@/lib/helper";
 import { resend } from "@/lib/resend";
 
 /**
@@ -36,23 +37,27 @@ export async function sendExpiryReminders() {
     const email = event.notificationEmail;
     if (!email) continue;
 
-    const expiresAt = new Date(event.expiresAt!).toLocaleDateString("en-GB", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
+    const expiresAt = formattedDate(event.expiresAt!);
 
-    await resend.emails.send({
-      from: "Ceremonia <noreply@ceremonia.app>",
-      to: email,
-      subject: `Your Ceremonia event page expires on ${expiresAt}`,
-      html: `
-        <p>Hi,</p>
-        <p>Your event page <strong>${event.slug}.ceremonia.app</strong> will expire on <strong>${expiresAt}</strong>.</p>
-        <p>After this date, guests visiting your invitation will see an expired page.</p>
-        <p>To keep your event live, <a href="https://app.ceremonia.app/app/billing">upgrade to a monthly plan</a>.</p>
-        <p>— The Ceremonia team</p>
-      `,
-    });
+    try {
+      await resend.emails.send({
+        from: "Ceremonia <noreply@ceremonia.app>",
+        to: email,
+        subject: `Your Ceremonia event page expires on ${expiresAt}`,
+        html: `
+          <p>Hi,</p>
+          <p>Your event page <strong>${event.slug}.ceremonia.app</strong> will expire on <strong>${expiresAt}</strong>.</p>
+          <p>After this date, guests visiting your invitation will see an expired page.</p>
+          <p>To keep your event live, <a href="https://app.ceremonia.app/app/billing">upgrade to a monthly plan</a>.</p>
+          <p>— The Ceremonia team</p>
+        `,
+      });
+    } catch (error) {
+      console.error("Failed to send expiry reminder", {
+        slug: event.slug,
+        error,
+      });
+      continue;
+    }
   }
 }

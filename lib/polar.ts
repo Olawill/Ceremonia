@@ -1,5 +1,7 @@
-import { env } from "@/env";
 import { Polar } from "@polar-sh/sdk";
+import "server-only";
+
+import { env } from "@/env";
 
 export const polar = new Polar({
   accessToken: env.POLAR_ACCESS_TOKEN,

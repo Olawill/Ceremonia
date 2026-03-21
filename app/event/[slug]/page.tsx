@@ -1,4 +1,4 @@
-import { and, eq, gt, isNull, or } from "drizzle-orm";
+import { and, eq, gt, isNull, or, sql } from "drizzle-orm";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
@@ -164,8 +164,9 @@ export default async function EventPage({ params }: Props) {
 
   // Increment view count (fire-and-forget, don't await)
   db.update(events)
-    .set({ viewCount: (event.viewCount ?? 0) + 1 })
+    .set({ viewCount: sql`COALESCE(${events.viewCount}, 0) + 1` })
     .where(eq(events.id, event.id))
+    .execute()
     .catch(console.error);
 
   // Map DB row → EventConfig (the bridge between DB and UI)

@@ -71,7 +71,7 @@ export const uploadRouter = new Elysia({ prefix: "/upload" })
         metadata: {
           bytes: file.size,
           type: file.type, // "image" or "audio"
-          plan: owner.plan ?? "free",
+          plan: owner?.plan ?? "free",
         },
       }).catch(() => {});
 

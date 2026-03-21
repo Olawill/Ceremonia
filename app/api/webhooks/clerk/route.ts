@@ -1,5 +1,6 @@
 import { clerkClient } from "@clerk/nextjs/server";
 import { verifyWebhook } from "@clerk/nextjs/webhooks";
+import { ResourceNotFound } from "@polar-sh/sdk/models/errors/resourcenotfound";
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -40,12 +41,17 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ received: true });
       }
 
-      await polar.customers.create({
-        externalId: clerkUserId,
-        email: primaryEmail,
-        name: primaryEmail,
-        metadata: { clerkUserId },
-      });
+      const existingCustomer = await polar.customers
+        .getExternal({ externalId: clerkUserId })
+        .catch(() => null);
+      if (!existingCustomer) {
+        await polar.customers.create({
+          externalId: clerkUserId,
+          email: primaryEmail,
+          name: primaryEmail,
+          metadata: { clerkUserId },
+        });
+      }
 
       await db.insert(users).values({
         id: clerkUserId,
@@ -65,8 +71,10 @@ export async function POST(req: NextRequest) {
       if (clerkUserId) {
         try {
           await polar.customers.deleteExternal({ externalId: clerkUserId });
-        } catch {
-          // Customer may not exist in Polar if they never completed signup — safe to ignore
+        } catch (err) {
+          // Ignore only "not found"; surface all other failures.
+          if (err instanceof ResourceNotFound) return;
+          throw err;
         }
         await db.delete(users).where(eq(users.id, clerkUserId));
       }
