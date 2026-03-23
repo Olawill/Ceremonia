@@ -18,6 +18,8 @@ export interface PlanFeatures {
   customDomain: boolean; // Pro+
   whitLabel: boolean; // Agency
   apiAccess: boolean; // Agency
+  envelopeEntry: boolean; // Pro+ (envelope is a premium entry style)
+  roomsNavMode: boolean; // Agency only (3D rooms navigation)
   registryItemLimit: number; // Infinity = unlimited
   registryScraper: boolean; // URL scraping feature
 }
@@ -39,6 +41,8 @@ export const PLAN_FEATURES: Record<Plan, PlanFeatures> = {
     customDomain: false,
     whitLabel: false,
     apiAccess: false,
+    envelopeEntry: false,
+    roomsNavMode: false,
     registryItemLimit: 10,
     registryScraper: false,
   },
@@ -58,6 +62,8 @@ export const PLAN_FEATURES: Record<Plan, PlanFeatures> = {
     customDomain: false,
     whitLabel: false,
     apiAccess: false,
+    envelopeEntry: false,
+    roomsNavMode: false,
     registryItemLimit: 30,
     registryScraper: true,
   },
@@ -77,6 +83,8 @@ export const PLAN_FEATURES: Record<Plan, PlanFeatures> = {
     customDomain: true,
     whitLabel: false,
     apiAccess: false,
+    envelopeEntry: true,
+    roomsNavMode: false,
     registryItemLimit: Infinity,
     registryScraper: true,
   },
@@ -96,6 +104,8 @@ export const PLAN_FEATURES: Record<Plan, PlanFeatures> = {
     customDomain: true,
     whitLabel: true,
     apiAccess: true,
+    envelopeEntry: true,
+    roomsNavMode: true,
     registryItemLimit: Infinity,
     registryScraper: true,
   },

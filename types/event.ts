@@ -46,6 +46,12 @@ export const CURTAIN_STYLES = [
 
 export type CurtainStyle = (typeof CURTAIN_STYLES)[number];
 
+export const ENTRY_STYLES = ["curtain", "envelope"] as const;
+export type EntryStyle = (typeof ENTRY_STYLES)[number];
+
+export const NAV_MODES = ["scroll", "rooms"] as const;
+export type NavMode = (typeof NAV_MODES)[number];
+
 export interface TravelItem {
   type: "hotel" | "airport" | "tip";
   name: string;
@@ -71,6 +77,8 @@ export interface EventConfig {
   themeKey: ThemeKey;
   customTheme?: EventTheme;
   curtainStyle: CurtainStyle;
+  entryStyle?: EntryStyle;
+  navMode?: NavMode;
   audioUrl?: string;
   heroPhotoUrl?: string;
   timeline: TimelineEvent[];

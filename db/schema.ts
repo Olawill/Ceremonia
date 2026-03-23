@@ -38,6 +38,8 @@ export const events = pgTable("events", {
   themeKey: text("theme_key").default("royal"),
   customTheme: jsonb("custom_theme"),
   curtainStyle: text("curtain_style").default("velvet"),
+  entryStyle: text("entry_style").default("curtain"),
+  navMode: text("nav_mode").default("scroll"),
   audioUrl: text("audio_url"),
   heroPhotoUrl: text("hero_photo_url"),
   timeline: jsonb("timeline"),
