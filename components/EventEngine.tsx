@@ -25,12 +25,14 @@ interface EventEngineProps {
   config?: EventConfig;
   showWatermark?: boolean;
   brandName?: string;
+  previewLocked?: boolean;
 }
 
 export function EventEngine({
   config = DEMO_EVENT_CONFIG,
   showWatermark,
   brandName,
+  previewLocked = false,
 }: EventEngineProps) {
   const { theme } = useTheme();
 
@@ -49,6 +51,7 @@ export function EventEngine({
   const navMode = config.navMode ?? "scroll";
 
   const handleCurtainOpen = () => {
+    if (previewLocked) return;
     setCurtainOpen(true);
     if (window.self !== window.top) {
       window.parent.postMessage({ type: "CURTAIN_OPEN" }, "*");

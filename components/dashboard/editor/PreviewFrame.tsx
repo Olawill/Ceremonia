@@ -8,6 +8,7 @@ import type { EventConfig } from "@/types/event";
 interface Props {
   config: EventConfig;
   iframeRef: React.RefObject<HTMLIFrameElement | null>;
+  previewLocked?: boolean;
 }
 
 function buildUrl(config: EventConfig): string {
@@ -20,7 +21,11 @@ function buildUrl(config: EventConfig): string {
   )}`;
 }
 
-export function PreviewFrame({ config, iframeRef }: Props) {
+export function PreviewFrame({
+  config,
+  iframeRef,
+  previewLocked = false,
+}: Props) {
   const [curtainOpen, setCurtainOpen] = useState(false);
   const [dateRevealed, setDateRevealed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -45,7 +50,10 @@ export function PreviewFrame({ config, iframeRef }: Props) {
     const iframe = iframeRef.current;
     if (!iframe?.contentWindow) return;
 
-    iframe.contentWindow.postMessage({ type: "PREVIEW_CONFIG", config }, "*");
+    iframe.contentWindow.postMessage(
+      { type: "PREVIEW_CONFIG", config, previewLocked },
+      "*",
+    );
   }, [config]);
 
   // Hard-reload the iframe when entry style or nav mode changes — these are
@@ -96,7 +104,7 @@ export function PreviewFrame({ config, iframeRef }: Props) {
     setDateRevealed(false);
     setTimeout(() => {
       iframeRef.current?.contentWindow?.postMessage(
-        { type: "PREVIEW_CONFIG", config },
+        { type: "PREVIEW_CONFIG", config, previewLocked },
         "*",
       );
     }, 300);
@@ -144,6 +152,42 @@ export function PreviewFrame({ config, iframeRef }: Props) {
           title="Event Preview"
           onLoad={handleLoad}
         />
+
+        {previewLocked && (
+          <div
+            className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 backdrop-blur-[2px]"
+            style={{ background: "rgba(5,5,5,0.75)" }}
+          >
+            <div
+              className="rounded-2xl px-8! py-6! flex flex-col items-center gap-3 text-center"
+              style={{
+                background: "#0A0A0A",
+                border: "1px solid #D4AF3730",
+                maxWidth: 280,
+              }}
+            >
+              <div
+                className="text-2xl mb-1"
+                style={{ filter: "drop-shadow(0 0 8px #D4AF3760)" }}
+              >
+                ✦
+              </div>
+              <p
+                className="font-display italic font-bold text-lg leading-snug"
+                style={{ color: "#F5F0E8" }}
+              >
+                Save first to preview
+              </p>
+              <p
+                className="font-label text-[12px] font-semibold tracking-[0.3em] uppercase leading-relaxed"
+                style={{ color: "#D4AF3780" }}
+              >
+                You can interact with the {config.entryStyle ?? "curtain"} in
+                the preview once your event details are saved
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Loading overlay — shown during hard reloads (entry style / nav mode change) */}
         {isLoading && (

@@ -58,6 +58,7 @@ export function EditorShell({ initialConfig, isNew }: Props) {
   const [previewOpen, setPreviewOpen] = useState(false);
 
   const hasOpenedPreviewRef = useRef(false);
+  const hasEverSavedRef = useRef(!isNew); // true for existing events, false for brand new ones
 
   // Prevent body scroll when preview sheet is open
   useEffect(() => {
@@ -168,6 +169,7 @@ export function EditorShell({ initialConfig, isNew }: Props) {
           throw error;
         }
         setSaveState("saved");
+        hasEverSavedRef.current = true;
         toast.success("Event created!");
         posthog.capture("event_created", {
           slug: data!.slug,
@@ -358,7 +360,11 @@ export function EditorShell({ initialConfig, isNew }: Props) {
           </div>
         </div>
         <div className="flex-1 overflow-hidden">
-          <PreviewFrame config={config} iframeRef={previewIframeRef} />
+          <PreviewFrame
+            config={config}
+            iframeRef={previewIframeRef}
+            previewLocked={!hasEverSavedRef.current}
+          />
         </div>
       </div>
     </div>

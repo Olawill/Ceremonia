@@ -23,6 +23,7 @@ function PreviewInner({
   config: EventConfig;
   onConfigChange: (c: EventConfig) => void;
 }) {
+  const [previewLocked, setPreviewLocked] = useState(false);
   const { setCustomTheme, setThemeKey } = useTheme();
 
   // Use refs so the handler never goes stale and the effect never re-runs
@@ -70,6 +71,10 @@ function PreviewInner({
               : (incoming.themeKey ?? "royal"),
           );
         }
+
+        if (typeof e.data.previewLocked === "boolean") {
+          setPreviewLocked(e.data.previewLocked);
+        }
       }
 
       if (e.data?.type === "SCROLL_TO" && typeof e.data.index === "number") {
@@ -100,7 +105,7 @@ function PreviewInner({
     return () => window.removeEventListener("message", handler);
   }, []); // ← empty deps, handler never re-registers
 
-  return <EventEngine config={config} />;
+  return <EventEngine config={config} previewLocked={previewLocked} />;
 }
 
 export function PreviewClient({ initialConfig }: Props) {
