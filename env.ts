@@ -22,6 +22,7 @@ export const env = createEnv({
     NEXT_PUBLIC_POLAR_PRODUCT_STARTER_ONCE: z.string().min(1),
     NEXT_PUBLIC_POLAR_PRODUCT_PRO_MONTHLY: z.string().min(1),
     NEXT_PUBLIC_POLAR_PRODUCT_AGENCY_MONTHLY: z.string().min(1),
+    NEXT_PUBLIC_POLAR_PRODUCT_ROOMS_CREDITS: z.string().min(1),
 
     NEXT_PUBLIC_EVENT_THEME: z.string().min(1),
     NEXT_PUBLIC_APP_URL: z.url(),
@@ -59,5 +60,7 @@ export const env = createEnv({
       process.env.NEXT_PUBLIC_POLAR_PRODUCT_PRO_MONTHLY,
     NEXT_PUBLIC_POLAR_PRODUCT_AGENCY_MONTHLY:
       process.env.NEXT_PUBLIC_POLAR_PRODUCT_AGENCY_MONTHLY,
+    NEXT_PUBLIC_POLAR_PRODUCT_ROOMS_CREDITS:
+      process.env.NEXT_PUBLIC_POLAR_PRODUCT_ROOMS_CREDITS,
   },
 });

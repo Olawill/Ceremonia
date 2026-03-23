@@ -29,6 +29,7 @@ jobs:
       NEXT_PUBLIC_POLAR_PRODUCT_STARTER_ONCE: prod_placeholder
       NEXT_PUBLIC_POLAR_PRODUCT_PRO_MONTHLY: prod_placeholder
       NEXT_PUBLIC_POLAR_PRODUCT_AGENCY_MONTHLY: prod_placeholder
+      NEXT_PUBLIC_POLAR_PRODUCT_ROOMS_CREDITS: prod_placeholder
       NEXT_PUBLIC_POSTHOG_KEY: phc_placeholder
       NEXT_PUBLIC_POSTHOG_HOST: https://app.posthog.com
     services:
@@ -94,6 +95,7 @@ jobs:
       NEXT_PUBLIC_POLAR_PRODUCT_STARTER_ONCE: prod_placeholder
       NEXT_PUBLIC_POLAR_PRODUCT_PRO_MONTHLY: prod_placeholder
       NEXT_PUBLIC_POLAR_PRODUCT_AGENCY_MONTHLY: prod_placeholder
+      NEXT_PUBLIC_POLAR_PRODUCT_ROOMS_CREDITS: prod_placeholder
       # Playwright
       PLAYWRIGHT_BASE_URL: http://localhost:3000
       TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL || 'test+clerk_test@ceremonia.app' }}

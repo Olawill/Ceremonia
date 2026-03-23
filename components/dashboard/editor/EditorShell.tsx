@@ -107,6 +107,18 @@ export function EditorShell({ initialConfig, isNew }: Props) {
     setIsDirty(false);
   }, []);
 
+  const handleHardReset = useCallback(() => {
+    const iframe = previewIframeRef.current;
+    if (!iframe) return;
+    iframe.src = `/event/preview?initial=${encodeURIComponent(
+      btoa(
+        Array.from(new TextEncoder().encode(JSON.stringify(config)))
+          .map((b) => String.fromCharCode(b))
+          .join(""),
+      ),
+    )}`;
+  }, [config]);
+
   const handleSave = async () => {
     setSaveState("saving");
     try {
@@ -199,8 +211,6 @@ export function EditorShell({ initialConfig, isNew }: Props) {
       setTimeout(() => setSaveState("idle"), 2500);
     }
   };
-
-  console.log({ isDirty, saveState, isNew });
 
   return (
     <div className="flex h-full overflow-hidden space-x-2!">
@@ -330,17 +340,7 @@ export function EditorShell({ initialConfig, isNew }: Props) {
           <div className="flex items-center gap-2">
             {/* Reset preview — reopens curtain from scratch with current config */}
             <button
-              onClick={() => {
-                const iframe = previewIframeRef.current;
-                if (!iframe) return;
-                iframe.src = `/event/preview?initial=${encodeURIComponent(
-                  btoa(
-                    Array.from(new TextEncoder().encode(JSON.stringify(config)))
-                      .map((b) => String.fromCharCode(b))
-                      .join(""),
-                  ),
-                )}`;
-              }}
+              onClick={handleHardReset}
               className="flex items-center gap-1.5 font-label font-semibold text-[9px] tracking-[0.3em] uppercase px-2.5! py-1.5! rounded-lg border border-[#D4AF3780] text-[#D4AF3780] hover:text-[#D4AF37] transition-all hover:border-[#D4AF37] cursor-pointer bg-transparent"
               title="Restart the curtain from scratch"
             >

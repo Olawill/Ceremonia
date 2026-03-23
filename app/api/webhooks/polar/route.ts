@@ -1,13 +1,18 @@
-import { getPostHogClient } from "@/lib/posthog-server";
 import { clerkClient } from "@clerk/nextjs/server";
 import { Webhooks } from "@polar-sh/nextjs";
+import { CustomerStateSubscription } from "@polar-sh/sdk/models/components/customerstatesubscription.js";
 import { eq } from "drizzle-orm";
 
 import { db } from "@/db";
-import { users } from "@/db/schema";
+import { roomsCredits, users } from "@/db/schema";
 import { env } from "@/env";
-import { Plan, STARTER_ONCE_HOSTING_DAYS } from "@/lib/plans";
-import { CustomerStateSubscription } from "@polar-sh/sdk/models/components/customerstatesubscription.js";
+
+import {
+  Plan,
+  ROOMS_CREDITS_PER_PACK,
+  STARTER_ONCE_HOSTING_DAYS,
+} from "@/lib/plans";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 // Map Polar product IDs → plan names
 const PRODUCT_TO_PLAN: Record<string, Plan> = {
@@ -136,5 +141,38 @@ export const POST = Webhooks({
       properties: { plan, polar_customer_id: data.customer.id },
     });
     await posthog.shutdown();
+  },
+
+  onOrderCreated: async (payload) => {
+    const { data } = payload;
+    const productId = data.product?.id;
+    const externalId = data.customer?.externalId;
+
+    if (
+      productId === env.NEXT_PUBLIC_POLAR_PRODUCT_ROOMS_CREDITS &&
+      externalId
+    ) {
+      // Add credits to the user's balance
+      const existing = await db
+        .select()
+        .from(roomsCredits)
+        .where(eq(roomsCredits.userId, externalId))
+        .limit(1);
+
+      if (existing.length) {
+        await db
+          .update(roomsCredits)
+          .set({
+            creditsTotal: existing[0].creditsTotal + ROOMS_CREDITS_PER_PACK,
+          })
+          .where(eq(roomsCredits.userId, externalId));
+      } else {
+        await db.insert(roomsCredits).values({
+          userId: externalId,
+          creditsTotal: ROOMS_CREDITS_PER_PACK,
+          creditsUsed: 0,
+        });
+      }
+    }
   },
 });

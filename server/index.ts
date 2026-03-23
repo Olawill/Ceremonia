@@ -9,6 +9,7 @@ import { customThemesRouter } from "@/server/routers/customThemes";
 import { eventsRouter } from "@/server/routers/events";
 import { guestbookRouter } from "@/server/routers/guestbook";
 import { registryRouter } from "@/server/routers/registry";
+import { roomsRouter } from "@/server/routers/rooms";
 import { rsvpRouter } from "@/server/routers/rsvp";
 import { settingsRouter } from "@/server/routers/settings";
 import { stockRouter } from "@/server/routers/stock";
@@ -25,6 +26,7 @@ export const app = new Elysia({ prefix: "/api" })
   .use(stockRouter)
   .use(settingsRouter)
   .use(registryRouter)
-  .use(guestbookRouter);
+  .use(guestbookRouter)
+  .use(roomsRouter);
 
 export type App = typeof app;

@@ -6,20 +6,30 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useApi } from "@/hooks/useApi";
 import { useToast } from "@/hooks/useToast";
 
-import type { EventConfig } from "@/types/event";
+import type { EntryStyle, EventConfig } from "@/types/event";
 import { EventTheme } from "@/types/theme";
 
-const COLOR_FIELDS: { key: keyof EventTheme; label: string }[] = [
-  { key: "curtain", label: "Curtain" },
-  { key: "curtainDark", label: "Curtain Shadow" },
-  { key: "curtainSheen", label: "Curtain Highlight" },
-  { key: "gold", label: "Gold Accent" },
-  { key: "goldLight", label: "Gold Light" },
-  { key: "bg", label: "Background" },
-  { key: "bgMid", label: "Background Mid" },
-  { key: "text", label: "Text" },
-];
-
+function getColorFields(
+  entryStyle: EntryStyle | undefined,
+): { key: keyof EventTheme; label: string }[] {
+  const isEnvelope = entryStyle === "envelope";
+  return [
+    { key: "curtain", label: isEnvelope ? "Envelope Body" : "Curtain" },
+    {
+      key: "curtainDark",
+      label: isEnvelope ? "Envelope Shadow" : "Curtain Shadow",
+    },
+    {
+      key: "curtainSheen",
+      label: isEnvelope ? "Envelope Highlight" : "Curtain Highlight",
+    },
+    { key: "gold", label: "Gold Accent" },
+    { key: "goldLight", label: "Gold Light" },
+    { key: "bg", label: "Background" },
+    { key: "bgMid", label: "Background Mid" },
+    { key: "text", label: "Text" },
+  ];
+}
 interface SavedCustomTheme {
   id: string;
   name: string;
@@ -32,6 +42,7 @@ interface Props {
   onChange: (patch: Partial<EventConfig>) => void;
   previewIframeRef: React.RefObject<HTMLIFrameElement | null>;
   ownerPlan?: string;
+  entryStyle?: EntryStyle;
 }
 
 const DEFAULT_CUSTOM_THEME: Omit<EventTheme, "key" | "name"> = {
@@ -54,6 +65,7 @@ export function ThemeCustomiser({
   onChange,
   previewIframeRef,
   ownerPlan,
+  entryStyle,
 }: Props) {
   const { api } = useApi();
   const { toast, handleApiError } = useToast();
@@ -64,6 +76,8 @@ export function ThemeCustomiser({
   const [savedThemes, setSavedThemes] = useState<SavedCustomTheme[]>([]);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  const colorFields = getColorFields(entryStyle);
 
   const hasMountedRef = useRef(false);
 
@@ -288,7 +302,7 @@ export function ThemeCustomiser({
       </p>
 
       <div className="space-y-3!">
-        {COLOR_FIELDS.map(({ key, label }) => (
+        {colorFields.map(({ key, label }) => (
           <div key={key} className="flex items-center gap-3">
             <label
               htmlFor={`color-${key}`}

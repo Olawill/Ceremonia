@@ -9,15 +9,16 @@ import { SheerCurtain } from "@/components/curtain/SheerCurtain";
 import { SplitCurtain } from "@/components/curtain/SplitCurtain";
 import { VeilCurtain } from "@/components/curtain/VeilCurtain";
 import { VelvetCurtain } from "@/components/curtain/VelvetCurtain";
+import { EnvelopeCurtain } from "@/components/entry/EnvelopeCurtain";
 
 import { DrapeFrame } from "@/components/effects/DrapeFrame";
 import { DustParticles } from "@/components/effects/DustParticles";
-
+import { RoomsEngine } from "@/components/rooms/RoomsEngine";
 import { AudioPlayer } from "@/components/ui/AudioPlayer";
 
 import { useTheme } from "@/lib/ThemeContext";
-
 import { buildSections } from "@/lib/eventSections";
+
 import { DEMO_EVENT_CONFIG, EventConfig } from "@/types/event";
 
 interface EventEngineProps {
@@ -44,6 +45,8 @@ export function EventEngine({
   }, []);
 
   const curtainStyle = config.curtainStyle ?? "velvet";
+  const entryStyle = config.entryStyle ?? "curtain";
+  const navMode = config.navMode ?? "scroll";
 
   const handleCurtainOpen = () => {
     setCurtainOpen(true);
@@ -103,66 +106,93 @@ export function EventEngine({
         src={config.audioUrl ?? "/audio/royal.mp3"}
       />
       {/* Drape frame – fixed peek-through frame shown on every page when drape style active */}
-      {curtainStyle === "drape" && <DrapeFrame />}
+      {entryStyle === "curtain" && curtainStyle === "drape" && <DrapeFrame />}
 
-      {/* Curtain – removed from DOM once open */}
-      {curtainStyle === "velvet" && (
-        <VelvetCurtain onOpen={handleCurtainOpen} />
-      )}
-      {curtainStyle === "drape" && <DrapedCurtain onOpen={handleCurtainOpen} />}
-      {curtainStyle === "sheer" && <SheerCurtain onOpen={handleCurtainOpen} />}
-      {curtainStyle === "cascade" && (
-        <CascadeCurtain
-          onOpen={handleCurtainOpen}
-          panelCount={config.customTheme?.panelCount ?? 5}
-        />
-      )}
-      {curtainStyle === "iris" && (
-        <IrisCurtain
-          onOpen={handleCurtainOpen}
-          bladeCount={config.customTheme?.bladeCount ?? 8}
-        />
-      )}
-      {curtainStyle === "split" && <SplitCurtain onOpen={handleCurtainOpen} />}
-      {curtainStyle === "veil" && <VeilCurtain onOpen={handleCurtainOpen} />}
-      {/* Scrollable Main content – revealed after curtain opens */}
+      {/* ── Entry experience ──
+    Both are always mounted. CSS visibility+opacity switching (not conditional
+    rendering) prevents the 1-frame flash when entryStyle changes in the editor. ── */}
+      <div style={{ display: entryStyle === "curtain" ? "block" : "none" }}>
+        {curtainStyle === "velvet" && (
+          <VelvetCurtain onOpen={handleCurtainOpen} />
+        )}
+        {curtainStyle === "drape" && (
+          <DrapedCurtain onOpen={handleCurtainOpen} />
+        )}
+        {curtainStyle === "sheer" && (
+          <SheerCurtain onOpen={handleCurtainOpen} />
+        )}
+        {curtainStyle === "cascade" && (
+          <CascadeCurtain
+            onOpen={handleCurtainOpen}
+            panelCount={config.customTheme?.panelCount ?? 5}
+          />
+        )}
+        {curtainStyle === "iris" && (
+          <IrisCurtain
+            onOpen={handleCurtainOpen}
+            bladeCount={config.customTheme?.bladeCount ?? 8}
+          />
+        )}
+        {curtainStyle === "split" && (
+          <SplitCurtain onOpen={handleCurtainOpen} />
+        )}
+        {curtainStyle === "veil" && <VeilCurtain onOpen={handleCurtainOpen} />}
+      </div>
 
-      <main
-        data-scroll-container
-        className="relative overflow-x-hidden"
-        style={{
-          // background: theme.bg,
-          color: theme.text,
-          height: "100vh",
-          overflowY: curtainOpen ? "scroll" : "hidden",
-          scrollSnapType: "y mandatory",
-          scrollBehavior: "smooth",
-          visibility: curtainOpen ? "visible" : "hidden",
-          pointerEvents: curtainOpen ? "auto" : "none",
-        }}
-      >
-        {/* Each section wrapper enforces full-viewport snap alignment */}
-        {sections.map((section, i) => (
-          <div
-            key={i}
-            data-section={section.key}
-            style={{
-              scrollSnapAlign: "start",
-              scrollSnapStop: "always",
-              minHeight: "100vh",
-              background: i % 2 === 0 ? theme.bg : theme.bgMid,
-              // Padding to keep content below the drape valance when drape is active
-              paddingTop:
-                curtainStyle === "drape" ? "clamp(140px, 24vh, 280px)" : 0,
-            }}
-          >
-            {section.node}
-          </div>
-        ))}
-      </main>
+      <div style={{ display: entryStyle === "envelope" ? "block" : "none" }}>
+        <EnvelopeCurtain
+          onOpen={handleCurtainOpen}
+          host1={config.bride}
+          host2={config.groom || undefined}
+          eventType={config.eventType}
+        />
+      </div>
+
+      {/* ── Content navigation ── */}
+      {navMode === "scroll" && curtainOpen && (
+        // Scrollable Main content – revealed after curtain opens
+        <main
+          data-scroll-container
+          className="relative overflow-x-hidden"
+          style={{
+            // background: theme.bg,
+            color: theme.text,
+            height: "100vh",
+            overflowY: curtainOpen ? "scroll" : "hidden",
+            scrollSnapType: "y mandatory",
+            scrollBehavior: "smooth",
+            visibility: curtainOpen ? "visible" : "hidden",
+            opacity: curtainOpen ? 1 : 0,
+            pointerEvents: curtainOpen ? "auto" : "none",
+          }}
+        >
+          {/* Each section wrapper enforces full-viewport snap alignment */}
+          {sections.map((section, i) => (
+            <div
+              key={i}
+              data-section={section.key}
+              style={{
+                scrollSnapAlign: "start",
+                scrollSnapStop: "always",
+                minHeight: "100vh",
+                background: i % 2 === 0 ? theme.bg : theme.bgMid,
+                // Padding to keep content below the drape valance when drape is active
+                paddingTop:
+                  curtainStyle === "drape" ? "clamp(140px, 24vh, 280px)" : 0,
+              }}
+            >
+              {section.node}
+            </div>
+          ))}
+        </main>
+      )}
+
+      {navMode === "rooms" && curtainOpen && (
+        <RoomsEngine config={config} sections={sections} />
+      )}
 
       {/* Float nav */}
-      {isPreview && (
+      {isPreview && navMode === "scroll" && (
         <div
           style={{
             position: "fixed",

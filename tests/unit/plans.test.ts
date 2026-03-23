@@ -265,3 +265,23 @@ describe("PLAN_FEATURES — agency-only features", () => {
     expect(PLAN_FEATURES.agency.apiAccess).toBe(true);
   });
 });
+
+describe("PLAN_FEATURES — envelopeEntry", () => {
+  it("free and starter cannot use envelope entry", () => {
+    expect(PLAN_FEATURES.free.envelopeEntry).toBe(false);
+    expect(PLAN_FEATURES.starter.envelopeEntry).toBe(false);
+  });
+  it("pro and agency can use envelope entry", () => {
+    expect(PLAN_FEATURES.pro.envelopeEntry).toBe(true);
+    expect(PLAN_FEATURES.agency.envelopeEntry).toBe(true);
+  });
+});
+
+describe("PLAN_FEATURES — roomsNavMode", () => {
+  it("only agency has roomsNavMode included", () => {
+    expect(PLAN_FEATURES.free.roomsNavMode).toBe(false);
+    expect(PLAN_FEATURES.starter.roomsNavMode).toBe(false);
+    expect(PLAN_FEATURES.pro.roomsNavMode).toBe(false);
+    expect(PLAN_FEATURES.agency.roomsNavMode).toBe(true);
+  });
+});

@@ -162,6 +162,17 @@ export const registryClaims = pgTable("registry_claims", {
   purchasedAt: timestamp("purchased_at"),
 });
 
+export const roomsCredits = pgTable("rooms_credits", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  creditsTotal: integer("credits_total").notNull().default(0),
+  creditsUsed: integer("credits_used").notNull().default(0),
+  periodStart: timestamp("period_start").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // ─── Relations ───────────────────────────────────────────────────────────────
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -221,4 +232,8 @@ export const guestbookRelations = relations(guestbook, ({ one }) => ({
     fields: [guestbook.eventId],
     references: [events.id],
   }),
+}));
+
+export const roomsCreditsRelations = relations(roomsCredits, ({ one }) => ({
+  user: one(users, { fields: [roomsCredits.userId], references: [users.id] }),
 }));

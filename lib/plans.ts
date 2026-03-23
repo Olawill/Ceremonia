@@ -19,7 +19,7 @@ export interface PlanFeatures {
   whitLabel: boolean; // Agency
   apiAccess: boolean; // Agency
   envelopeEntry: boolean; // Pro+ (envelope is a premium entry style)
-  roomsNavMode: boolean; // Agency only (3D rooms navigation)
+  roomsNavMode: boolean; // Agency only (3D rooms navigation - base 3 credits/mo included)
   registryItemLimit: number; // Infinity = unlimited
   registryScraper: boolean; // URL scraping feature
 }
@@ -112,6 +112,10 @@ export const PLAN_FEATURES: Record<Plan, PlanFeatures> = {
 };
 
 export const PLAN_ORDER: Plan[] = ["free", "starter", "pro", "agency"];
+
+// Rooms Credits add-on — sold to any plan, Agency gets 3 free/mo included
+export const ROOMS_CREDITS_PER_PACK = 5;
+export const ROOMS_CREDITS_AGENCY_MONTHLY_FREE = 3;
 
 /** Returns true if userPlan meets or exceeds requiredPlan */
 export function planMeetsRequirement(

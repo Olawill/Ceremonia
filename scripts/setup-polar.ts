@@ -170,7 +170,7 @@ async function createWebhook(webhookUrl: string): Promise<PolarWebhook> {
     {
       url: webhookUrl,
       secret,
-      events: ["customer.state_changed"],
+      events: ["customer.state_changed", "order.paid", "order.created"],
     },
   );
 
