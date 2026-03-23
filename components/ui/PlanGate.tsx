@@ -4,9 +4,16 @@ import { useState, type ReactNode } from "react";
 
 import { usePlan } from "@/hooks/usePlan";
 
-import type { Plan } from "@/lib/plans";
-import { ArrowRightIcon, LockIcon, SparklesIcon, XIcon } from "lucide-react";
-import Link from "next/link";
+import { useApi } from "@/hooks/useApi";
+import { PLAN_ORDER, PRICING, type Plan } from "@/lib/plans";
+import { PolarEmbedCheckout } from "@polar-sh/checkout/embed";
+import {
+  ArrowRightIcon,
+  Loader2Icon,
+  LockIcon,
+  SparklesIcon,
+  XIcon,
+} from "lucide-react";
 
 interface Props {
   requires: Plan;
@@ -15,11 +22,65 @@ interface Props {
   featureName?: string;
 }
 
+// Map each plan to the product ID that unlocks it
+const PLAN_TO_PRODUCT_ID: Record<Exclude<Plan, "free">, string> = {
+  starter: PRICING.starter.monthly.productId,
+  pro: PRICING.pro.monthly.productId,
+  agency: PRICING.agency.monthly.productId,
+};
+
+// All monthly product IDs — passed as allProducts so Polar shows the upgrade switcher
+const ALL_MONTHLY = [
+  PRICING.starter.monthly.productId,
+  PRICING.pro.monthly.productId,
+  PRICING.agency.monthly.productId,
+];
+
+// Helper — reverse-look up which plan a product ID belongs to
+function getPlanFromProductId(id: string): Plan {
+  if (
+    id === PRICING.starter.monthly.productId ||
+    id === PRICING.starter.once.productId
+  )
+    return "starter";
+  if (id === PRICING.pro.monthly.productId) return "pro";
+  if (id === PRICING.agency.monthly.productId) return "agency";
+  return "free";
+}
+
 export function PlanGate({ requires, children, featureName }: Props) {
-  const { can } = usePlan();
+  const { can, plan: currentPlan } = usePlan();
+  const { api } = useApi();
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   if (can(requires)) return <>{children}</>;
+
+  const handleUpgrade = async () => {
+    if (requires === "free") return;
+    setLoading(true);
+    try {
+      const productId = PLAN_TO_PRODUCT_ID[requires];
+      // Pass all monthly products so Polar renders the plan switcher
+      const allProducts = ALL_MONTHLY.filter(
+        (id) =>
+          PLAN_ORDER.indexOf(getPlanFromProductId(id)) >=
+          PLAN_ORDER.indexOf(requires),
+      );
+      const { data, error } = await api.billing.checkout.post({
+        productId,
+        allProducts: allProducts.length ? allProducts : [productId],
+      });
+      if (error || !data?.url) throw new Error("Checkout failed");
+      setOpen(false);
+      await PolarEmbedCheckout.create(data.url, { theme: "dark" });
+    } catch {
+      // Fall back to billing page on error
+      window.location.href = `/app/billing?autoOpen=${requires}_monthly`;
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
@@ -44,11 +105,14 @@ export function PlanGate({ requires, children, featureName }: Props) {
         </div>
       </div>
 
-      {/* Dialog */}
+      {/* Upgrade dialog */}
       {open && (
         <div
           className="fixed inset-0 z-999 flex items-center justify-center p-6!"
-          style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
+          style={{
+            background: "rgba(0,0,0,0.75)",
+            backdropFilter: "blur(4px)",
+          }}
           onClick={() => setOpen(false)}
         >
           <div
@@ -95,13 +159,20 @@ export function PlanGate({ requires, children, featureName }: Props) {
               >
                 Cancel
               </button>
-              <Link
-                href="/app/billing"
-                className="flex-1 py-2.5! rounded-full font-label text-[11px] tracking-[0.3em] uppercase transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              <button
+                onClick={handleUpgrade}
+                disabled={loading}
+                className="flex-1 py-2.5! rounded-full font-label text-[11px] tracking-[0.3em] uppercase transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
                 style={{ background: "#D4AF37", color: "#080808" }}
               >
-                Upgrade <ArrowRightIcon className="size-3" />
-              </Link>
+                {loading ? (
+                  <Loader2Icon className="size-3.5 animate-spin" />
+                ) : (
+                  <>
+                    Upgrade <ArrowRightIcon className="size-3" />
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>
