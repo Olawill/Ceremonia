@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 
 import { buildSections } from "@/lib/eventSections";
 import type { EventConfig } from "@/types/event";
+import clsx from "clsx";
+import { RefreshCwIcon } from "lucide-react";
 
 interface Props {
   config: EventConfig;
@@ -28,7 +30,22 @@ export function PreviewFrame({
 }: Props) {
   const [curtainOpen, setCurtainOpen] = useState(false);
   const [dateRevealed, setDateRevealed] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isResetting, setIsResetting] = useState(false);
+  const [activeSectionIndex, setActiveSectionIndex] = useState(0);
+  const [registryItemCount, setRegistryItemCount] = useState<
+    number | undefined
+  >(undefined);
+
+  useEffect(() => {
+    if (!config.registryEnabled || !config.slug) return;
+    fetch(`/api/registry/public/${config.slug}`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((items: unknown[]) =>
+        setRegistryItemCount(Array.isArray(items) ? items.length : 0),
+      )
+      .catch(() => setRegistryItemCount(0));
+  }, [config.registryEnabled, config.slug]);
 
   // Freeze the src on first mount — never change it, use postMessage for all updates
   const frozenSrcRef = useRef<string | null>(null);
@@ -91,31 +108,35 @@ export function PreviewFrame({
       if (e.data?.type === "CURTAIN_OPEN") setCurtainOpen(true);
       if (e.data?.type === "DATE_REVEALED") setDateRevealed(true);
       if (e.data?.type === "PREVIEW_READY") setIsLoading(false);
+      if (e.data?.type === "SECTION_CHANGE" && typeof e.data.index === "number")
+        setActiveSectionIndex(e.data.index);
     };
     window.addEventListener("message", handler);
     return () => window.removeEventListener("message", handler);
   }, []);
 
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+    const handler = () => setIsResetting(true);
+    iframe.addEventListener("preview-reset", handler);
+    return () => iframe.removeEventListener("preview-reset", handler);
+  }, []);
+
   // When the iframe first loads, push the current config in case
   // the initial URL param was stale or too long
   const handleLoad = () => {
-    setIsLoading(false);
     setCurtainOpen(false);
     setDateRevealed(false);
+    setIsLoading(false);
+    setIsResetting(false);
+    setActiveSectionIndex(0);
     setTimeout(() => {
       iframeRef.current?.contentWindow?.postMessage(
         { type: "PREVIEW_CONFIG", config, previewLocked },
         "*",
       );
     }, 300);
-  };
-
-  // Hard reset — rebuilds URL from current config and remounts iframe
-  const handleReset = () => {
-    const iframe = iframeRef.current;
-    if (!iframe) return;
-    initialUrl.current = buildUrl(config);
-    iframe.src = initialUrl.current;
   };
 
   return (
@@ -127,20 +148,35 @@ export function PreviewFrame({
             Jump to
           </span>
           <div className="flex gap-1 flex-wrap">
-            {buildSections(config, dateRevealed, () => {}).map((s, i) => (
-              <button
-                key={s.key}
-                onClick={() =>
-                  iframeRef.current?.contentWindow?.postMessage(
-                    { type: "SCROLL_TO", index: i },
-                    "*",
-                  )
-                }
-                className="font-label text-[8px] tracking-[0.2em] uppercase px-2! py-0.5! rounded-full border border-[#D4AF3760] text-[#D4AF3780] hover:text-[#D4AF37] hover:border-[#D4AF3780] transition-colors cursor-pointer"
-              >
-                {s.label}
-              </button>
-            ))}
+            {buildSections(
+              config,
+              dateRevealed,
+              () => {},
+              registryItemCount,
+              config.navMode,
+            ).map((s, i) => {
+              const isActive = i === activeSectionIndex;
+
+              return (
+                <button
+                  key={s.key}
+                  onClick={() =>
+                    iframeRef.current?.contentWindow?.postMessage(
+                      { type: "SCROLL_TO", index: i },
+                      "*",
+                    )
+                  }
+                  className={clsx(
+                    "font-label text-[8px] tracking-[0.2em] uppercase px-2! py-0.5! rounded-full border hover:text-[#D4AF37] hover:border-[#D4AF3790] transition-colors cursor-pointer",
+                    isActive
+                      ? "border-[#D4AF3790] text-[#D4AF37] bg-[#D4AF3718]"
+                      : "border-[#D4AF3760] text-[#D4AF3780] bg-transparent",
+                  )}
+                >
+                  {s.label}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
@@ -184,6 +220,17 @@ export function PreviewFrame({
               >
                 You can interact with the {config.entryStyle ?? "curtain"} in
                 the preview once your event details are saved
+              </p>
+            </div>
+          </div>
+        )}
+
+        {isResetting && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-dash-bg/80 backdrop-blur-sm">
+            <div className="flex flex-col items-center gap-3">
+              <RefreshCwIcon className="size-5 text-[#D4AF37] animate-spin" />
+              <p className="font-label text-[10px] tracking-[0.4em] uppercase text-[#D4AF3780]">
+                Resetting…
               </p>
             </div>
           </div>

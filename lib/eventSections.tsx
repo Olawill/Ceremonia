@@ -2,28 +2,47 @@ import { Accommodation } from "@/components/sections/Accommodation";
 import { Countdown } from "@/components/sections/Countdown";
 import { DressCode } from "@/components/sections/DressCode";
 import { EventMenu } from "@/components/sections/EventMenu";
+import { EventParty } from "@/components/sections/EventParty";
 import { FAQ } from "@/components/sections/FAQ";
 import { Finale } from "@/components/sections/Finale";
 import { GuestBook } from "@/components/sections/GuestBook";
 import { Livestream } from "@/components/sections/Livestream";
 import { ParallaxHero } from "@/components/sections/ParallaxHero";
 import { PhotoGallery } from "@/components/sections/PhotoGallery";
-import { RSVP } from "@/components/sections/RSVP";
 import { Registry } from "@/components/sections/Registry";
+import { RSVP } from "@/components/sections/RSVP";
 import { ScratchDate } from "@/components/sections/ScratchDate";
 import { Timeline } from "@/components/sections/Timeline";
 import { TravelGuide } from "@/components/sections/TravelGuide";
 import { VenueDetails } from "@/components/sections/VenueDetails";
-import { getVocabulary } from "@/types/event";
 
-import { EventParty } from "@/components/sections/EventParty";
+import { AccommodationPanel } from "@/components/rooms/panels/AccommodationPanel";
+import { CountdownPanel } from "@/components/rooms/panels/CountdownPanel";
+import { DressCodePanel } from "@/components/rooms/panels/DressCodePanel";
+import { EventMenuPanel } from "@/components/rooms/panels/EventMenuPanel";
+import { EventPartyPanel } from "@/components/rooms/panels/EventPartyPanel";
+import { FAQPanel } from "@/components/rooms/panels/FAQPanel";
+import { FinalePanel } from "@/components/rooms/panels/FinalePanel";
+import { GuestBookPanel } from "@/components/rooms/panels/GuestBookPanel";
+import { LivestreamPanel } from "@/components/rooms/panels/LivestreamPanel";
+import { ParallaxHeroPanel } from "@/components/rooms/panels/ParallaxHeroPanel";
+import { PhotoGalleryPanel } from "@/components/rooms/panels/PhotoGalleryPanel";
+import { RegistryPanel } from "@/components/rooms/panels/RegistryPanel";
+import { RSVPPanel } from "@/components/rooms/panels/RSVPPanel";
+import { ScratchDatePanel } from "@/components/rooms/panels/ScratchDatePanel";
+import { TimelinePanel } from "@/components/rooms/panels/TimelinePanel";
+import { TravelGuidePanel } from "@/components/rooms/panels/TravelGuidePanel";
+import { VenueDetailsPanel } from "@/components/rooms/panels/VenuDetailsPanel";
+
 import {
   DEMO_EVENT_CONFIG,
   FALLBACK_LOCATION,
+  getVocabulary,
   type EventConfig,
   type VenueEvent,
 } from "@/types/event";
-import { getHost1Name, getHost2Name } from "./eventHelpers";
+
+import { getHost1Name, getHost2Name } from "@/lib/eventHelpers";
 
 export interface EventSection {
   key: string;
@@ -35,7 +54,11 @@ export function buildSections(
   config: EventConfig,
   dateRevealed: boolean,
   onDateRevealed: () => void,
+  registryItemCount?: number,
+  navMode?: string,
 ): EventSection[] {
+  const isRooms = navMode === "rooms";
+
   const vocab = getVocabulary(config.eventType);
   const host1 = getHost1Name(config);
   const host2 = getHost2Name(config);
@@ -49,7 +72,17 @@ export function buildSections(
     {
       key: "hero",
       label: "Opening",
-      node: (
+      node: isRooms ? (
+        <ParallaxHeroPanel
+          key="hero"
+          bride={host1}
+          groom={host2}
+          tagLine={config.tagLine}
+          heroPhotoUrl={config.heroPhotoUrl}
+          topLabel={vocab.topLabel}
+          eventType={config.eventType}
+        />
+      ) : (
         <ParallaxHero
           key="hero"
           bride={host1}
@@ -57,30 +90,48 @@ export function buildSections(
           tagLine={config.tagLine}
           heroPhotoUrl={config.heroPhotoUrl}
           topLabel={vocab.topLabel}
+          eventType={config.eventType}
+          isRooms={false}
         />
       ),
     },
     {
       key: "scratch",
       label: "Date Reveal",
-      node: (
+      node: isRooms ? (
+        <ScratchDatePanel
+          key="scratch"
+          date={config.date}
+          onRevealed={onDateRevealed}
+          eventType={config.eventType}
+        />
+      ) : (
         <ScratchDate
           key="scratch"
           date={config.date}
           onRevealed={onDateRevealed}
           // revealLabel="" // TODO
+          eventType={config.eventType}
+          isRooms={false}
         />
       ),
     },
   ];
 
-  if (!dateRevealed) return always;
+  if (!dateRevealed && !isRooms) return always;
 
   const revealed: EventSection[] = [
     {
       key: "countdown",
       label: "Countdown",
-      node: (
+      node: isRooms ? (
+        <CountdownPanel
+          key="countdown"
+          date={config.date}
+          location={location}
+          eventLabel={vocab.eventLabel}
+        />
+      ) : (
         <Countdown
           key="countdown"
           date={config.date}
@@ -89,31 +140,51 @@ export function buildSections(
         />
       ),
     },
-    {
-      key: "timeline",
-      label: "Timeline",
-      node: <Timeline key="timeline" events={config.timeline} />,
-    },
+    ...(config.timelineEnabled && config.timeline?.length
+      ? [
+          {
+            key: "timeline",
+            label: "Timeline",
+            node: isRooms ? (
+              <TimelinePanel key="timeline" events={config.timeline} />
+            ) : (
+              <Timeline key="timeline" events={config.timeline} />
+            ),
+          },
+        ]
+      : []),
     ...(config.photoGalleryEnabled && config.galleryPhotos?.length
       ? [
           {
             key: "gallery",
             label: "Gallery",
-            node: <PhotoGallery key="gallery" photos={config.galleryPhotos} />,
+            node: isRooms ? (
+              <PhotoGalleryPanel key="gallery" photos={config.galleryPhotos} />
+            ) : (
+              <PhotoGallery key="gallery" photos={config.galleryPhotos} />
+            ),
           },
         ]
       : []),
     {
       key: "venue",
       label: "Venue",
-      node: <VenueDetails key="venue" details={config.venueDetails} />,
+      node: isRooms ? (
+        <VenueDetailsPanel key="venue" details={config.venueDetails} />
+      ) : (
+        <VenueDetails key="venue" details={config.venueDetails} />
+      ),
     },
     ...(config.dressCodeEnabled && config.dressCode
       ? [
           {
             key: "dresscode",
             label: "Dress Code",
-            node: <DressCode key="dresscode" dressCode={config.dressCode} />,
+            node: isRooms ? (
+              <DressCodePanel key="dresscode" dressCode={config.dressCode} />
+            ) : (
+              <DressCode key="dresscode" dressCode={config.dressCode} />
+            ),
           },
         ]
       : []),
@@ -122,7 +193,12 @@ export function buildSections(
           {
             key: "accommodation",
             label: "Accommodation",
-            node: (
+            node: isRooms ? (
+              <AccommodationPanel
+                key="accommodation"
+                accommodation={config.accommodation}
+              />
+            ) : (
               <Accommodation
                 key="accommodation"
                 accommodation={config.accommodation}
@@ -135,8 +211,16 @@ export function buildSections(
       ? [
           {
             key: "eventParty",
-            label: `${vocab.eventLabel} Party`,
-            node: (
+            label: vocab.partyLabel,
+            node: isRooms ? (
+              <EventPartyPanel
+                key="eventParty"
+                members={config.eventParty}
+                bride={host1}
+                groom={host2}
+                sectionLabel={vocab.partyLabel}
+              />
+            ) : (
               <EventParty
                 key="eventParty"
                 members={config.eventParty}
@@ -153,7 +237,11 @@ export function buildSections(
           {
             key: "faq",
             label: "FAQ",
-            node: <FAQ key="faq" items={config.faq} />,
+            node: isRooms ? (
+              <FAQPanel key="faq" items={config.faq} />
+            ) : (
+              <FAQ key="faq" items={config.faq} />
+            ),
           },
         ]
       : []),
@@ -162,7 +250,15 @@ export function buildSections(
           {
             key: "livestream",
             label: "Livestream",
-            node: (
+            node: isRooms ? (
+              <LivestreamPanel
+                key="livestream"
+                url={config.livestreamUrl}
+                title={config.livestreamTitle}
+                note={config.livestreamNote}
+                date={config.date}
+              />
+            ) : (
               <Livestream
                 key="livestream"
                 url={config.livestreamUrl}
@@ -179,7 +275,13 @@ export function buildSections(
           {
             key: "travel",
             label: "Travel",
-            node: (
+            node: isRooms ? (
+              <TravelGuidePanel
+                key="travel"
+                items={config.travelItems}
+                city={location.value ?? ""}
+              />
+            ) : (
               <TravelGuide
                 key="travel"
                 items={config.travelItems}
@@ -192,7 +294,15 @@ export function buildSections(
     {
       key: "menu",
       label: "Menu",
-      node: (
+      node: isRooms ? (
+        <EventMenuPanel
+          key="menu"
+          courses={config.menuCourses}
+          label={vocab.menuLabel}
+          subLabel={vocab.menuSubLabel}
+          description={vocab.menuDescription}
+        />
+      ) : (
         <EventMenu
           key="menu"
           courses={config.menuCourses}
@@ -205,21 +315,37 @@ export function buildSections(
     {
       key: "rsvp",
       label: "RSVP",
-      node: (
+      node: isRooms ? (
+        <RSVPPanel
+          key="rsvp"
+          eventId={config.id}
+          enabled={config.rsvpEnabled}
+          rsvpDeadline={config.rsvpDeadline}
+          eventLabel={vocab.eventLabel}
+        />
+      ) : (
         <RSVP
           key="rsvp"
           eventId={config.id}
           enabled={config.rsvpEnabled}
           rsvpDeadline={config.rsvpDeadline}
+          eventLabel={vocab.eventLabel}
         />
       ),
     },
-    ...(config.registryEnabled
+    ...(config.registryEnabled &&
+    (registryItemCount === undefined || registryItemCount > 0)
       ? [
           {
             key: "registry",
-            label: "Registry",
-            node: (
+            label: vocab.registryLabel,
+            node: isRooms ? (
+              <RegistryPanel
+                key="registry"
+                eventSlug={config.slug}
+                label={vocab.registryLabel}
+              />
+            ) : (
               <Registry
                 key="registry"
                 eventSlug={config.slug}
@@ -234,7 +360,13 @@ export function buildSections(
           {
             key: "guestbook",
             label: "Guestbook",
-            node: (
+            node: isRooms ? (
+              <GuestBookPanel
+                key="guestbook"
+                eventId={config.id ?? ""}
+                enabled={config.guestBookEnabled!}
+              />
+            ) : (
               <GuestBook
                 key="guestbook"
                 eventId={config.id ?? ""}
@@ -247,7 +379,20 @@ export function buildSections(
     {
       key: "finale",
       label: "Finale",
-      node: (
+      node: isRooms ? (
+        <FinalePanel
+          key="finale"
+          bride={host1}
+          groom={host2}
+          finaleTagLine={config.finaleTagLine}
+          finaleHeading={vocab.finaleHeading}
+          date={config.date}
+          eventType={config.eventType}
+          showCoupleIllustration={
+            config.eventType === "wedding" || config.eventType === "engagement"
+          }
+        />
+      ) : (
         <Finale
           key="finale"
           bride={host1}
@@ -258,6 +403,7 @@ export function buildSections(
           showCoupleIllustration={
             config.eventType === "wedding" || config.eventType === "engagement"
           }
+          isRooms={false}
         />
       ),
     },

@@ -1,20 +1,22 @@
 "use client";
 
+import { PolarEmbedCheckout } from "@polar-sh/checkout/embed";
 import clsx from "clsx";
+import { Loader2Icon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import { ThemeCustomiser } from "@/components/dashboard/editor/ThemeCustomiser";
 import { PlanGate } from "@/components/ui/PlanGate";
 
-import { usePlan } from "@/hooks/usePlan";
-
-import { themes } from "@/themes";
-
 import { useApi } from "@/hooks/useApi";
+import { usePlan } from "@/hooks/usePlan";
+import { useToast } from "@/hooks/useToast";
 import { Plan, planMeetsRequirement } from "@/lib/plans";
+import { themes } from "@/themes";
 import type { EntryStyle, EventConfig, NavMode } from "@/types/event";
 import type { ThemeKey } from "@/types/theme";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface Props {
   config: EventConfig;
@@ -64,6 +66,45 @@ const navModes = [
 
 export function DesignPanel({ config, onChange, previewIframeRef }: Props) {
   const { features, plan: ownerPlan } = usePlan();
+  const { api } = useApi();
+  const { handleApiError } = useToast();
+
+  // null = not yet checked, true = has credits, false = no credits
+  const [roomsAvailable, setRoomsAvailable] = useState<boolean | null>(null);
+  const [checkingRooms, setCheckingRooms] = useState(false);
+
+  const handleNavModeChange = async (label: NavMode) => {
+    if (label !== "rooms") {
+      onChange({ navMode: label });
+      return;
+    }
+
+    // For rooms: check credits before applying
+    setCheckingRooms(true);
+    try {
+      const { data, error } = await api.rooms.credits.get({});
+      if (error || !data) {
+        handleApiError(error);
+        return;
+      }
+
+      const remaining = data.total - data.used;
+      if (remaining > 0) {
+        setRoomsAvailable(true);
+        onChange({ navMode: "rooms" });
+      } else {
+        setRoomsAvailable(false);
+        // Don't apply — leave navMode as scroll, show the credits widget
+        // so the user can buy credits before activating
+        onChange({ navMode: "scroll" });
+      }
+    } catch {
+      setRoomsAvailable(false);
+      onChange({ navMode: "scroll" });
+    } finally {
+      setCheckingRooms(false);
+    }
+  };
 
   return (
     <div className="space-y-6!">
@@ -172,41 +213,52 @@ export function DesignPanel({ config, onChange, previewIframeRef }: Props) {
       <div className="grid grid-cols-2 gap-3!">
         {navModes.map(({ label, name, emoji, plan }) => {
           const active = (config.navMode ?? "scroll") === label;
-          const locked =
-            plan !== "free" ? !planMeetsRequirement(ownerPlan, plan) : false;
+          const isRooms = label === "rooms";
+          const isLoading = isRooms && checkingRooms;
+
+          // For rooms: all plans can activate it (they just need credits).
+          // Agency gets it free in-plan; others buy credits.
+          // So we don't gate rooms behind PlanGate — we let anyone click it,
+          // and the RoomsCreditsInfo widget handles the purchase flow.
           const btn = (
             <button
               key={label}
-              onClick={() => {
-                if (locked) return;
-                onChange({ navMode: label });
-              }}
+              onClick={() => handleNavModeChange(label)}
               className={clsx(
                 "py-3! rounded-xl border font-label text-[12px] font-bold! tracking-widest uppercase transition-all w-full",
                 active
                   ? "border-[#D4AF3790] text-[#D4AF37] bg-[#D4AF3710]"
                   : "border-[#D4AF3740] text-[#D4AF3770] bg-transparent",
-                locked ? "cursor-default" : "cursor-pointer",
+                isLoading ? "cursor-wait opacity-60" : "cursor-pointer",
               )}
             >
-              {emoji} {name}
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-1.5">
+                  <Loader2Icon className="size-3 animate-spin" />
+                  Checking…
+                </span>
+              ) : (
+                <>
+                  {emoji} {name}
+                </>
+              )}
             </button>
           );
-          if (!locked) return btn;
-          return (
-            <PlanGate
-              key={label}
-              requires={plan}
-              featureName={`${name} navigation`}
-            >
-              {btn}
-            </PlanGate>
-          );
+
+          return btn;
         })}
       </div>
 
       {/* Rooms credits info — shown when rooms mode is active */}
-      {config.navMode === "rooms" && <RoomsCreditsInfo ownerPlan={ownerPlan} />}
+      {(config.navMode === "rooms" || roomsAvailable === false) && (
+        <RoomsCreditsInfo
+          ownerPlan={ownerPlan}
+          onCreditsPurchased={() => {
+            setRoomsAvailable(true);
+            onChange({ navMode: "rooms" });
+          }}
+        />
+      )}
 
       {(config.entryStyle ?? "curtain") === "curtain" && (
         <>
@@ -286,13 +338,20 @@ export function DesignPanel({ config, onChange, previewIframeRef }: Props) {
   );
 }
 
-function RoomsCreditsInfo({ ownerPlan }: { ownerPlan: Plan }) {
+function RoomsCreditsInfo({
+  ownerPlan,
+  onCreditsPurchased,
+}: {
+  ownerPlan: Plan;
+  onCreditsPurchased?: () => void;
+}) {
   const { api } = useApi();
   const router = useRouter();
   const [credits, setCredits] = useState<{
     total: number;
     used: number;
   } | null>(null);
+  const [buying, setBuying] = useState(false);
 
   useEffect(() => {
     api.rooms.credits.get({}).then(({ data, error }) => {
@@ -302,24 +361,54 @@ function RoomsCreditsInfo({ ownerPlan }: { ownerPlan: Plan }) {
 
   const remaining = credits ? credits.total - credits.used : null;
 
+  const handleBuyCredits = async () => {
+    setBuying(true);
+    try {
+      const { data, error } = await api.rooms.credits.checkout.post({});
+      if (error || !data?.url) {
+        toast.error("Checkout failed");
+        return;
+      }
+
+      const checkout = await PolarEmbedCheckout.create(data.url, {
+        theme: "dark",
+      });
+      checkout.addEventListener("success", () => {
+        onCreditsPurchased?.();
+      });
+    } catch {
+      router.push("/app/billing");
+    } finally {
+      setBuying(false);
+    }
+  };
+
   return (
     <div
-      className="rounded-xl p-4! text-[11px] font-label tracking-wide"
+      className="rounded-xl p-4! text-[11px] font-label tracking-wide space-y-3!"
       style={{ background: "#D4AF3708", border: "1px solid #D4AF3720" }}
     >
-      <p style={{ color: "#D4AF3790" }}>
+      <p className="font-semibold" style={{ color: "#D4AF3790" }}>
         {ownerPlan === "agency"
-          ? "Agency plan includes 3 free activations/month."
-          : "3D Rooms is available as a paid add-on."}
+          ? "Agency includes 3 free activations/month."
+          : "3D Rooms is an add-on available to all plans."}
       </p>
       {credits !== null && (
-        <p className="mt-1" style={{ color: "#D4AF37" }}>
-          Credits remaining: <strong>{remaining}</strong>
-        </p>
+        <div className="space-y-1!">
+          <p className="font-semibold" style={{ color: "#D4AF37" }}>
+            Credits remaining: <strong>{remaining}</strong>
+          </p>
+          {ownerPlan === "agency" && (
+            <p style={{ color: "#D4AF3780", fontSize: 10 }}>
+              Free credits reset monthly · Purchased credits never expire
+            </p>
+          )}
+        </div>
       )}
       <button
-        onClick={() => router.push("/app/billing?addOn=rooms")}
-        className="mt-3 w-full py-2! rounded-lg font-bold tracking-[0.3em] uppercase transition-all cursor-pointer"
+        onClick={handleBuyCredits}
+        disabled={buying}
+        className="w-full py-2! rounded-lg font-bold tracking-[0.3em] uppercase transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
         style={{
           background: "#D4AF3715",
           border: "1px solid #D4AF3740",
@@ -327,7 +416,11 @@ function RoomsCreditsInfo({ ownerPlan }: { ownerPlan: Plan }) {
           fontSize: 10,
         }}
       >
-        Buy Credits
+        {buying ? (
+          <Loader2Icon className="size-3 animate-spin" />
+        ) : (
+          "Buy 5 Credits — $19"
+        )}
       </button>
     </div>
   );

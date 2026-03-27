@@ -19,6 +19,7 @@ import { AudioPlayer } from "@/components/ui/AudioPlayer";
 import { useTheme } from "@/lib/ThemeContext";
 import { buildSections } from "@/lib/eventSections";
 
+import { getHost1Name, getHost2Name } from "@/lib/eventHelpers";
 import { DEMO_EVENT_CONFIG, EventConfig } from "@/types/event";
 
 interface EventEngineProps {
@@ -40,11 +41,27 @@ export function EventEngine({
   const [curtainOpen, setCurtainOpen] = useState(false);
   const [dateRevealed, setDateRevealed] = useState(false);
 
+  const host1 = getHost1Name(config);
+  const host2 = getHost2Name(config); // undefined for single-host events
+
   const [isPreview, setIsPreview] = useState(false);
+  const [registryItemCount, setRegistryItemCount] = useState<
+    number | undefined
+  >(undefined);
 
   useEffect(() => {
     setIsPreview(window.self !== window.top);
   }, []);
+
+  useEffect(() => {
+    if (!config.registryEnabled || !config.slug) return;
+    fetch(`/api/registry/public/${config.slug}`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((items: unknown[]) =>
+        setRegistryItemCount(Array.isArray(items) ? items.length : 0),
+      )
+      .catch(() => setRegistryItemCount(0));
+  }, [config.registryEnabled, config.slug]);
 
   const curtainStyle = config.curtainStyle ?? "velvet";
   const entryStyle = config.entryStyle ?? "curtain";
@@ -65,7 +82,13 @@ export function EventEngine({
     }
   };
 
-  const sections = buildSections(config, dateRevealed, handleDateRevealed);
+  const sections = buildSections(
+    config,
+    dateRevealed,
+    handleDateRevealed,
+    registryItemCount,
+    navMode,
+  );
 
   useEffect(() => {
     if (!curtainOpen) return;
@@ -82,7 +105,15 @@ export function EventEngine({
         for (const entry of entries) {
           if (entry.isIntersecting) {
             const idx = sectionEls.indexOf(entry.target as HTMLElement);
-            if (idx !== -1) setActiveIndex(idx);
+            if (idx !== -1) {
+              setActiveIndex(idx);
+              if (window.self !== window.top) {
+                window.parent.postMessage(
+                  { type: "SECTION_CHANGE", index: idx },
+                  "*",
+                );
+              }
+            }
           }
         }
       },
@@ -145,8 +176,8 @@ export function EventEngine({
       <div style={{ display: entryStyle === "envelope" ? "block" : "none" }}>
         <EnvelopeCurtain
           onOpen={handleCurtainOpen}
-          host1={config.bride}
-          host2={config.groom || undefined}
+          host1={host1}
+          host2={host2}
           eventType={config.eventType}
         />
       </div>
@@ -191,7 +222,12 @@ export function EventEngine({
       )}
 
       {navMode === "rooms" && curtainOpen && (
-        <RoomsEngine config={config} sections={sections} />
+        <RoomsEngine
+          config={config}
+          sections={sections}
+          dateRevealed={dateRevealed}
+          onDateRevealed={handleDateRevealed}
+        />
       )}
 
       {/* Float nav */}

@@ -111,6 +111,9 @@ export function EditorShell({ initialConfig, isNew }: Props) {
   const handleHardReset = useCallback(() => {
     const iframe = previewIframeRef.current;
     if (!iframe) return;
+
+    // Dispatch a custom event that PreviewFrame listens for
+    iframe.dispatchEvent(new CustomEvent("preview-reset"));
     iframe.src = `/event/preview?initial=${encodeURIComponent(
       btoa(
         Array.from(new TextEncoder().encode(JSON.stringify(config)))

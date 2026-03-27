@@ -166,10 +166,17 @@ export const roomsCredits = pgTable("rooms_credits", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: text("user_id")
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  creditsTotal: integer("credits_total").notNull().default(0),
-  creditsUsed: integer("credits_used").notNull().default(0),
-  periodStart: timestamp("period_start").defaultNow(),
+    .references(() => users.id, { onDelete: "cascade" })
+    .unique(), // one row per user
+  // Monthly free allowance (Agency only, resets each period, does NOT roll over)
+  freeCreditsTotal: integer("free_credits_total").notNull().default(0),
+  freeCreditsUsed: integer("free_credits_used").notNull().default(0),
+  periodStart: timestamp("period_start").defaultNow(), // when the current month started
+  // Purchased credits (permanent, roll over forever)
+  purchasedCreditsTotal: integer("purchased_credits_total")
+    .notNull()
+    .default(0),
+  purchasedCreditsUsed: integer("purchased_credits_used").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

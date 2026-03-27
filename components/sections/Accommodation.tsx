@@ -69,7 +69,7 @@ function HotelCard({
         </div>
       )}
 
-      <div className="p-6 flex flex-col gap-4">
+      <div className="p-6! flex flex-col gap-4">
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-col gap-1">
@@ -89,7 +89,7 @@ function HotelCard({
           </div>
           {option.pricePerNight && (
             <div
-              className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full border font-label text-[10px] tracking-widest"
+              className="shrink-0 flex items-center gap-1.5 px-3! py-1.5! rounded-full border font-label text-[10px] tracking-widest"
               style={{
                 borderColor: `${theme.gold}40`,
                 color: theme.gold,
@@ -117,7 +117,7 @@ function HotelCard({
           {option.address && (
             <div className="flex items-start gap-2">
               <MapPinIcon
-                className="size-3.5 mt-0.5 shrink-0"
+                className="size-3.5 mt-0.5! shrink-0"
                 style={{ color: `${theme.gold}80` }}
               />
               <p
@@ -165,7 +165,7 @@ function HotelCard({
               >
                 Group code:{" "}
                 <span
-                  className="font-mono px-2 py-0.5 rounded"
+                  className="font-mono px-2! py-0.5! rounded"
                   style={{
                     color: theme.gold,
                     background: `${theme.gold}15`,
@@ -201,7 +201,7 @@ function HotelCard({
             href={option.bookingUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-2 flex items-center justify-center gap-2 py-3 rounded-xl border font-label text-[11px] tracking-[0.3em] uppercase transition-all hover:opacity-80"
+            className="mt-2! flex items-center justify-center gap-2 py-3! rounded-xl border font-label text-[11px] tracking-[0.3em] uppercase transition-all hover:opacity-80"
             style={{
               borderColor: `${theme.gold}50`,
               color: theme.gold,
@@ -245,7 +245,7 @@ export function Accommodation({ accommodation }: Props) {
 
   return (
     <section
-      className="min-h-screen flex flex-col items-center justify-center px-8 py-24 gap-12"
+      className="min-h-screen flex flex-col items-center justify-center px-8! py-24! gap-12"
       style={{ background: theme.bg }}
     >
       <div className="w-full max-w-2xl flex flex-col items-center gap-10">

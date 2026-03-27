@@ -45,32 +45,51 @@ export function Timeline({ events }: TimelineProps) {
   const sectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    const items =
-      sectionRef.current?.querySelectorAll<HTMLElement>(".timeline-item");
-    if (!items) return;
+    const section = sectionRef.current;
+    if (!section) return;
+
+    const items = Array.from(
+      section.querySelectorAll<HTMLElement>(".timeline-item"),
+    );
+    if (!items.length) return;
+
+    // Guard: skip GSAP entirely if elements are not attached to the document
+    // (happens in rooms mode where sections are hidden off-screen)
+    if (!document.body.contains(section)) return;
+
+    const scrollContainer = document.querySelector("[data-scroll-container]");
 
     const triggers: ScrollTrigger[] = [];
 
     items.forEach((item, i) => {
+      // Null-guard: element must be in the DOM before GSAP can touch it
+      if (!item) return;
+
       gsap.set(item, { opacity: 0, y: i % 2 === 0 ? 70 : -70 });
 
+      // In rooms mode there is no scroll container — fall back to a simple
+      // IntersectionObserver-style trigger using the viewport as scroller
       const st = ScrollTrigger.create({
         trigger: item,
-        scroller: "[data-scroll-container]",
+        ...(scrollContainer ? { scroller: scrollContainer } : {}),
         start: "top 82%",
-        onEnter: () =>
+        onEnter: () => {
+          if (!item) return;
           gsap.to(item, {
             opacity: 1,
             y: 0,
             duration: 0.95,
             ease: "power3.out",
             delay: i * 0.12,
-          }),
+          });
+        },
       });
       triggers.push(st);
     });
 
-    return () => triggers.forEach((t) => t.kill());
+    return () => {
+      triggers.forEach((t) => t.kill());
+    };
   }, []);
 
   return (
@@ -115,7 +134,7 @@ export function Timeline({ events }: TimelineProps) {
           const isLeft = i % 2 === 0;
           return (
             <div
-              key={ev.year}
+              key={`${ev.year}-${i}`}
               className={clsx(
                 "timeline-item relative flex items-center gap-10 mb-20!",
                 isLeft ? "flex-row" : "flex-row-reverse",

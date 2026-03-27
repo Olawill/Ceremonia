@@ -5,17 +5,22 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTheme } from "@/lib/ThemeContext";
 import { fireConfetti } from "@/lib/confetti";
 import { formattedDate } from "@/lib/helper";
+import { EventType } from "@/types/event";
 
 interface ScratchDateProps {
   date?: string; // ISO "2026-07-12"
   onRevealed: () => void;
   revealLabel?: string; // defaults to "Reveal Our Date"
+  eventType?: EventType;
+  isRooms?: boolean;
 }
 
 export function ScratchDate({
   date = "2026-07-12",
   onRevealed,
   revealLabel,
+  eventType,
+  isRooms = false,
 }: ScratchDateProps) {
   const { theme } = useTheme();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -181,7 +186,7 @@ export function ScratchDate({
           style={{ width: "min(640px, 85vw)", height: 180 }}
         >
           {/* Revealed layer (underneath the foil) */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4 pb-2 bg-[linear-gradient(135deg,var(--theme-curtain)_0%,var(--theme-bg)_100%)] text-4xl lg:text-6xl">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4 pb-2 bg-[linear-gradient(135deg,var(--theme-curtain)_0%,var(--theme-bg)_100%)] text-2xl md:text-4xl lg:text-6xl">
             <p
               className="font-label font-semibold"
               style={{
@@ -238,13 +243,30 @@ export function ScratchDate({
                 paddingTop: "1rem",
               }}
             >
-              We can&apos;t wait for you to celebrate with us ♡
+              {(
+                {
+                  wedding: "We can't wait to celebrate with you ♡",
+                  birthday: "We can't wait to party with you ♡",
+                  baby_shower: "We can't wait to share this moment with you ♡",
+                  christening: "We are grateful you can join us ♡",
+                  bridal_shower:
+                    "We can't wait to celebrate the bride with you ♡",
+                  housewarming: "We can't wait to welcome you to our home ♡",
+                  anniversary: "We can't wait to celebrate with you ♡",
+                  graduation:
+                    "We can't wait to celebrate this milestone with you ♡",
+                  engagement: "We can't wait to celebrate our love with you ♡",
+                  corporate: "We look forward to seeing you there ✦",
+                  other: "We can't wait to see you there ♡",
+                } as Record<string, string>
+              )[eventType ?? "wedding"] ??
+                "We can't wait to celebrate with you ♡"}
             </p>
             <p
               className="font-label text-[16px] font-semibold tracking-[0.4em] animate-pulse"
               style={{ color: `${theme.gold}50`, marginTop: "4rem" }}
             >
-              ↓ SCROLL TO CONTINUE
+              {isRooms ? "SWIPE" : "↓ SCROLL"} TO CONTINUE
             </p>
           </div>
         )}

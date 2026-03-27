@@ -90,6 +90,7 @@ export interface EventConfig {
   password?: string;
   notificationEmail?: string;
   registryEnabled?: boolean;
+  timelineEnabled?: boolean;
   photoGalleryEnabled?: boolean;
   galleryPhotos?: string[]; // Vercel Blob URLs
   travelGuideEnabled?: boolean;
@@ -216,6 +217,7 @@ export const DEMO_EVENT_CONFIG: EventConfig = {
   ],
   themeKey: "royal",
   curtainStyle: "velvet",
+  timelineEnabled: true,
   timeline: [
     {
       year: "2019",

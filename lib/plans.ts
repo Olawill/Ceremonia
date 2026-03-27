@@ -116,6 +116,7 @@ export const PLAN_ORDER: Plan[] = ["free", "starter", "pro", "agency"];
 // Rooms Credits add-on — sold to any plan, Agency gets 3 free/mo included
 export const ROOMS_CREDITS_PER_PACK = 5;
 export const ROOMS_CREDITS_AGENCY_MONTHLY_FREE = 3;
+export const ROOMS_CREDITS_RESET_DAYS = 30;
 
 /** Returns true if userPlan meets or exceeds requiredPlan */
 export function planMeetsRequirement(

@@ -9,6 +9,7 @@ import { env } from "@/env";
 
 import {
   Plan,
+  ROOMS_CREDITS_AGENCY_MONTHLY_FREE,
   ROOMS_CREDITS_PER_PACK,
   STARTER_ONCE_HOSTING_DAYS,
 } from "@/lib/plans";
@@ -95,6 +96,38 @@ export const POST = Webhooks({
       [], // orders not in customer.state_changed — handled via starterIsOnce on order webhooks
     );
 
+    // If the user just upgraded to agency, ensure their credits row exists
+    // with the free monthly allowance. getCreditsRow handles the upsert logic.
+    if (plan === "agency") {
+      const existing = await db
+        .select()
+        .from(roomsCredits)
+        .where(eq(roomsCredits.userId, externalId))
+        .limit(1);
+
+      if (!existing.length) {
+        await db.insert(roomsCredits).values({
+          userId: externalId,
+          freeCreditsTotal: ROOMS_CREDITS_AGENCY_MONTHLY_FREE,
+          freeCreditsUsed: 0,
+          purchasedCreditsTotal: 0,
+          purchasedCreditsUsed: 0,
+          periodStart: new Date(),
+        });
+      } else if (
+        existing[0].freeCreditsTotal < ROOMS_CREDITS_AGENCY_MONTHLY_FREE
+      ) {
+        // Existing row from a previous plan — top up the free allowance
+        await db
+          .update(roomsCredits)
+          .set({
+            freeCreditsTotal: ROOMS_CREDITS_AGENCY_MONTHLY_FREE,
+            periodStart: new Date(),
+          })
+          .where(eq(roomsCredits.userId, externalId));
+      }
+    }
+
     const posthog = getPostHogClient();
     posthog.capture({
       distinctId: externalId,
@@ -163,14 +196,18 @@ export const POST = Webhooks({
         await db
           .update(roomsCredits)
           .set({
-            creditsTotal: existing[0].creditsTotal + ROOMS_CREDITS_PER_PACK,
+            purchasedCreditsTotal:
+              existing[0].purchasedCreditsTotal + ROOMS_CREDITS_PER_PACK,
           })
           .where(eq(roomsCredits.userId, externalId));
       } else {
         await db.insert(roomsCredits).values({
           userId: externalId,
-          creditsTotal: ROOMS_CREDITS_PER_PACK,
-          creditsUsed: 0,
+          freeCreditsTotal: 0,
+          freeCreditsUsed: 0,
+          purchasedCreditsTotal: ROOMS_CREDITS_PER_PACK,
+          purchasedCreditsUsed: 0,
+          periodStart: new Date(),
         });
       }
     }

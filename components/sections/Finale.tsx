@@ -2,7 +2,7 @@
 
 import gsap from "gsap";
 import ScrollTrigger from "gsap/ScrollTrigger";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 import { useTheme } from "@/lib/ThemeContext";
 import { fireConfetti } from "@/lib/confetti";
@@ -19,6 +19,7 @@ interface FinaleProps {
   date?: string;
   finaleHeading?: string;
   showCoupleIllustration?: boolean;
+  isRooms?: boolean;
 }
 
 function BrideGroomSVG({
@@ -542,11 +543,12 @@ function BrideGroomSVG({
 
 export function Finale({
   bride = "Taiwo",
-  groom = "Tayo",
+  groom,
   finaleTagLine,
   date,
   finaleHeading,
   showCoupleIllustration,
+  isRooms = false,
 }: FinaleProps) {
   const { theme } = useTheme();
   const sectionRef = useRef<HTMLElement>(null);
@@ -554,40 +556,91 @@ export function Finale({
 
   const displayDate = date ?? DEMO_EVENT_CONFIG.date;
 
-  useEffect(() => {
-    if (!sectionRef.current || !contentRef.current) return;
+  const confettiFiredRef = useRef(false);
 
-    gsap.set(contentRef.current, { opacity: 0, scale: 0.88 });
+  const fireFinaleConfetti = useCallback(() => {
+    if (confettiFiredRef.current) return;
+    confettiFiredRef.current = true;
+    [0, 600, 1200].forEach((delay) => {
+      setTimeout(() => {
+        fireConfetti({
+          count: 60,
+          fixed: true,
+          colors: [theme.gold, theme.goldLight, "#ffffff", theme.curtain],
+          origin: { x: "50%", y: "50%" },
+        });
+      }, delay);
+    });
+  }, [theme]);
+
+  // In rooms mode: animate + confetti on mount (the room IS the viewport)
+  // In scroll mode: use ScrollTrigger to detect when the section scrolls into view
+  useEffect(() => {
+    const section = sectionRef.current;
+    const content = contentRef.current;
+    if (!section || !content) return;
+
+    if (isRooms) {
+      // In rooms mode all sections are mounted immediately but hidden.
+      // We must NOT fire on mount — instead watch for when the section's
+      // parent div becomes visible (display: block) using a MutationObserver.
+      const parent = section.closest<HTMLElement>("[data-rooms-panel]");
+      if (!parent) return;
+
+      const observer = new MutationObserver(() => {
+        const visible = parent.style.display !== "none";
+        if (!visible) return;
+        observer.disconnect();
+
+        gsap.fromTo(
+          content,
+          { opacity: 0, scale: 0.88 },
+          {
+            opacity: 1,
+            scale: 1,
+            duration: 1.3,
+            ease: "power3.out",
+            delay: 0.3,
+          },
+        );
+        const t = setTimeout(fireFinaleConfetti, 900);
+        return () => clearTimeout(t);
+      });
+
+      observer.observe(parent, {
+        attributes: true,
+        attributeFilter: ["style"],
+      });
+
+      return () => observer.disconnect();
+    }
+
+    // Scroll mode: guard against rooms-mounted-but-invisible case
+    if (!document.body.contains(section)) return;
+
+    gsap.set(content, { opacity: 0, scale: 0.88 });
+
+    const scrollContainer = document.querySelector("[data-scroll-container]");
 
     const st = ScrollTrigger.create({
-      trigger: sectionRef.current,
-      scroller: "[data-scroll-container]",
+      trigger: section,
+      ...(scrollContainer ? { scroller: scrollContainer } : {}),
       start: "top 55%",
       once: true,
       onEnter: () => {
-        gsap.to(contentRef.current, {
+        if (!content) return;
+        gsap.to(content, {
           opacity: 1,
           scale: 1,
           duration: 1.3,
           ease: "power3.out",
         });
-
-        // Three waves of confetti
-        [0, 600, 1200].forEach((delay) => {
-          setTimeout(() => {
-            fireConfetti({
-              count: 60,
-              fixed: true,
-              colors: [theme.gold, theme.goldLight, "#ffffff", theme.curtain],
-              origin: { x: "50%", y: "50%" },
-            });
-          }, delay);
-        });
+        fireFinaleConfetti();
       },
     });
 
     return () => st.kill();
-  }, [theme]);
+  }, [isRooms, theme, fireFinaleConfetti]);
 
   return (
     <section

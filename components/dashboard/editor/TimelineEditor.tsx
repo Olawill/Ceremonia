@@ -6,9 +6,14 @@ import { useEffect, useRef, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 
-import type { EventConfig, TimelineEvent } from "@/types/event";
+import {
+  getVocabulary,
+  type EventConfig,
+  type TimelineEvent,
+} from "@/types/event";
 
 import { Field, Input, Textarea } from "@/components/ui/FormPrimitives";
+import { SectionToggle } from "./SectionToggle";
 
 const EVENT_ICONS = [
   "✦",
@@ -127,6 +132,8 @@ interface Props {
 }
 
 export function TimelineEditor({ config, onChange }: Props) {
+  const vocab = getVocabulary(config.eventType);
+
   const {
     register,
     control,
@@ -160,88 +167,94 @@ export function TimelineEditor({ config, onChange }: Props) {
 
   return (
     <div className="space-y-5!">
-      <p
-        className="font-label text-[12px] font-semibold tracking-[0.5em] uppercase"
-        style={{ color: "#D4AF37" }}
-      >
-        Our Story
-      </p>
+      <SectionToggle
+        label="Our Story"
+        enabled={config.timelineEnabled ?? false}
+        onToggle={() => onChange({ timelineEnabled: !config.timelineEnabled })}
+        disabledMessage={`Enable to showcase the story for your ${vocab.eventLabel.toLowerCase()} invitation.`}
+      />
 
-      {fields.map((field, i) => (
-        <div
-          key={field.id}
-          className="p-4! rounded-xl space-y-3! relative font-semibold"
-          style={{ background: "#D4AF3708", border: "1px solid #D4AF3720" }}
-        >
+      {config.timelineEnabled && (
+        <>
+          {fields.map((field, i) => (
+            <div
+              key={field.id}
+              className="p-4! rounded-xl space-y-3! relative font-semibold"
+              style={{ background: "#D4AF3708", border: "1px solid #D4AF3720" }}
+            >
+              <button
+                type="button"
+                onClick={() => remove(i)}
+                className="absolute top-3 right-3 font-label text-[10px] tracking-widest hover:cursor-pointer hover:font-bold! hover:scale-1.15!"
+                style={{ color: "#D4AF3750" }}
+              >
+                <XIcon className="size-3" />
+              </button>
+
+              <div className="grid grid-cols-3 gap-3">
+                <Field label="Year" error={errors.timeline?.[i]?.year?.message}>
+                  <Input
+                    {...register(`timeline.${i}.year`)}
+                    placeholder="2024"
+                    hasError={!!errors.timeline?.[i]?.year}
+                  />
+                </Field>
+                <Field label="Icon" error={errors.timeline?.[i]?.icon?.message}>
+                  <IconPicker
+                    value={watch(`timeline.${i}.icon`)}
+                    onChange={(v) =>
+                      setValue(`timeline.${i}.icon`, v, {
+                        shouldValidate: true,
+                      })
+                    }
+                  />
+                </Field>
+                <div /> {/* spacer */}
+              </div>
+
+              <Field label="Title" error={errors.timeline?.[i]?.title?.message}>
+                <Input
+                  {...register(`timeline.${i}.title`)}
+                  placeholder="First Meeting"
+                  hasError={!!errors.timeline?.[i]?.title}
+                />
+              </Field>
+
+              <Field label="Story" error={errors.timeline?.[i]?.desc?.message}>
+                <Textarea
+                  {...register(`timeline.${i}.desc`)}
+                  placeholder="Two souls crossed paths…"
+                  rows={2}
+                  hasError={!!errors.timeline?.[i]?.desc}
+                />
+              </Field>
+            </div>
+          ))}
+
           <button
             type="button"
-            onClick={() => remove(i)}
-            className="absolute top-3 right-3 font-label text-[10px] tracking-widest hover:cursor-pointer hover:font-bold! hover:scale-1.15!"
-            style={{ color: "#D4AF3750" }}
+            onClick={() =>
+              append({
+                year: new Date().getFullYear().toString(),
+                icon: "✦",
+                title: "",
+                desc: "",
+              })
+            }
+            className="w-full py-3! rounded-xl font-label text-[12px] forn-semibold tracking-[0.4em] uppercase transition-all border"
+            style={{
+              borderColor: "#D4AF3760",
+              color: "#D4AF37",
+              borderStyle: "dashed",
+            }}
           >
-            <XIcon className="size-3" />
+            <span className="flex items-center justify-center gap-1.5">
+              <PlusIcon className="size-3" />
+              Add Milestone
+            </span>
           </button>
-
-          <div className="grid grid-cols-3 gap-3">
-            <Field label="Year" error={errors.timeline?.[i]?.year?.message}>
-              <Input
-                {...register(`timeline.${i}.year`)}
-                placeholder="2024"
-                hasError={!!errors.timeline?.[i]?.year}
-              />
-            </Field>
-            <Field label="Icon" error={errors.timeline?.[i]?.icon?.message}>
-              <IconPicker
-                value={watch(`timeline.${i}.icon`)}
-                onChange={(v) =>
-                  setValue(`timeline.${i}.icon`, v, { shouldValidate: true })
-                }
-              />
-            </Field>
-            <div /> {/* spacer */}
-          </div>
-
-          <Field label="Title" error={errors.timeline?.[i]?.title?.message}>
-            <Input
-              {...register(`timeline.${i}.title`)}
-              placeholder="First Meeting"
-              hasError={!!errors.timeline?.[i]?.title}
-            />
-          </Field>
-
-          <Field label="Story" error={errors.timeline?.[i]?.desc?.message}>
-            <Textarea
-              {...register(`timeline.${i}.desc`)}
-              placeholder="Two souls crossed paths…"
-              rows={2}
-              hasError={!!errors.timeline?.[i]?.desc}
-            />
-          </Field>
-        </div>
-      ))}
-
-      <button
-        type="button"
-        onClick={() =>
-          append({
-            year: new Date().getFullYear().toString(),
-            icon: "✦",
-            title: "",
-            desc: "",
-          })
-        }
-        className="w-full py-3! rounded-xl font-label text-[12px] forn-semibold tracking-[0.4em] uppercase transition-all border"
-        style={{
-          borderColor: "#D4AF3760",
-          color: "#D4AF37",
-          borderStyle: "dashed",
-        }}
-      >
-        <span className="flex items-center justify-center gap-1.5">
-          <PlusIcon className="size-3" />
-          Add Milestone
-        </span>
-      </button>
+        </>
+      )}
     </div>
   );
 }

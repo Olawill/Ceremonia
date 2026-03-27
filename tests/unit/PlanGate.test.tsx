@@ -111,8 +111,12 @@ describe("PlanGate", () => {
     expect(screen.getByRole("link", { name: /upgrade/i })).toBeInTheDocument();
   });
 
-  it("upgrade dialog contains a link to /app/billing", async () => {
+  it("upgrade dialog contains an upgrade button", async () => {
     mockPlan("free");
+    // Mock useApi so it doesn't throw
+    vi.mock("@/hooks/useApi", () => ({
+      useApi: () => ({ api: { billing: { checkout: { post: vi.fn() } } } }),
+    }));
     render(
       <PlanGate requires="starter">
         <div>Content</div>
@@ -121,8 +125,9 @@ describe("PlanGate", () => {
     const lockedWrapper = screen.getByText("Content").closest(".relative");
     await userEvent.click(lockedWrapper!);
 
-    const link = screen.getByRole("link", { name: /upgrade/i });
-    expect(link).toHaveAttribute("href", "/app/billing");
+    expect(
+      screen.getByRole("button", { name: /upgrade/i }),
+    ).toBeInTheDocument();
   });
 
   it("featureName prop appears in the dialog message", async () => {

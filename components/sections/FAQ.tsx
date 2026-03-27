@@ -70,7 +70,7 @@ function FaqRow({ item, index }: { item: FaqItem; index: number }) {
         style={{ height: 0, opacity: 0 }}
       >
         <p
-          className="font-display italic text-sm md:text-base pb-6! leading-relaxed"
+          className="font-display font-semibold italic text-sm md:text-base pb-6! leading-relaxed"
           style={{ color: `${theme.text}70` }}
         >
           {item.answer}
