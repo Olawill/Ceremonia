@@ -24,6 +24,12 @@ import { EditorSidebar } from "@/components/dashboard/editor/EditorSidebar";
 import { NewEventDialog } from "@/components/dashboard/editor/NewEventDialog";
 import { PreviewFrame } from "@/components/dashboard/editor/PreviewFrame";
 
+interface RoomsCredits {
+  freeRemaining: number;
+  purchasedRemaining: number;
+  totalRemaining: number;
+}
+
 interface Props {
   initialConfig: EventConfig | null;
   isNew: boolean;
@@ -56,6 +62,7 @@ export function EditorShell({ initialConfig, isNew }: Props) {
 
   const [showDialog, setShowDialog] = useState(isNew);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [roomsCredits, setRoomsCredits] = useState<RoomsCredits | null>(null);
 
   const hasOpenedPreviewRef = useRef(false);
   const hasEverSavedRef = useRef(!isNew); // true for existing events, false for brand new ones
@@ -172,6 +179,7 @@ export function EditorShell({ initialConfig, isNew }: Props) {
         galleryPhotos: config.galleryPhotos,
         travelGuideEnabled: config.travelGuideEnabled,
         travelItems: config.travelItems,
+        navMode: config.navMode,
       } satisfies Parameters<typeof api.events.post>[0];
 
       if (isNew) {
@@ -195,12 +203,27 @@ export function EditorShell({ initialConfig, isNew }: Props) {
           router.replace(`/app/editor/${data!.slug}`);
         });
       } else {
-        const { error } = await api
-          .events({ slug: config.slug })
-          .patch(payload);
-        if (error) {
-          handleApiError(error, "Failed to save event");
-          throw error;
+        const res = await api.events({ slug: config.slug }).patch(payload);
+
+        // Handle 403 from rooms credit exhaustion — revert navMode to scroll
+        if (res.error?.status === 403) {
+          setConfig((prev) => ({ ...prev, navMode: "scroll" }));
+          handleApiError(
+            res.error,
+            "No rooms credits remaining. Purchase a 5-credit pack to enable 3D rooms.",
+          );
+          setSaveState("idle");
+          return;
+        }
+
+        if (res.error) {
+          handleApiError(res.error, "Failed to save event");
+          throw res.error;
+        }
+
+        // Update rooms credits balance from the save response
+        if (res.data?.roomsCredits) {
+          setRoomsCredits(res.data.roomsCredits);
         }
         setSaveState("saved");
         setIsDirty(false);
@@ -312,6 +335,7 @@ export function EditorShell({ initialConfig, isNew }: Props) {
             config={config}
             onChange={updateConfig}
             previewIframeRef={previewIframeRef}
+            roomsCredits={roomsCredits}
           />
         </div>
       </div>

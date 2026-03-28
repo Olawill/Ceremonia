@@ -70,9 +70,14 @@ interface Props {
   config: EventConfig;
   onChange: (patch: Partial<EventConfig>) => void;
   previewIframeRef: React.RefObject<HTMLIFrameElement | null>;
+  roomsCredits: {
+    freeRemaining: number;
+    purchasedRemaining: number;
+    totalRemaining: number;
+  } | null;
 }
 
-export function EditorSidebar({ config, onChange, previewIframeRef }: Props) {
+export function EditorSidebar({ config, onChange, previewIframeRef, roomsCredits }: Props) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const TABS = getTabs(config.eventType);
@@ -117,6 +122,7 @@ export function EditorSidebar({ config, onChange, previewIframeRef }: Props) {
             config={config}
             onChange={onChange}
             previewIframeRef={previewIframeRef}
+            roomsCredits={roomsCredits}
           />
         </div>
         <div className={activeTab === "host" ? "p-2 space-y-6" : "hidden"}>

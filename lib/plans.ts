@@ -133,6 +133,7 @@ export const PLAN_ORDER: Plan[] = ["free", "starter", "pro", "agency"];
 export const ROOMS_CREDITS_PER_PACK = 5;
 export const ROOMS_CREDITS_AGENCY_MONTHLY_FREE = 3;
 export const ROOMS_CREDITS_RESET_DAYS = 30;
+export const ROOMS_CREDITS_PACK_PRICE = 19; // USD per 5-credit pack
 
 /** Returns true if userPlan meets or exceeds requiredPlan */
 export function planMeetsRequirement(

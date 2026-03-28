@@ -4,7 +4,7 @@ import { PolarEmbedCheckout } from "@polar-sh/checkout/embed";
 import clsx from "clsx";
 import { Loader2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { ThemeCustomiser } from "@/components/dashboard/editor/ThemeCustomiser";
 import { PlanGate } from "@/components/ui/PlanGate";
@@ -12,7 +12,7 @@ import { PlanGate } from "@/components/ui/PlanGate";
 import { useApi } from "@/hooks/useApi";
 import { usePlan } from "@/hooks/usePlan";
 import { useToast } from "@/hooks/useToast";
-import { Plan, planMeetsRequirement } from "@/lib/plans";
+import { Plan, planMeetsRequirement, ROOMS_CREDITS_PACK_PRICE } from "@/lib/plans";
 import { themes } from "@/themes";
 import type { EntryStyle, EventConfig, NavMode } from "@/types/event";
 import type { ThemeKey } from "@/types/theme";
@@ -22,6 +22,11 @@ interface Props {
   config: EventConfig;
   onChange: (patch: Partial<EventConfig>) => void;
   previewIframeRef: React.RefObject<HTMLIFrameElement | null>;
+  roomsCredits: {
+    freeRemaining: number;
+    purchasedRemaining: number;
+    totalRemaining: number;
+  } | null;
 }
 
 const curtainStyles = [
@@ -64,7 +69,7 @@ const navModes = [
   },
 ] as const;
 
-export function DesignPanel({ config, onChange, previewIframeRef }: Props) {
+export function DesignPanel({ config, onChange, previewIframeRef, roomsCredits }: Props) {
   const { features, plan: ownerPlan } = usePlan();
   const { api } = useApi();
   const { handleApiError } = useToast();
@@ -253,6 +258,7 @@ export function DesignPanel({ config, onChange, previewIframeRef }: Props) {
       {(config.navMode === "rooms" || roomsAvailable === false) && (
         <RoomsCreditsInfo
           ownerPlan={ownerPlan}
+          roomsCredits={roomsCredits}
           onCreditsPurchased={() => {
             setRoomsAvailable(true);
             onChange({ navMode: "rooms" });
@@ -340,26 +346,22 @@ export function DesignPanel({ config, onChange, previewIframeRef }: Props) {
 
 function RoomsCreditsInfo({
   ownerPlan,
+  roomsCredits,
   onCreditsPurchased,
 }: {
   ownerPlan: Plan;
+  roomsCredits: {
+    freeRemaining: number;
+    purchasedRemaining: number;
+    totalRemaining: number;
+  } | null;
   onCreditsPurchased?: () => void;
 }) {
   const { api } = useApi();
   const router = useRouter();
-  const [credits, setCredits] = useState<{
-    total: number;
-    used: number;
-  } | null>(null);
   const [buying, setBuying] = useState(false);
 
-  useEffect(() => {
-    api.rooms.credits.get({}).then(({ data, error }) => {
-      if (data && !error) setCredits({ total: data.total, used: data.used });
-    });
-  }, []);
-
-  const remaining = credits ? credits.total - credits.used : null;
+  const remaining = roomsCredits?.totalRemaining ?? null;
 
   const handleBuyCredits = async () => {
     setBuying(true);
@@ -393,7 +395,7 @@ function RoomsCreditsInfo({
           ? "Agency includes 3 free activations/month."
           : "3D Rooms is an add-on available to all plans."}
       </p>
-      {credits !== null && (
+      {roomsCredits !== null && (
         <div className="space-y-1!">
           <p className="font-semibold" style={{ color: "#D4AF37" }}>
             Credits remaining: <strong>{remaining}</strong>
@@ -419,7 +421,7 @@ function RoomsCreditsInfo({
         {buying ? (
           <Loader2Icon className="size-3 animate-spin" />
         ) : (
-          "Buy 5 Credits — $19"
+          `Buy 5 Credits — $${ROOMS_CREDITS_PACK_PRICE}`
         )}
       </button>
     </div>

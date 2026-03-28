@@ -7,6 +7,7 @@ import { events, users } from "@/db/schema";
 
 import { hashPassword } from "@/lib/password";
 import { computeEventExpiry, MONTHLY_EVENTS, PLAN_FEATURES } from "@/lib/plans";
+import { consumeRoomCredit, getRoomCreditBalance } from "@/lib/rooms-credits";
 
 import { ingestUsage } from "@/lib/polar-usage";
 import { getPostHogClient } from "@/lib/posthog-server";
@@ -74,6 +75,7 @@ const EventBodySchema = t.Object({
   galleryPhotos: t.Optional(t.Any()),
   travelGuideEnabled: t.Optional(t.Boolean()),
   travelItems: t.Optional(t.Any()),
+  navMode: t.Optional(t.UnionEnum(["scroll", "rooms"])),
 });
 
 export const eventsRouter = new Elysia({ prefix: "/events" })
@@ -148,10 +150,16 @@ export const eventsRouter = new Elysia({ prefix: "/events" })
       const isNewMonth =
         now.getUTCMonth() !== periodStart.getUTCMonth() ||
         now.getUTCFullYear() !== periodStart.getUTCFullYear();
-      const currentMonthlyCreated = isNewMonth ? 0 : (owner?.monthlyEventsCreated ?? 0);
+      const currentMonthlyCreated = isNewMonth
+        ? 0
+        : (owner?.monthlyEventsCreated ?? 0);
 
       // Check monthly quota (skip for one-time plans which use lifetime check)
-      if (!isOnce && monthlyLimit !== Infinity && currentMonthlyCreated >= monthlyLimit) {
+      if (
+        !isOnce &&
+        monthlyLimit !== Infinity &&
+        currentMonthlyCreated >= monthlyLimit
+      ) {
         const posthog = getPostHogClient();
         posthog.capture({
           distinctId: userId,
@@ -225,7 +233,7 @@ export const eventsRouter = new Elysia({ prefix: "/events" })
         await db
           .update(users)
           .set({
-            monthlyEventsCreated: isNewMonth ? 1 : (currentMonthlyCreated + 1),
+            monthlyEventsCreated: isNewMonth ? 1 : currentMonthlyCreated + 1,
             eventPeriodStart: isNewMonth ? now : periodStart,
           })
           .where(eq(users.id, userId));
@@ -276,6 +284,7 @@ export const eventsRouter = new Elysia({ prefix: "/events" })
         await posthog.shutdown();
         return status(403, { message: "Custom domains require the Pro plan." });
       }
+
       if (body.passwordProtected && !features.passwordProtection) {
         const posthog = getPostHogClient();
         posthog.capture({
@@ -288,6 +297,7 @@ export const eventsRouter = new Elysia({ prefix: "/events" })
           message: "Password protection requires the Pro plan.",
         });
       }
+
       if (body.audioUrl && !features.customAudio) {
         const posthog = getPostHogClient();
         posthog.capture({
@@ -299,6 +309,37 @@ export const eventsRouter = new Elysia({ prefix: "/events" })
         return status(403, {
           message: "Custom audio requires the Starter plan.",
         });
+      }
+
+      // ── Rooms credit consumption ─────────────────────────────────
+      // Detect navMode transition to "rooms" and consume one credit
+      let roomsCreditsResult = null;
+      if (body.navMode === "rooms") {
+        // Fetch existing event to check if navMode is new
+        const [existing] = await db
+          .select({ navMode: events.navMode })
+          .from(events)
+          .where(and(eq(events.slug, params.slug), eq(events.userId, userId)))
+          .limit(1);
+
+        const isRoomsTransition = !existing || existing.navMode !== "rooms";
+
+        if (isRoomsTransition) {
+          try {
+            roomsCreditsResult = await consumeRoomCredit(
+              userId,
+              owner?.plan ?? "free",
+            );
+          } catch (err: unknown) {
+            if ((err as Error).message === "NO_CREDITS") {
+              return status(403, {
+                message:
+                  "No rooms credits remaining. Purchase a 5-credit pack to enable 3D rooms.",
+              });
+            }
+            throw err;
+          }
+        }
       }
 
       const [updated] = await db
@@ -318,7 +359,17 @@ export const eventsRouter = new Elysia({ prefix: "/events" })
         .returning();
 
       if (!updated) return status(404, { message: "Not found" });
-      return updated;
+
+      // Return updated event with current credit balance
+      const balance = await getRoomCreditBalance(userId, owner?.plan ?? "free");
+      return {
+        event: updated,
+        roomsCredits: {
+          freeRemaining: balance.free.remaining,
+          purchasedRemaining: balance.purchased.remaining,
+          totalRemaining: balance.totalRemaining,
+        },
+      };
     },
     { body: t.Partial(EventBodySchema) },
   )
