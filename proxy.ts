@@ -4,7 +4,45 @@ import { env } from "./env";
 
 const isProtectedRoute = createRouteMatcher(["/app(.*)"]);
 
+const ALLOWED_DEV_ORIGINS = [
+  "http://localhost:3000",
+  process.env.NGROK_URL,
+].filter(Boolean) as string[];
+
+function getCorsHeaders(origin: string) {
+  return {
+    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Credentials": "true",
+  };
+}
+
+function isAllowedOrigin(origin: string): boolean {
+  if (process.env.NODE_ENV === "development") {
+    return (
+      ALLOWED_DEV_ORIGINS.includes(origin) ||
+      /^https?:\/\/.*\.ngrok-free\.app$/.test(origin) ||
+      /^https?:\/\/.*\.ngrok\.io$/.test(origin)
+    );
+  }
+  const rootDomain = env.NEXT_PUBLIC_ROOT_DOMAIN || "ceremonia.app";
+  return origin === `https://${rootDomain}`;
+}
+
 export default clerkMiddleware(async (auth, req: NextRequest) => {
+  const origin = req.headers.get("origin") ?? "";
+  const isApiRoute = req.nextUrl.pathname.startsWith("/api");
+  const allowed = isAllowedOrigin(origin);
+
+  // Handle CORS preflight
+  if (req.method === "OPTIONS" && isApiRoute) {
+    return new NextResponse(null, {
+      status: 204,
+      headers: allowed ? getCorsHeaders(origin) : {},
+    });
+  }
+
   if (req.nextUrl.pathname.startsWith("/api/webhooks")) {
     return NextResponse.next();
   }
@@ -21,16 +59,23 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
   // In prod: isabella-alexander.ceremonia.app → "isabella-alexander"
   const rootDomain = env.NEXT_PUBLIC_ROOT_DOMAIN || "ceremonia.app";
   const isLocalhost = host.includes("localhost");
+  const isNgrok =
+    host.endsWith(".ngrok-free.app") || host.endsWith(".ngrok.io");
+  const isDevTunnel = isLocalhost || isNgrok;
 
   let subdomain: string | null = null;
 
-  if (isLocalhost) {
-    // dev: "demo.localhost:3000" → subdomain = "demo"
-    // "localhost:3000" → no subdomain
-    const withoutPort = host.split(":")[0]; // strip :3000
-    const parts = withoutPort.split(".");
-    if (parts.length > 1 && !["app", "www", "ceremonia"].includes(parts[0])) {
-      subdomain = parts[0];
+  if (isDevTunnel) {
+    // For localhost: "demo.localhost:3000" → subdomain = "demo"
+    // For ngrok: no subdomain extraction (treat as root)
+    if (isLocalhost) {
+      // dev: "demo.localhost:3000" → subdomain = "demo"
+      // "localhost:3000" → no subdomain
+      const withoutPort = host.split(":")[0]; // strip :3000
+      const parts = withoutPort.split(".");
+      if (parts.length > 1 && !["app", "www", "ceremonia"].includes(parts[0])) {
+        subdomain = parts[0];
+      }
     }
   } else {
     // prod: "isabella-alexander.ceremonia.app"
@@ -46,9 +91,8 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     return NextResponse.rewrite(url);
   }
 
-  // Custom domain support — non-ceremonia.app hosts
-  if (!isLocalhost && !host.endsWith(rootDomain)) {
-    // Rewrite to a special route that will look up the domain in DB
+  // Only treat as custom domain if it's NOT a dev tunnel
+  if (!isDevTunnel && !host.endsWith(rootDomain)) {
     url.pathname = `/event/domain/${host}${url.pathname}`;
     return NextResponse.rewrite(url);
   }
@@ -58,7 +102,15 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     await auth.protect();
   }
 
-  return NextResponse.next();
+  // Attach CORS headers to API responses
+  const response = NextResponse.next();
+  if (isApiRoute && allowed && origin) {
+    Object.entries(getCorsHeaders(origin)).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+  }
+
+  return response;
 });
 
 export const config = {

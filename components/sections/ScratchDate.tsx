@@ -190,7 +190,6 @@ export function ScratchDate({
             <p
               className="font-label font-semibold"
               style={{
-                // fontSize: "clamp(26px,7vw,52px)",
                 color: theme.gold,
                 letterSpacing: "0.15em",
                 textShadow: `0 0 30px ${theme.gold}80`,

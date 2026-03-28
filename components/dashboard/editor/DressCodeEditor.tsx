@@ -256,21 +256,21 @@ export function DressCodeEditor({ config, onChange }: Props) {
                     className="size-9 rounded-lg border border-[#D4AF3770] cursor-pointer shrink-0"
                     style={{ background: c }}
                     onClick={() =>
-                      document.getElementById(`palette-color-${i}`)?.click()
+                      document.getElementById(`avoid-color-${i}`)?.click()
                     }
                   />
                   <input
-                    id={`palette-color-${i}`}
+                    id={`avoid-color-${i}`}
                     type="color"
                     value={c}
                     onChange={(e) =>
-                      updateColour("colourPalette", i, e.target.value)
+                      updateColour("avoidColours", i, e.target.value)
                     }
                     className="sr-only"
                   />
                   {/* Remove — appears on hover */}
                   <button
-                    onClick={() => removeColour("colourPalette", i)}
+                    onClick={() => removeColour("avoidColours", i)}
                     className="absolute -top-1.5 -right-1.5 size-4 rounded-full bg-[#0A0A0A] border border-[#D4AF3760] text-[#D4AF3770] hover:text-dash-error hover:border-[#ff6b6b90] transition-all flex items-center justify-center opacity-0 group-hover:opacity-100 text-[9px] cursor-pointer"
                   >
                     ✕

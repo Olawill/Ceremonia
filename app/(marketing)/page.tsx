@@ -113,7 +113,7 @@ export default async function MarketingPage() {
   return (
     <div className="size-full text-[#F5F0E8] flex flex-col gap-2">
       {/* Hero */}
-      <section className="min-h-screen flex flex-col items-center justify-center text-center px-6! pt-20 font-semibold">
+      <section className="min-h-screen flex flex-col items-center justify-center text-center px-6! pt-20! font-semibold">
         <HeroHeadline />
         <p className="font-display italic text-xl text-[#F5F0E8] mb-12! max-w-xl">
           Create a cinematic invitation your guests will never forget —
@@ -150,7 +150,7 @@ export default async function MarketingPage() {
       </section>
 
       {/* Pricing */}
-      <section className="px-6! py-2 w-full mx-auto">
+      <section className="px-6! py-2! w-full mx-auto">
         <div className="text-center mb-8">
           <p className="font-label text-[14px] font-semibold tracking-[0.5em] uppercase text-[#D4AF37] mb-4">
             Pricing

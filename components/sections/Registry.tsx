@@ -6,9 +6,10 @@ import {
   GiftIcon,
   ShoppingBagIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useTheme } from "@/lib/ThemeContext";
+import { toast } from "sonner";
 
 interface RegistryItem {
   id: string;
@@ -59,7 +60,9 @@ export function Registry({ eventSlug, label }: Props) {
   const [claimingId, setClaimingId] = useState<string | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [guestName, setGuestName] = useState("");
+  const [nameConfirmed, setNameConfirmed] = useState(false);
   const [namePromptFor, setNamePromptFor] = useState<string | null>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   // Load persisted claims from localStorage
   useEffect(() => {
@@ -91,6 +94,10 @@ export function Registry({ eventSlug, label }: Props) {
   const handleClaim = async (itemId: string) => {
     if (!guestName.trim()) {
       setNamePromptFor(itemId);
+      setTimeout(() => nameInputRef.current?.focus(), 50);
+      toast.info(
+        "Enter your name and confirm before you can purcahse this product",
+      );
       return;
     }
     setClaimingId(itemId);
@@ -155,12 +162,15 @@ export function Registry({ eventSlug, label }: Props) {
   const categories = [...new Set(items.map((i) => i.category ?? "General"))];
 
   return (
-    <section className="py-24! px-6!" style={{ background: theme.bgMid }}>
-      <div className="max-w-4xl mx-auto">
+    <section
+      className="min-h-screen flex items-center justify-center py-24! px-6!"
+      style={{ background: theme.bgMid }}
+    >
+      <div className="w-full max-w-4xl mx-auto">
         {/* Heading */}
         <div className="text-center mb-16!">
           <p
-            className="font-label text-xs tracking-[0.5em] uppercase mb-3!"
+            className="font-label font-semibold text-sm tracking-[0.5em] uppercase mb-3!"
             style={{ color: `${theme.gold}90` }}
           >
             {label ?? "Wedding Registry"}
@@ -176,7 +186,7 @@ export function Registry({ eventSlug, label }: Props) {
             style={{ background: `${theme.gold}40` }}
           />
           <p
-            className="font-display italic text-sm mt-4! max-w-md mx-auto"
+            className="font-display italic text-sm mt-4! w-full"
             style={{ color: `${theme.text}80` }}
           >
             Your presence is the greatest gift of all. For those who wish to
@@ -185,9 +195,9 @@ export function Registry({ eventSlug, label }: Props) {
         </div>
 
         {/* Name prompt (shown once, persists for session) */}
-        {!guestName && (
+        {!nameConfirmed && (
           <div
-            className="mb-10 p-5! rounded-2xl border text-center"
+            className="mb-10! p-5! rounded-2xl border text-center"
             style={{
               borderColor: `${theme.gold}20`,
               background: `${theme.gold}08`,
@@ -199,8 +209,9 @@ export function Registry({ eventSlug, label }: Props) {
             >
               Enter your name so the couple knows who's gifting what
             </p>
-            <div className="flex gap-2 max-w-xs mx-auto">
+            <div className="flex gap-2">
               <input
+                ref={nameInputRef}
                 type="text"
                 placeholder="Your name"
                 value={guestName}
@@ -212,13 +223,23 @@ export function Registry({ eventSlug, label }: Props) {
                   color: theme.text,
                 }}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" && namePromptFor)
-                    handleClaim(namePromptFor);
+                  if (e.key === "Enter" && guestName.trim()) {
+                    setNameConfirmed(true);
+                    if (namePromptFor) handleClaim(namePromptFor);
+                  }
+                }}
+                onBlur={() => {
+                  if (guestName.trim()) {
+                    setNameConfirmed(true);
+                  }
                 }}
               />
-              {namePromptFor && (
+              {guestName.trim() && (
                 <button
-                  onClick={() => handleClaim(namePromptFor)}
+                  onClick={() => {
+                    setNameConfirmed(true);
+                    if (namePromptFor) handleClaim(namePromptFor);
+                  }}
                   className="px-4! py-2! rounded-lg text-sm font-label tracking-widest uppercase transition-all"
                   style={{
                     background: `${theme.gold}20`,
@@ -369,7 +390,7 @@ export function Registry({ eventSlug, label }: Props) {
                                 <button
                                   onClick={() => handleConfirmPurchase(item.id)}
                                   disabled={confirmingId === item.id}
-                                  className="py-2! rounded-xl text-xs font-label tracking-[0.3em] uppercase transition-all flex items-center justify-center gap-1.5"
+                                  className="py-2! px-1! rounded-xl text-xs font-label tracking-[0.3em] uppercase transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                                   style={{
                                     background: `${theme.gold}18`,
                                     border: `1px solid ${theme.gold}50`,
@@ -383,8 +404,11 @@ export function Registry({ eventSlug, label }: Props) {
                                 </button>
                                 <button
                                   onClick={() => handleUnclaim(item.id)}
-                                  className="py-1! text-[10px] font-label tracking-wider uppercase text-center transition-colors"
-                                  style={{ color: `${theme.text}30` }}
+                                  className="py-1! rounded-xl text-[10px] font-label tracking-wider uppercase text-center transition-colors cursor-pointer"
+                                  style={{
+                                    color: `${theme.text}30`,
+                                    border: `1px solid ${theme.gold}50`,
+                                  }}
                                 >
                                   Release
                                 </button>
@@ -395,7 +419,7 @@ export function Registry({ eventSlug, label }: Props) {
                                 disabled={
                                   fullyReserved || claimingId === item.id
                                 }
-                                className="flex-1 py-2! rounded-xl text-xs font-label tracking-[0.3em] uppercase transition-all"
+                                className="flex-1 py-2! rounded-xl text-xs font-label tracking-[0.3em] uppercase transition-all cursor-pointer"
                                 style={
                                   fullyReserved
                                     ? {

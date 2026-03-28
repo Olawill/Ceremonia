@@ -24,6 +24,7 @@ interface Coords {
 }
 
 const OFFSET = 8;
+const AUTO_HIDE_DURATION = 2200; // ms before tooltip disappears on its own
 
 function getPosition(
   triggerRect: DOMRect,
@@ -88,20 +89,13 @@ export function Tooltip<T extends React.ElementType = "button">({
   const [ready, setReady] = useState(false);
 
   const triggerRef = useRef<HTMLElement | null>(null);
-  const measureRef = useRef<HTMLDivElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoHideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  const updatePosition = useCallback(() => {
-    if (!triggerRef.current || !measureRef.current) return;
-    const triggerRect = triggerRef.current.getBoundingClientRect();
-    const tooltipRect = measureRef.current.getBoundingClientRect();
-    setCoords(getPosition(triggerRect, tooltipRect, position));
-  }, [position]);
 
   const show = useCallback(() => {
     if (disabled || showWhen === false) return;
@@ -110,28 +104,16 @@ export function Tooltip<T extends React.ElementType = "button">({
 
   const hide = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
+    if (autoHideRef.current) clearTimeout(autoHideRef.current);
     setVisible(false);
     setCoords(null);
   }, []);
-
-  // useEffect(() => {
-  //   if (!visible) {
-  //     setCoords(null);
-  //     return;
-  //   }
-  //   // Two rAF passes: first lets the DOM paint the invisible tooltip,
-  //   // second measures it after it has dimensions
-  //   requestAnimationFrame(() => {
-  //     requestAnimationFrame(() => {
-  //       updatePosition();
-  //     });
-  //   });
-  // }, [visible, updatePosition]);
 
   useEffect(() => {
     if (!visible) {
       setReady(false);
       setCoords(null);
+      if (autoHideRef.current) clearTimeout(autoHideRef.current);
       return;
     }
     requestAnimationFrame(() => {
@@ -143,6 +125,13 @@ export function Tooltip<T extends React.ElementType = "button">({
         setReady(true);
       });
     });
+    // Auto-hide after duration
+    autoHideRef.current = setTimeout(() => {
+      setVisible(false);
+    }, AUTO_HIDE_DURATION);
+    return () => {
+      if (autoHideRef.current) clearTimeout(autoHideRef.current);
+    };
   }, [visible, position]);
 
   useEffect(() => {

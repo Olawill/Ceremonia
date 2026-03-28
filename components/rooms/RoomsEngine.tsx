@@ -1,7 +1,7 @@
 "use client";
 
 import { useTheme } from "@/lib/ThemeContext";
-import type { EventConfig } from "@/types/event";
+import { type EventConfig } from "@/types/event";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
@@ -18,6 +18,7 @@ interface RoomsEngineProps {
   sections: Section[];
   dateRevealed: boolean;
   onDateRevealed: () => void;
+  isEditorPreview?: boolean;
 }
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -35,10 +36,13 @@ const CORRIDOR_HEIGHT = 3.2; // lower ceiling for drama
 const TOTAL_SEGMENT = ROOM_LENGTH + CORRIDOR_LENGTH; // one full room+corridor unit
 
 // ── Particle system ─────────────────────────────────────────────────────────
-const DUST_COUNT =
-  typeof window !== "undefined" && window.self !== window.top
-    ? 80 // preview iframe — reduced for performance
-    : 320; // guest page — full effect
+// const DUST_COUNT =
+//   typeof window !== "undefined" && window.self !== window.top
+//     ? 80 // preview iframe — reduced for performance
+//     : 320; // guest page — full effect
+
+const DUST_COUNT_FULL = 320;
+const DUST_COUNT_PREVIEW = 80;
 
 // ── Camera spring ───────────────────────────────────────────────────────────
 const CAM_SPRING_STIFFNESS = 180;
@@ -48,6 +52,16 @@ function hexCol(hex: string): THREE.Color {
   // Strip alpha / non-hex chars and parse
   const clean = hex.replace(/[^#0-9a-fA-F]/g, "").slice(0, 7);
   return new THREE.Color(clean);
+}
+
+// ── Convert a hex colour + 0–1 alpha to a CSS rgba() string ─────────────────
+// Canvas 2D API does not reliably support 8-digit hex colours; rgba() is safe.
+function hexAlpha(hex: string, alpha: number): string {
+  const clean = hex.replace(/[^#0-9a-fA-F]/g, "").slice(0, 7);
+  const r = parseInt(clean.slice(1, 3), 16);
+  const g = parseInt(clean.slice(3, 5), 16);
+  const b = parseInt(clean.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
 }
 
 // ── Procedural floor tile texture ────────────────────────────────────────────
@@ -77,6 +91,7 @@ function makeFloorTexture(col1: string, col2: string): THREE.CanvasTexture {
     ctx.stroke();
   }
   const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
   tex.repeat.set(3, ROOM_LENGTH / 3);
   return tex;
@@ -100,6 +115,7 @@ function makeWallTexture(baseHex: string): THREE.CanvasTexture {
     ctx.fillRect(x, y, 1.5, 1.5);
   }
   const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
   tex.repeat.set(2, 1);
   return tex;
@@ -121,7 +137,7 @@ function makeCeilingTexture(
     rows = 3;
   const cw = size / cols,
     ch = size / rows;
-  ctx.strokeStyle = goldHex + "55";
+  ctx.strokeStyle = hexAlpha(goldHex, 0.33);
   ctx.lineWidth = 3;
   for (let r = 0; r < rows; r++) {
     for (let col = 0; col < cols; col++) {
@@ -134,13 +150,15 @@ function makeCeilingTexture(
       // Centre dot
       ctx.beginPath();
       ctx.arc(x + cw / 2, y + ch / 2, 5, 0, Math.PI * 2);
-      ctx.fillStyle = goldHex + "40";
+      ctx.fillStyle = hexAlpha(goldHex, 0.25);
       ctx.fill();
     }
   }
   const tex = new THREE.CanvasTexture(c);
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
   tex.repeat.set(2, 2);
+  tex.colorSpace = THREE.SRGBColorSpace;
+
   return tex;
 }
 
@@ -172,6 +190,7 @@ function makeStoneTexture(baseHex: string): THREE.CanvasTexture {
     ctx.fillRect(Math.random() * size, Math.random() * size, 2, 2);
   }
   const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
   tex.repeat.set(2, 1);
   return tex;
@@ -191,7 +210,7 @@ function makeBannerTexture(
   // Background
   const grad = ctx.createLinearGradient(0, 0, 0, h);
   grad.addColorStop(0, curtainHex);
-  grad.addColorStop(1, curtainHex + "AA");
+  grad.addColorStop(1, hexAlpha(curtainHex, 0.67));
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, w, h);
   // Border
@@ -201,7 +220,7 @@ function makeBannerTexture(
   ctx.lineWidth = 1.5;
   ctx.strokeRect(12, 12, w - 24, h - 24);
   // Fleur-de-lis approximation using arcs
-  ctx.fillStyle = goldHex + "CC";
+  ctx.fillStyle = hexAlpha(goldHex, 0.8);
   const cx = w / 2,
     cy = h / 2;
   ctx.beginPath();
@@ -220,15 +239,287 @@ function makeBannerTexture(
     ctx.fillRect(i * 16 + 4, h - 22, 8, 16);
   }
   const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+// ── Timeline event portrait canvas texture ───────────────────────────────────
+function makeTimelineFrameTexture(
+  year: string,
+  icon: string,
+  title: string,
+  desc: string,
+  goldHex: string,
+  curtainHex: string,
+  textHex: string,
+): THREE.CanvasTexture {
+  const w = 256,
+    h = 384;
+  const c = document.createElement("canvas");
+  c.width = w;
+  c.height = h;
+  const ctx = c.getContext("2d")!;
+
+  // Background — deep curtain gradient
+  const bg = ctx.createLinearGradient(0, 0, w, h);
+  bg.addColorStop(0, hexAlpha(curtainHex, 0.87));
+  bg.addColorStop(1, "#0a0608CC");
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, w, h);
+
+  // Parchment noise
+  for (let i = 0; i < 3000; i++) {
+    ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.025})`;
+    ctx.fillRect(Math.random() * w, Math.random() * h, 1.5, 1.5);
+  }
+
+  // Gold border
+  ctx.strokeStyle = hexAlpha(goldHex, 0.5);
+  ctx.lineWidth = 3;
+  ctx.strokeRect(8, 8, w - 16, h - 16);
+  ctx.strokeStyle = hexAlpha(goldHex, 0.25);
+  ctx.lineWidth = 1;
+  ctx.strokeRect(14, 14, w - 28, h - 28);
+
+  // Year — top
+  ctx.font = "bold 22px monospace";
+  ctx.fillStyle = hexAlpha(goldHex, 0.8);
+  ctx.textAlign = "center";
+  ctx.fillText(year, w / 2, 56);
+
+  // Divider below year
+  ctx.strokeStyle = hexAlpha(goldHex, 0.31);
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(40, 68);
+  ctx.lineTo(w - 40, 68);
+  ctx.stroke();
+
+  // Icon medallion — circle
+  ctx.beginPath();
+  ctx.arc(w / 2, 148, 40, 0, Math.PI * 2);
+  ctx.fillStyle = hexAlpha(goldHex, 0.09);
+  ctx.fill();
+  ctx.strokeStyle = hexAlpha(goldHex, 0.38);
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  // Icon glyph
+  ctx.font = "36px serif";
+  ctx.fillStyle = goldHex;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(icon, w / 2, 148);
+  ctx.textBaseline = "alphabetic";
+
+  // Divider below medallion
+  ctx.strokeStyle = hexAlpha(goldHex, 0.25);
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(50, 200);
+  ctx.lineTo(w - 50, 200);
+  ctx.stroke();
+
+  // Title
+  ctx.font = "300 20px serif";
+  ctx.fillStyle = hexAlpha(textHex, 0.93);
+  ctx.textAlign = "center";
+  // Word-wrap title into 2 lines max
+  const words = title.split(" ");
+  let line = "";
+  let y = 234;
+  for (const word of words) {
+    const test = line + (line ? " " : "") + word;
+    if (ctx.measureText(test).width > w - 48 && line) {
+      ctx.fillText(line, w / 2, y);
+      line = word;
+      y += 26;
+    } else {
+      line = test;
+    }
+  }
+  ctx.fillText(line, w / 2, y);
+
+  // Description — smaller italic
+  ctx.font = "italic 13px serif";
+  ctx.fillStyle = hexAlpha(textHex, 0.44);
+  // Word-wrap desc into up to 4 lines
+  const descWords = desc.split(" ");
+  let dLine = "";
+  let dy = y + 32;
+  for (const word of descWords) {
+    const test = dLine + (dLine ? " " : "") + word;
+    if (ctx.measureText(test).width > w - 56 && dLine) {
+      ctx.fillText(dLine, w / 2, dy);
+      dLine = word;
+      dy += 18;
+      if (dy > h - 30) break;
+    } else {
+      dLine = test;
+    }
+  }
+  if (dy <= h - 30) ctx.fillText(dLine, w / 2, dy);
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+function makePhotoTexture(url: string): THREE.CanvasTexture {
+  const size = 512;
+  const c = document.createElement("canvas");
+  c.width = c.height = size;
+  const ctx = c.getContext("2d")!;
+  ctx.fillStyle = "#1a1008";
+  ctx.fillRect(0, 0, size, size);
+  const tex = new THREE.CanvasTexture(c);
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  img.onload = () => {
+    const aspect = img.width / img.height;
+    let sx = 0,
+      sy = 0,
+      sw = img.width,
+      sh = img.height;
+    if (aspect > 1) {
+      sx = (img.width - img.height) / 2;
+      sw = img.height;
+    } else {
+      sy = (img.height - img.width) / 2;
+      sh = img.width;
+    }
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, size, size);
+    tex.needsUpdate = true;
+  };
+  img.src = url;
+
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+function makeEventPlaqueTexture(
+  year: string,
+  icon: string,
+  title: string,
+  desc: string,
+  goldHex: string,
+  curtainHex: string,
+  textHex: string,
+  bgHex: string,
+): THREE.CanvasTexture {
+  const w = 512,
+    h = 384;
+
+  const c = document.createElement("canvas");
+  c.width = 1024;
+  c.height = 768;
+  const ctx = c.getContext("2d")!;
+  ctx.scale(2, 2); // draw at 2x resolution, coordinates stay the same
+
+  // Background
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, hexAlpha(bgHex, 1.0));
+  grad.addColorStop(1, hexAlpha(bgHex, 0.95));
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+
+  // Noise
+  for (let i = 0; i < 4000; i++) {
+    ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.018})`;
+    ctx.fillRect(Math.random() * w, Math.random() * h, 1.5, 1.5);
+  }
+
+  // Gold border
+  ctx.strokeStyle = hexAlpha(goldHex, 0.45);
+  ctx.lineWidth = 3;
+  ctx.strokeRect(10, 10, w - 20, h - 20);
+  ctx.strokeStyle = hexAlpha(goldHex, 0.2);
+  ctx.lineWidth = 1;
+  ctx.strokeRect(18, 18, w - 36, h - 36);
+
+  // Year — top left
+  ctx.font = "bold 28px monospace";
+  ctx.fillStyle = hexAlpha(goldHex, 0.9);
+  ctx.textAlign = "left";
+  ctx.fillText(year, 38, 66);
+
+  // Divider
+  ctx.strokeStyle = hexAlpha(goldHex, 0.3);
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(38, 78);
+  ctx.lineTo(w - 38, 78);
+  ctx.stroke();
+
+  // Icon — large, right side
+  ctx.font = "80px serif";
+  ctx.textAlign = "right";
+  ctx.textBaseline = "top";
+  ctx.fillStyle = hexAlpha(goldHex, 0.15);
+  ctx.fillText(icon, w - 30, 20);
+  ctx.textBaseline = "alphabetic";
+
+  // Title — large
+  ctx.font = "300 32px serif";
+  ctx.fillStyle = hexAlpha(textHex, 0.95);
+  ctx.textAlign = "left";
+  const titleWords = title.split(" ");
+  let tLine = "",
+    ty = 130;
+  for (const word of titleWords) {
+    const test = tLine + (tLine ? " " : "") + word;
+    if (ctx.measureText(test).width > w - 76 && tLine) {
+      ctx.fillText(tLine, 38, ty);
+      tLine = word;
+      ty += 42;
+    } else {
+      tLine = test;
+    }
+  }
+  ctx.fillText(tLine, 38, ty);
+  ty += 32;
+
+  // Desc
+  ctx.font = "italic 24px serif";
+  ctx.fillStyle = hexAlpha(textHex, 0.55);
+  const descWords = (desc ?? "").split(" ");
+  let dLine = "",
+    dy = ty + 8;
+  for (const word of descWords) {
+    const test = dLine + (dLine ? " " : "") + word;
+    if (ctx.measureText(test).width > w - 76 && dLine) {
+      ctx.fillText(dLine, 38, dy);
+      dLine = word;
+      dy += 28;
+      if (dy > h - 36) break;
+    } else {
+      dLine = test;
+    }
+  }
+  if (dy <= h - 36) ctx.fillText(dLine, 38, dy);
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
   return tex;
 }
 
 export function RoomsEngine({
+  config,
   sections,
   dateRevealed,
   onDateRevealed,
+  isEditorPreview = false,
 }: RoomsEngineProps) {
   const { theme } = useTheme();
+
+  const DUST_COUNT = isEditorPreview ? DUST_COUNT_PREVIEW : DUST_COUNT_FULL;
+
+  // When rendered inline in the editor (not in a full-page iframe/route),
+  // position:fixed is already contained by the transform wrapper in PreviewFrame.
+  // We use absolute positioning to match the containing block in both contexts.
+  const isInline = typeof window !== "undefined" && window.self === window.top;
+
+  const [isNarrow, setIsNarrow] = useState(false);
+
   const mountRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
 
@@ -249,6 +540,10 @@ export function RoomsEngine({
   const targetZRef = useRef(0);
   const bobTimeRef = useRef(0);
   const isMovingRef = useRef(false);
+
+  const peekXRef = useRef(0); // current horizontal look offset
+  const peekTargetRef = useRef(0); // target: -1 = left, 0 = centre, 1 = right
+  const peekCooldownRef = useRef(false); // debounce timeline plaque advances
 
   // Motion-blur ghost: previous frame rendered at lower opacity
   const prevRTRef = useRef<THREE.WebGLRenderTarget | null>(null);
@@ -283,16 +578,25 @@ export function RoomsEngine({
       if (clamped === activeRef.current) return;
 
       animatingRef.current = true;
+      peekTargetRef.current = 0;
       setIsAnimating(true);
-      setShowContent(false); // hide HTML content during travel
+      setShowContent(false);
 
       activeRef.current = clamped;
       setActiveIndex(clamped);
 
-      // Broadcast to parent editor frame so the jump bar highlights correctly
-      if (window.self !== window.top) {
+      // Broadcast to parent editor frame (iframe) or same window (inline) so
+      // the jump bar highlights correctly in both rendering contexts
+      if (!isInline) {
         window.parent.postMessage(
           { type: "SECTION_CHANGE", index: clamped },
+          "*",
+        );
+      } else {
+        // Inline in editor — post to same window, PreviewFrame listens here
+        // _fromRooms flag prevents RoomsEngine's own SCROLL_TO handler from echoing
+        window.postMessage(
+          { type: "SECTION_CHANGE", index: clamped, _fromRooms: true },
           "*",
         );
       }
@@ -311,12 +615,18 @@ export function RoomsEngine({
   useEffect(() => {
     if (dateRevealed && !prevDateRevealedRef.current) {
       prevDateRevealedRef.current = true;
+
+      // Notify the parent that the date has been revealed — this is a no-op
+      // if EventEngine already set dateRevealed=true via ScratchDate's onRevealed,
+      // but acts as a safety net if the reveal path was triggered differently
+      onDateRevealed();
+
       // Small delay so the guest sees the scratch completion before moving
       setTimeout(() => {
         goTo(scratchRoomIndex + 1);
       }, 1200);
     }
-  }, [dateRevealed, scratchRoomIndex, goTo]);
+  }, [dateRevealed, scratchRoomIndex, goTo, onDateRevealed]);
 
   useEffect(() => {
     maxAllowedIndexRef.current = maxAllowedIndex;
@@ -324,13 +634,24 @@ export function RoomsEngine({
 
   // ── Build all rooms into the scene ────────────────────────────────────────
   const buildScene = useCallback(
-    (scene: THREE.Scene, t: typeof theme, W: number, H: number) => {
+    (
+      scene: THREE.Scene,
+      t: typeof theme,
+      W: number,
+      H: number,
+      cfg: EventConfig,
+    ) => {
       // Clear existing room meshes (keep lights added separately)
       const toRemove: THREE.Object3D[] = [];
       scene.traverse((obj) => {
         if (obj.userData.isRoom) toRemove.push(obj);
       });
-      toRemove.forEach((obj) => scene.remove(obj));
+      toRemove.forEach((obj) => {
+        if (obj.userData.countdownInterval) {
+          clearInterval(obj.userData.countdownInterval);
+        }
+        scene.remove(obj);
+      });
       lightsRef.current = [];
       doorGlowsRef.current = [];
 
@@ -341,6 +662,30 @@ export function RoomsEngine({
       const goldCol = hexCol(t.gold);
       const goldLtCol = hexCol(t.goldLight);
 
+      const inEditor = isEditorPreview;
+      const inIframe = !isEditorPreview && window.self !== window.top;
+      const isGuest = !isEditorPreview && window.self === window.top;
+
+      // Hard cap on total dynamic lights to stay under WebGL uniform limit.
+      // MeshStandardMaterial shaders allocate uniform slots for every light
+      // in the scene. GPU limit is typically 256 vec4 uniforms in fragment
+      // shader. Each PointLight costs ~3 uniforms, SpotLight ~6.
+      // Cap: 12 point lights max on guest, 0 on editor/iframe.
+      const MAX_LIGHTS = isGuest ? 12 : 0;
+      let lightCount = 0;
+
+      const addLight = (light: THREE.PointLight | THREE.SpotLight) => {
+        if (lightCount >= MAX_LIGHTS) return;
+        lightCount++;
+        scene.add(light);
+        if (light instanceof THREE.SpotLight) {
+          scene.add(light.target);
+        }
+        lightsRef.current.push(light as THREE.PointLight);
+      };
+
+      const manyRooms = sections.length > 6;
+
       // ── Textures ──────────────────────────────────────────────────────────
       const floorTex = makeFloorTexture(t.curtainDark, t.bg);
       const wallTex = makeWallTexture(t.bgMid);
@@ -349,16 +694,15 @@ export function RoomsEngine({
       const bannerTex = makeBannerTexture(t.curtain, t.gold);
 
       // ── Shared materials ──────────────────────────────────────────────────
-      const floorMat = new THREE.MeshStandardMaterial({
+      const floorMat = new THREE.MeshLambertMaterial({
         map: floorTex,
-        roughness: 0.92,
-        metalness: 0.06,
       });
-      const ceilMat = new THREE.MeshStandardMaterial({
+
+      const ceilMat = new THREE.MeshLambertMaterial({
         map: ceilTex,
-        roughness: 0.95,
         color: bgCol.clone().multiplyScalar(0.75),
       });
+
       const goldMat = new THREE.MeshStandardMaterial({
         color: goldCol,
         roughness: 0.18,
@@ -366,14 +710,15 @@ export function RoomsEngine({
         emissive: goldLtCol,
         emissiveIntensity: 0.08,
       });
-      const stoneMat = new THREE.MeshStandardMaterial({
+
+      const stoneMat = new THREE.MeshLambertMaterial({
         map: stoneTex,
-        roughness: 0.95,
       });
-      const carpetMat = new THREE.MeshStandardMaterial({
+
+      const carpetMat = new THREE.MeshLambertMaterial({
         color: wallCol,
-        roughness: 0.98,
       });
+
       const bannerMat = new THREE.MeshStandardMaterial({
         map: bannerTex,
         roughness: 0.9,
@@ -381,11 +726,16 @@ export function RoomsEngine({
       });
 
       // ── Per-room + corridor construction ─────────────────────────────────
-      sections.forEach((_, roomIndex) => {
+      sections.forEach((section, roomIndex) => {
         const group = new THREE.Group();
         group.userData.isRoom = true;
         // Room origin Z: each room+corridor pair is TOTAL_SEGMENT apart
-        const rZ = roomIndex * TOTAL_SEGMENT;
+        const rZ = -(roomIndex * TOTAL_SEGMENT);
+
+        // ── Front wall with Gothic pointed arch ──
+        const frontZ = rZ - ROOM_LENGTH;
+        const aw = 2.7;
+        const ar = aw / 2;
 
         // ════════════════════════════════════════════════════════════════════
         //  A. ROOM GEOMETRY
@@ -435,10 +785,10 @@ export function RoomsEngine({
 
         // Ceiling centre beam (runs front-to-back)
         const beamGeo = new THREE.BoxGeometry(0.22, 0.18, ROOM_LENGTH);
-        const beamMat = new THREE.MeshStandardMaterial({
+        const beamMat = new THREE.MeshLambertMaterial({
           color: darkCol,
-          roughness: 0.8,
         });
+
         const beam = new THREE.Mesh(beamGeo, beamMat);
         beam.position.set(0, ROOM_HEIGHT / 2 - 0.09, rZ - ROOM_LENGTH / 2);
         group.add(beam);
@@ -457,11 +807,11 @@ export function RoomsEngine({
         }
 
         // ── Side walls with wallpaper texture ──
-        const sideWallMat = new THREE.MeshStandardMaterial({
+        const sideWallMat = new THREE.MeshLambertMaterial({
           map: wallTex,
-          roughness: 0.85,
           color: bgCol.clone().lerp(hexCol(t.bgMid), 0.5),
         });
+
         const leftWall = new THREE.Mesh(
           new THREE.PlaneGeometry(ROOM_LENGTH, ROOM_HEIGHT),
           sideWallMat,
@@ -477,23 +827,622 @@ export function RoomsEngine({
         group.add(rightWall);
 
         // ── Back wall ──
-        const backWallMat = new THREE.MeshStandardMaterial({
+        const backWallMat = new THREE.MeshLambertMaterial({
           map: wallTex,
-          roughness: 0.88,
           color: bgCol.clone().multiplyScalar(0.82),
         });
+
         const backWall = new THREE.Mesh(
           new THREE.PlaneGeometry(ROOM_WIDTH, ROOM_HEIGHT),
           backWallMat,
         );
+
         backWall.rotation.y = Math.PI;
         backWall.position.set(0, 0, rZ + 0.1);
         group.add(backWall);
 
-        // ── Front wall with Gothic pointed arch ──
-        const frontZ = rZ - ROOM_LENGTH;
-        const aw = 2.7;
-        const ar = aw / 2;
+        // ════════════════════════════════════════════════════════════════════════
+        // BACK WALL CONTENT — faces camera on entry, built per section key
+        // ════════════════════════════════════════════════════════════════════════
+        {
+          // Universal: section title engraved near top of back wall
+          const titleCv = document.createElement("canvas");
+          titleCv.width = 512;
+          titleCv.height = 72;
+          const tCtx = titleCv.getContext("2d")!;
+          // tCtx.clearRect(0, 0, 512, 72);
+          tCtx.fillStyle = hexAlpha(t.bg, 1.0);
+          tCtx.fillRect(0, 0, 512, 72);
+          tCtx.strokeStyle = hexAlpha(t.gold, 0.33);
+          tCtx.lineWidth = 1;
+          tCtx.beginPath();
+          tCtx.moveTo(48, 14);
+          tCtx.lineTo(464, 14);
+          tCtx.stroke();
+          tCtx.beginPath();
+          tCtx.moveTo(48, 58);
+          tCtx.lineTo(464, 58);
+          tCtx.stroke();
+          tCtx.fillStyle = hexAlpha(t.gold, 0.73);
+          tCtx.font = "300 26px serif";
+          tCtx.textAlign = "center";
+          tCtx.fillText((section.label ?? "").toUpperCase(), 256, 46);
+          const titleTex = new THREE.CanvasTexture(titleCv);
+          titleTex.colorSpace = THREE.SRGBColorSpace;
+          const titleMesh = new THREE.Mesh(
+            new THREE.PlaneGeometry(ROOM_WIDTH * 0.7, 0.55),
+            new THREE.MeshBasicMaterial({
+              map: titleTex,
+            }),
+          );
+          // Title mesh
+          // titleMesh.rotation.y = Math.PI;
+          titleMesh.rotation.y = 0;
+          titleMesh.position.set(0, ROOM_HEIGHT / 2 - 0.35, rZ + 0.25);
+
+          group.add(titleMesh);
+
+          // ── Section-specific back wall content ────────────────────────────────
+          // if (section.key === "timeline") {
+          //   const events = cfg.timeline ?? [];
+          //   if (events.length > 0) {
+          //     // Distribute events across 4 wall surfaces, stacking vertically per wall
+          //     // Slot 0 = back wall, 1 = left wall, 2 = right wall, 3 = front-left panel
+          //     const clampY = (y: number, plaqueH: number) =>
+          //       Math.max(
+          //         -ROOM_HEIGHT / 2 + plaqueH / 2 + 0.1,
+          //         Math.min(ROOM_HEIGHT / 2 - plaqueH / 2 - 0.3, y),
+          //       );
+
+          //     const wallSlots = [
+          //       {
+          //         // Back wall — faces camera directly on entry
+          //         rotation: new THREE.Euler(0, Math.PI, 0),
+          //         position: (stackIdx: number, totalInSlot: number) => {
+          //           const plaqueH = ROOM_WIDTH * 0.78 * (384 / 512);
+          //           const totalH =
+          //             totalInSlot * plaqueH + (totalInSlot - 1) * 0.1;
+          //           const startY = totalH / 2 - plaqueH / 2;
+          //           const rawY = startY - stackIdx * (plaqueH + 0.1);
+          //           return new THREE.Vector3(
+          //             0,
+          //             clampY(rawY, plaqueH),
+          //             rZ + 0.25,
+          //           );
+          //         },
+          //         width: ROOM_WIDTH * 0.78,
+          //       },
+          //       {
+          //         // Left wall — visible when peeking left
+          //         rotation: new THREE.Euler(0, -Math.PI / 2, 0),
+          //         position: (stackIdx: number, totalInSlot: number) => {
+          //           const plaqueH = ROOM_LENGTH * 0.55 * (384 / 512);
+          //           const totalH =
+          //             totalInSlot * plaqueH + (totalInSlot - 1) * 0.1;
+          //           const startY = totalH / 2 - plaqueH / 2;
+          //           const rawY = startY - stackIdx * (plaqueH + 0.1);
+          //           return new THREE.Vector3(
+          //             -ROOM_WIDTH / 2 + 0.25,
+          //             clampY(rawY, plaqueH),
+          //             rZ - ROOM_LENGTH / 2,
+          //           );
+          //         },
+          //         width: ROOM_LENGTH * 0.55,
+          //       },
+          //       {
+          //         // Right wall — visible when peeking right
+          //         rotation: new THREE.Euler(0, Math.PI / 2, 0),
+          //         position: (stackIdx: number, totalInSlot: number) => {
+          //           const plaqueH = ROOM_LENGTH * 0.55 * (384 / 512);
+          //           const totalH =
+          //             totalInSlot * plaqueH + (totalInSlot - 1) * 0.1;
+          //           const startY = totalH / 2 - plaqueH / 2;
+          //           const rawY = startY - stackIdx * (plaqueH + 0.1);
+          //           return new THREE.Vector3(
+          //             ROOM_WIDTH / 2 - 0.25,
+          //             clampY(rawY, plaqueH),
+          //             rZ - ROOM_LENGTH / 2,
+          //           );
+          //         },
+          //         width: ROOM_LENGTH * 0.55,
+          //       },
+          //       {
+          //         // Front wall left panel (beside arch) — visible when looking forward
+          //         rotation: new THREE.Euler(0, 0, 0),
+          //         position: (stackIdx: number, totalInSlot: number) => {
+          //           const plaqueH = 1.8 * (384 / 512);
+          //           const totalH =
+          //             totalInSlot * plaqueH + (totalInSlot - 1) * 0.08;
+          //           const startY = totalH / 2 - plaqueH / 2;
+          //           const rawY = startY - stackIdx * (plaqueH + 0.08);
+          //           return new THREE.Vector3(
+          //             -(ROOM_WIDTH / 2 - 1.1),
+          //             clampY(rawY, plaqueH),
+          //             frontZ + 0.08,
+          //           );
+          //         },
+          //         width: 1.8,
+          //       },
+          //     ];
+
+          //     // Group events into the 4 slots: 0,4,8 → slot0; 1,5,9 → slot1; etc.
+          //     const slotEvents: (typeof events)[0][][] = [[], [], [], []];
+          //     events.forEach((ev, idx) => {
+          //       slotEvents[idx % 4].push(ev);
+          //     });
+
+          //     slotEvents.forEach((slotEvs, slotIdx) => {
+          //       if (slotEvs.length === 0) return;
+          //       const slot = wallSlots[slotIdx];
+
+          //       slotEvs.forEach((ev, stackIdx) => {
+          //         // Scale down plaque width if stacking more than 1 to avoid overlap
+          //         const scale = slotEvs.length > 1 ? 0.72 : 1.0;
+          //         const scaledW = slot.width * scale;
+          //         const scaledH = scaledW * (384 / 512);
+
+          //         const tex = makeEventPlaqueTexture(
+          //           ev.year,
+          //           ev.icon,
+          //           ev.title,
+          //           ev.desc,
+          //           t.gold,
+          //           t.curtain,
+          //           t.text,
+          //           t.bg,
+          //         );
+          //         const plaque = new THREE.Mesh(
+          //           new THREE.PlaneGeometry(scaledW, scaledH),
+          //           new THREE.MeshBasicMaterial({
+          //             map: tex,
+          //           }),
+          //         );
+          //         plaque.rotation.copy(slot.rotation);
+          //         plaque.position.copy(slot.position(stackIdx, slotEvs.length));
+          //         group.add(plaque);
+          //       });
+          //     });
+          //   }
+          // }
+
+          if (section.key === "timeline") {
+            const events = cfg.timeline ?? [];
+            if (events.length > 0) {
+              // Store plaques in a ref so the peek input can swap which is visible.
+              // We render all plaques at the same position on the back wall,
+              // showing only the active one via material opacity.
+              const timelinePlaquesRef: THREE.Mesh[] = [];
+
+              events.forEach((ev, idx) => {
+                const tex = makeEventPlaqueTexture(
+                  ev.year,
+                  ev.icon,
+                  ev.title,
+                  ev.desc,
+                  t.gold,
+                  t.curtain,
+                  t.text,
+                  t.bg,
+                );
+
+                // Wider on landscape viewports, narrower on portrait/mobile
+                const plaqueW =
+                  ROOM_WIDTH * (W < 768 ? 0.28 : W < 1280 ? 0.33 : 0.38);
+                const plaqueH = plaqueW * (384 / 512);
+
+                const mat = new THREE.MeshBasicMaterial({
+                  map: tex,
+                  transparent: true,
+                  opacity: idx === 0 ? 1 : 0,
+                  depthWrite: false,
+                });
+
+                const plaque = new THREE.Mesh(
+                  new THREE.PlaneGeometry(plaqueW, plaqueH),
+                  mat,
+                );
+
+                // Sit flush against back wall, facing camera (rotation.y = Math.PI
+                // so normal points toward +Z / camera)
+                // plaque.rotation.y = Math.PI;
+                plaque.rotation.y = 0;
+                plaque.position.set(0, 0.1, rZ + 0.25);
+                plaque.userData.timelinePlaque = true;
+                plaque.userData.timelineRoomIndex = roomIndex;
+                group.add(plaque);
+                timelinePlaquesRef.push(plaque);
+              });
+
+              // Counter badge — "1 / N"
+              const badgeCv = document.createElement("canvas");
+              badgeCv.width = 256;
+              badgeCv.height = 64;
+              const bCtx = badgeCv.getContext("2d")!;
+              bCtx.fillStyle = hexAlpha(t.bg, 0.85);
+              bCtx.fillRect(0, 0, 256, 64);
+              bCtx.strokeStyle = hexAlpha(t.gold, 0.4);
+              bCtx.lineWidth = 1.5;
+              bCtx.strokeRect(4, 4, 248, 56);
+              bCtx.font = "bold 22px monospace";
+              bCtx.fillStyle = hexAlpha(t.gold, 0.9);
+              bCtx.textAlign = "center";
+              bCtx.textBaseline = "middle";
+              bCtx.fillText(`1 / ${events.length}`, 128, 32);
+
+              const badgeTex = new THREE.CanvasTexture(badgeCv);
+              badgeTex.colorSpace = THREE.SRGBColorSpace;
+
+              const badge = new THREE.Mesh(
+                new THREE.PlaneGeometry(ROOM_WIDTH * 0.22, 0.28),
+                new THREE.MeshBasicMaterial({
+                  map: badgeTex,
+                  transparent: true,
+                }),
+              );
+              // badge.rotation.y = Math.PI;
+              badge.rotation.y = 0;
+              badge.position.set(0, -ROOM_HEIGHT / 2 + 1.1, rZ + 0.25);
+              badge.userData.timelineBadge = true;
+              badge.userData.timelineRoomIndex = roomIndex;
+              group.add(badge);
+
+              // Track active index per room in userData on the group
+              group.userData.timelineActiveIdx = 0;
+              group.userData.timelinePlaques = timelinePlaquesRef;
+              group.userData.timelineBadge = badge;
+              group.userData.timelineBadgeTex = badgeTex;
+              group.userData.timelineBadgeCtx = bCtx;
+              group.userData.timelineTotal = events.length;
+            }
+          } else if (section.key === "gallery") {
+            const photos = cfg.galleryPhotos ?? [];
+            if (photos.length > 0) {
+              // 2x2 photo grid mosaic on the back wall
+              const gridW = 512,
+                gridH = 512;
+              const cv = document.createElement("canvas");
+              cv.width = gridW;
+              cv.height = gridH;
+              const ctx = cv.getContext("2d")!;
+              ctx.fillStyle = hexAlpha(t.curtainDark, 0.67);
+              ctx.fillRect(0, 0, gridW, gridH);
+
+              // Gold border
+              ctx.strokeStyle = hexAlpha(t.gold, 0.38);
+              ctx.lineWidth = 2;
+              ctx.strokeRect(6, 6, gridW - 12, gridH - 12);
+
+              const tex = new THREE.CanvasTexture(cv);
+              tex.colorSpace = THREE.SRGBColorSpace;
+              const mesh = new THREE.Mesh(
+                new THREE.PlaneGeometry(ROOM_WIDTH * 0.7, ROOM_WIDTH * 0.7),
+                new THREE.MeshBasicMaterial({ map: tex, transparent: true }),
+              );
+              mesh.rotation.y = Math.PI;
+              mesh.position.set(0, -0.1, frontZ + 0.15);
+              group.add(mesh);
+
+              // Load each photo and draw into the grid when ready
+              photos.slice(0, 4).forEach((url, i) => {
+                const img = new Image();
+                img.crossOrigin = "anonymous";
+                img.onload = () => {
+                  const col = i % 2,
+                    row = Math.floor(i / 2);
+                  const pad = 8;
+                  const cellW = (gridW - pad * 3) / 2;
+                  const cellH = (gridH - pad * 3) / 2;
+                  const dx = pad + col * (cellW + pad);
+                  const dy = pad + row * (cellH + pad);
+                  // Cover-crop the image into the cell
+                  const aspect = img.width / img.height;
+                  let sx = 0,
+                    sy = 0,
+                    sw = img.width,
+                    sh = img.height;
+                  const cellAspect = cellW / cellH;
+                  if (aspect > cellAspect) {
+                    sw = img.height * cellAspect;
+                    sx = (img.width - sw) / 2;
+                  } else {
+                    sh = img.width / cellAspect;
+                    sy = (img.height - sh) / 2;
+                  }
+                  ctx.drawImage(img, sx, sy, sw, sh, dx, dy, cellW, cellH);
+                  // Gold divider lines
+                  ctx.strokeStyle = hexAlpha(t.gold, 0.25);
+                  ctx.lineWidth = pad;
+                  ctx.strokeRect(0, gridH / 2 - pad / 2, gridW, 0);
+                  ctx.strokeRect(gridW / 2 - pad / 2, 0, 0, gridH);
+                  tex.needsUpdate = true;
+                };
+                img.src = url;
+              });
+            }
+          }
+          // else if (section.key === "countdown") {
+          //   const events = cfg; // full config available as cfg
+
+          //   const cvW = 1024,
+          //     cvH = 768;
+          //   const cv = document.createElement("canvas");
+          //   cv.width = cvW;
+          //   cv.height = cvH;
+          //   const ctx = cv.getContext("2d")!;
+
+          //   const tex = new THREE.CanvasTexture(cv);
+          //   tex.colorSpace = THREE.SRGBColorSpace;
+
+          //   // Fit within room height with margins for title strip + floor gap
+          //   const maxPlaqueH = ROOM_HEIGHT - 0.8;
+          //   const maxPlaqueW = ROOM_WIDTH * 0.35;
+          //   const plaqueH = Math.min(maxPlaqueH, maxPlaqueW * (cvH / cvW));
+          //   const plaqueW = plaqueH * (cvW / cvH);
+
+          //   const mesh = new THREE.Mesh(
+          //     new THREE.PlaneGeometry(plaqueW, plaqueH),
+          //     new THREE.MeshBasicMaterial({ map: tex, transparent: true }),
+          //   );
+          //   mesh.rotation.y = 0;
+          //   mesh.position.set(0, -0.15, rZ + 0.25);
+          //   group.add(mesh);
+
+          //   // ── Draw function — called every second ──────────────────────────────
+          //   const drawCountdown = () => {
+          //     ctx.clearRect(0, 0, cvW, cvH);
+
+          //     // Derive time left
+          //     const dateStr = cfg.date ?? DEMO_EVENT_CONFIG.date;
+          //     const [yr, mo, dy2] = dateStr.split("-").map(Number);
+          //     const eventDate = new Date(yr, mo - 1, dy2);
+          //     const diff = eventDate.getTime() - Date.now();
+          //     const tl =
+          //       diff <= 0
+          //         ? { days: 0, hours: 0, minutes: 0, seconds: 0 }
+          //         : {
+          //             days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+          //             hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+          //             minutes: Math.floor((diff / (1000 * 60)) % 60),
+          //             seconds: Math.floor((diff / 1000) % 60),
+          //           };
+
+          //     // ── Background ───────────────────────────────────────────────────────
+          //     const bg = ctx.createLinearGradient(0, 0, 0, cvH);
+          //     bg.addColorStop(0, hexAlpha(t.bg, 0.0));
+          //     bg.addColorStop(1, hexAlpha(t.bg, 0.0));
+          //     ctx.fillStyle = bg;
+          //     ctx.fillRect(0, 0, cvW, cvH);
+
+          //     // ── Hourglass ornament ───────────────────────────────────────────────
+          //     const hx = cvW / 2,
+          //       hy = 80;
+          //     ctx.save();
+          //     ctx.translate(hx - 16, hy - 28);
+          //     // Top bulb
+          //     ctx.beginPath();
+          //     ctx.moveTo(4, 4);
+          //     ctx.quadraticCurveTo(4, 32, 16, 40);
+          //     ctx.quadraticCurveTo(28, 32, 28, 4);
+          //     ctx.closePath();
+          //     ctx.fillStyle = hexAlpha(t.curtain, 0.35);
+          //     ctx.fill();
+          //     ctx.strokeStyle = hexAlpha(t.gold, 0.6);
+          //     ctx.lineWidth = 1.5;
+          //     ctx.stroke();
+          //     // Bottom bulb
+          //     ctx.beginPath();
+          //     ctx.moveTo(4, 76);
+          //     ctx.quadraticCurveTo(4, 48, 16, 40);
+          //     ctx.quadraticCurveTo(28, 48, 28, 76);
+          //     ctx.closePath();
+          //     ctx.fillStyle = hexAlpha(t.curtain, 0.25);
+          //     ctx.fill();
+          //     ctx.strokeStyle = hexAlpha(t.gold, 0.6);
+          //     ctx.stroke();
+          //     // Sand
+          //     ctx.fillStyle = hexAlpha(t.gold, 0.25);
+          //     ctx.beginPath();
+          //     ctx.moveTo(8, 6);
+          //     ctx.quadraticCurveTo(8, 28, 16, 36);
+          //     ctx.quadraticCurveTo(24, 28, 24, 6);
+          //     ctx.closePath();
+          //     ctx.fill();
+          //     // Sand pile bottom
+          //     ctx.beginPath();
+          //     ctx.ellipse(16, 70, 6, 2, 0, 0, Math.PI * 2);
+          //     ctx.fillStyle = hexAlpha(t.gold, 0.35);
+          //     ctx.fill();
+          //     // Frame bars
+          //     ctx.fillStyle = hexAlpha(t.gold, 0.5);
+          //     ctx.fillRect(2, 2, 28, 4);
+          //     ctx.fillRect(2, 74, 28, 4);
+          //     ctx.restore();
+
+          //     // ── "Until We Say I Do" label ────────────────────────────────────────
+          //     const isWedding = cfg.eventType === "wedding";
+          //     const untilLabel = `UNTIL ${isWedding ? "WE SAY I DO" : "THE BIG DAY"}`;
+          //     ctx.font = "bold 24px monospace";
+          //     ctx.fillStyle = hexAlpha(t.gold, 1.0);
+          //     ctx.textAlign = "center";
+          //     ctx.letterSpacing = "0.5em";
+          //     ctx.fillText(untilLabel, cvW / 2 - 12, 172);
+          //     ctx.letterSpacing = "0";
+
+          //     // ── "Counting Down" heading ──────────────────────────────────────────
+          //     ctx.font = "bold 58px serif";
+          //     ctx.fillStyle = hexAlpha(t.text, 0.95);
+          //     ctx.textAlign = "center";
+          //     ctx.fillText("Counting Down", cvW / 2, 238);
+
+          //     // Divider
+          //     ctx.strokeStyle = hexAlpha(t.gold, 0.5);
+          //     ctx.lineWidth = 1;
+          //     ctx.beginPath();
+          //     ctx.moveTo(cvW / 2 - 80, 256);
+          //     ctx.lineTo(cvW / 2 + 80, 256);
+          //     ctx.stroke();
+
+          //     // ── Date + location line (matches CountdownPanel exactly) ────────────
+          //     ctx.font = "bold italic 28px serif";
+          //     ctx.fillStyle = hexAlpha(t.gold, 0.85);
+          //     ctx.textAlign = "center";
+          //     const venueStr = cfg.venueDetails?.[0]
+          //       ? createCountDownLoaction(cfg.venueDetails[0])
+          //       : "";
+          //     ctx.fillText(formattedDate(cfg.date ?? ""), cvW / 2, 292);
+          //     ctx.fillText(venueStr, cvW / 2, 330);
+
+          //     // ── Stone digit blocks ───────────────────────────────────────────────
+          //     const units2 = [
+          //       { v: tl.days, label: "DAYS" },
+          //       { v: tl.hours, label: "HRS" },
+          //       { v: tl.minutes, label: "MIN" },
+          //       { v: tl.seconds, label: "SEC" },
+          //     ];
+
+          //     const blockW = 160,
+          //       blockH = 140,
+          //       gap = 24;
+          //     const totalW = units2.length * blockW + (units2.length - 1) * gap;
+          //     const startX = (cvW - totalW) / 2;
+          //     const blockY = 390;
+
+          //     units2.forEach(({ v, label }, i) => {
+          //       const bx = startX + i * (blockW + gap);
+
+          //       // Block background
+          //       const blockGrad = ctx.createLinearGradient(
+          //         bx,
+          //         blockY,
+          //         bx + blockW,
+          //         blockY + blockH,
+          //       );
+          //       blockGrad.addColorStop(0, hexAlpha(t.curtain, 0.45));
+          //       blockGrad.addColorStop(1, "rgba(0,0,0,0.55)");
+          //       ctx.fillStyle = blockGrad;
+          //       ctx.beginPath();
+          //       ctx.roundRect(bx, blockY, blockW, blockH, 10);
+          //       ctx.fill();
+
+          //       // Block border
+          //       ctx.strokeStyle = hexAlpha(t.gold, 0.3);
+          //       ctx.lineWidth = 1.5;
+          //       ctx.beginPath();
+          //       ctx.roundRect(bx, blockY, blockW, blockH, 10);
+          //       ctx.stroke();
+
+          //       // Corner notches
+          //       const notchSize = 12;
+          //       [
+          //         [bx + 4, blockY + 4],
+          //         [bx + blockW - 4 - notchSize, blockY + 4],
+          //         [bx + 4, blockY + blockH - 4 - notchSize],
+          //         [
+          //           bx + blockW - 4 - notchSize,
+          //           blockY + blockH - 4 - notchSize,
+          //         ],
+          //       ].forEach(([nx, ny], ni) => {
+          //         ctx.strokeStyle = hexAlpha(t.gold, 0.22);
+          //         ctx.lineWidth = 1;
+          //         ctx.beginPath();
+          //         if (ni === 0) {
+          //           ctx.moveTo(nx, ny + notchSize);
+          //           ctx.lineTo(nx, ny);
+          //           ctx.lineTo(nx + notchSize, ny);
+          //         }
+          //         if (ni === 1) {
+          //           ctx.moveTo(nx, ny);
+          //           ctx.lineTo(nx + notchSize, ny);
+          //           ctx.lineTo(nx + notchSize, ny + notchSize);
+          //         }
+          //         if (ni === 2) {
+          //           ctx.moveTo(nx, ny);
+          //           ctx.lineTo(nx, ny + notchSize);
+          //           ctx.lineTo(nx + notchSize, ny + notchSize);
+          //         }
+          //         if (ni === 3) {
+          //           ctx.moveTo(nx, ny);
+          //           ctx.lineTo(nx + notchSize, ny); /* skip */
+          //         }
+          //         ctx.stroke();
+          //       });
+
+          //       // Centre engraved line
+          //       ctx.strokeStyle = hexAlpha(t.gold, 0.18);
+          //       ctx.lineWidth = 1;
+          //       ctx.beginPath();
+          //       ctx.moveTo(bx + 16, blockY + blockH / 2);
+          //       ctx.lineTo(bx + blockW - 16, blockY + blockH / 2);
+          //       ctx.stroke();
+
+          //       // Number
+          //       ctx.font = "bold 72px monospace";
+          //       ctx.fillStyle = hexAlpha(t.gold, 0.92);
+          //       ctx.textAlign = "center";
+          //       ctx.textBaseline = "middle";
+          //       ctx.shadowColor = hexAlpha(t.gold, 0.4);
+          //       ctx.shadowBlur = 12;
+          //       ctx.fillText(
+          //         String(v).padStart(2, "0"),
+          //         bx + blockW / 2,
+          //         blockY + blockH / 2,
+          //       );
+          //       ctx.shadowBlur = 0;
+          //       ctx.textBaseline = "alphabetic";
+
+          //       // Separator dots (between blocks)
+          //       if (i < units2.length - 1) {
+          //         const dotX = bx + blockW + gap / 2;
+          //         const dotY1 = blockY + blockH / 2 - 12;
+          //         const dotY2 = blockY + blockH / 2 + 12;
+          //         ctx.fillStyle = hexAlpha(t.gold, 0.5);
+          //         ctx.beginPath();
+          //         ctx.arc(dotX, dotY1, 4, 0, Math.PI * 2);
+          //         ctx.fill();
+          //         ctx.beginPath();
+          //         ctx.arc(dotX, dotY2, 4, 0, Math.PI * 2);
+          //         ctx.fill();
+          //       }
+
+          //       // Label below block
+          //       ctx.font = "bold 22px monospace";
+          //       ctx.fillStyle = hexAlpha(t.gold, 0.9);
+          //       ctx.textAlign = "center";
+          //       ctx.textBaseline = "alphabetic";
+          //       ctx.letterSpacing = "0.3em";
+          //       ctx.fillText(label, bx + blockW / 2 - 4, blockY + blockH + 36);
+          //       ctx.letterSpacing = "0";
+          //     });
+
+          //     // ── Interlocked rings ────────────────────────────────────────────────
+          //     const rx = cvW / 2,
+          //       ry = cvH - 72,
+          //       rrad = 28;
+          //     for (const [cx3, fill] of [
+          //       [rx - 20, 0.3],
+          //       [rx + 20, 0.3],
+          //     ] as [number, number][]) {
+          //       ctx.beginPath();
+          //       ctx.arc(cx3, ry, rrad, 0, Math.PI * 2);
+          //       ctx.fillStyle = hexAlpha(t.gold, fill);
+          //       ctx.fill();
+          //       ctx.strokeStyle = hexAlpha(t.gold, 0.7);
+          //       ctx.lineWidth = 2;
+          //       ctx.stroke();
+          //     }
+
+          //     tex.needsUpdate = true;
+          //   };
+
+          //   // Draw immediately then tick every second
+          //   drawCountdown();
+          //   const intervalId = setInterval(drawCountdown, 1000);
+
+          //   // Store interval ID on group so it can be cleared on rebuild
+          //   group.userData.countdownInterval = intervalId;
+          // }
+        }
+
         // Gothic arch: two offset circles creating a pointed top
         const archBottomY = -ROOM_HEIGHT / 2;
         const archStraightH = ROOM_HEIGHT * 0.42;
@@ -537,9 +1486,8 @@ export function RoomsEngine({
 
         const frontWallMesh = new THREE.Mesh(
           new THREE.ShapeGeometry(wallShape, 48),
-          new THREE.MeshStandardMaterial({
+          new THREE.MeshLambertMaterial({
             map: wallTex,
-            roughness: 0.9,
             color: bgMidCol,
             side: THREE.DoubleSide,
           }),
@@ -595,51 +1543,54 @@ export function RoomsEngine({
           roughness: 0.25,
           metalness: 0.85,
         });
-        const panelMat2 = new THREE.MeshStandardMaterial({
+
+        const panelMat2 = new THREE.MeshLambertMaterial({
           color: new THREE.Color(t.curtainDark).multiplyScalar(1.15),
-          roughness: 0.82,
         });
+
         // Dado rail (horizontal gold strip at ~0.9 height)
-        for (const wallX of [-ROOM_WIDTH / 2 + 0.03, ROOM_WIDTH / 2 - 0.03]) {
-          for (const railY of [
-            -ROOM_HEIGHT / 2 + 0.9,
-            ROOM_HEIGHT / 2 - 0.28,
-          ]) {
-            const rail = new THREE.Mesh(
-              new THREE.BoxGeometry(ROOM_LENGTH, 0.055, 0.055),
-              railMat,
+        if (section.key !== "timeline") {
+          for (const wallX of [-ROOM_WIDTH / 2 + 0.03, ROOM_WIDTH / 2 - 0.03]) {
+            for (const railY of [
+              -ROOM_HEIGHT / 2 + 0.9,
+              ROOM_HEIGHT / 2 - 0.28,
+            ]) {
+              const rail = new THREE.Mesh(
+                new THREE.BoxGeometry(ROOM_LENGTH, 0.055, 0.055),
+                railMat,
+              );
+              rail.rotation.y = wallX < 0 ? Math.PI / 2 : -Math.PI / 2;
+              rail.position.set(wallX, railY, rZ - ROOM_LENGTH / 2);
+              group.add(rail);
+            }
+            // Lower panel fill (darker than wall above dado)
+            const panel = new THREE.Mesh(
+              new THREE.PlaneGeometry(ROOM_LENGTH - 0.1, 0.86),
+              panelMat2,
             );
-            rail.rotation.y = wallX < 0 ? Math.PI / 2 : -Math.PI / 2;
-            rail.position.set(wallX, railY, rZ - ROOM_LENGTH / 2);
-            group.add(rail);
-          }
-          // Lower panel fill (darker than wall above dado)
-          const panel = new THREE.Mesh(
-            new THREE.PlaneGeometry(ROOM_LENGTH - 0.1, 0.86),
-            panelMat2,
-          );
-          panel.rotation.y = wallX < 0 ? Math.PI / 2 : -Math.PI / 2;
-          panel.position.set(
-            wallX + (wallX < 0 ? 0.04 : -0.04),
-            -ROOM_HEIGHT / 2 + 0.44,
-            rZ - ROOM_LENGTH / 2,
-          );
-          group.add(panel);
-          // Panel detail: recessed rectangles every ~1.5 units
-          const panelCount = Math.floor((ROOM_LENGTH - 0.3) / 1.5);
-          for (let p = 0; p < panelCount; p++) {
-            const pz = rZ - 0.4 - p * 1.5 - 0.75;
-            const moulding = new THREE.Mesh(
-              new THREE.BoxGeometry(0.02, 0.62, 1.2),
-              goldMat,
-            );
-            moulding.rotation.y = wallX < 0 ? Math.PI / 2 : -Math.PI / 2;
-            moulding.position.set(
+            panel.rotation.y = wallX < 0 ? Math.PI / 2 : -Math.PI / 2;
+            panel.position.set(
               wallX + (wallX < 0 ? 0.04 : -0.04),
               -ROOM_HEIGHT / 2 + 0.44,
-              pz,
+              rZ - ROOM_LENGTH / 2,
             );
-            group.add(moulding);
+            group.add(panel);
+            // Panel detail: recessed rectangles every ~1.5 units
+            const panelCount = Math.floor((ROOM_LENGTH - 0.3) / 1.5);
+            for (let p = 0; p < panelCount; p++) {
+              const pz = rZ - 0.4 - p * 1.5 - 0.75;
+              const moulding = new THREE.Mesh(
+                new THREE.BoxGeometry(0.02, 0.62, 1.2),
+                goldMat,
+              );
+              moulding.rotation.y = wallX < 0 ? Math.PI / 2 : -Math.PI / 2;
+              moulding.position.set(
+                wallX + (wallX < 0 ? 0.04 : -0.04),
+                -ROOM_HEIGHT / 2 + 0.44,
+                pz,
+              );
+              group.add(moulding);
+            }
           }
         }
 
@@ -651,9 +1602,9 @@ export function RoomsEngine({
           emissive: goldLtCol,
           emissiveIntensity: 0.06,
         });
-        const matMat2 = new THREE.MeshStandardMaterial({
+
+        const matMat2 = new THREE.MeshLambertMaterial({
           color: darkCol,
-          roughness: 1,
         });
 
         for (const wallX of [-ROOM_WIDTH / 2, ROOM_WIDTH / 2]) {
@@ -673,7 +1624,45 @@ export function RoomsEngine({
             // Inner matte
             const innerGeo = new THREE.BoxGeometry(fw, fh, 0.02);
             innerGeo.translate(0, 0, 0.018);
-            frameGrp.add(new THREE.Mesh(innerGeo, matMat2));
+
+            // Per-section frame fill — side walls face 90° from camera so frames
+            // are visible when the guest glances left/right. We fill them with
+            // content relevant to the room; the primary back-wall content plane
+            // (added below, outside this loop) is what greets guests on entry.
+            const wallSide = wallX < 0 ? 0 : 1; // 0 = left wall, 1 = right wall
+            const frameSlot = wallSide * 2 + f; // 0,1 = left; 2,3 = right
+
+            let innerMat: THREE.Material = matMat2;
+
+            if (section.key === "timeline") {
+              continue;
+              // const events = cfg.timeline ?? [];
+              // const ev = events[frameSlot];
+              // if (ev) {
+              //   innerMat = new THREE.MeshBasicMaterial({
+              //     map: makeTimelineFrameTexture(
+              //       ev.year,
+              //       ev.icon,
+              //       ev.title,
+              //       ev.desc,
+              //       t.gold,
+              //       t.curtain,
+              //       t.text,
+              //     ),
+              //   });
+              // }
+            } else if (section.key === "gallery") {
+              const photos = cfg.galleryPhotos ?? [];
+              const url = photos[frameSlot];
+              if (url) {
+                innerMat = new THREE.MeshBasicMaterial({
+                  map: makePhotoTexture(url),
+                });
+              }
+            }
+
+            frameGrp.add(new THREE.Mesh(innerGeo, innerMat));
+
             // Corner ornament spheres
             for (const [cx2, cy2] of [
               [-fw / 2 - 0.04, fh / 2 + 0.04],
@@ -693,14 +1682,11 @@ export function RoomsEngine({
             frameGrp.rotation.y = wallX < 0 ? Math.PI / 2 : -Math.PI / 2;
             group.add(frameGrp);
 
-            // Use PointLight in preview (cheaper), SpotLight on guest page
-            const inPrev = window.self !== window.top;
-            if (inPrev) {
-              const picLight = new THREE.PointLight(goldLtCol, 0.9, 3.0, 2.2);
-              picLight.position.set(wallX * 0.75, ROOM_HEIGHT / 2 - 0.3, fz);
-              scene.add(picLight);
-              lightsRef.current.push(picLight);
-            } else {
+            // Editor: no picture lights at all
+            // iframe: one PointLight per wall side (f===0 only, not per frame)
+            // Guest with few rooms: one PointLight per frame (full quality)
+            // Guest with many rooms: one PointLight per wall side only
+            if (isGuest && !manyRooms) {
               const picLight = new THREE.SpotLight(
                 goldLtCol,
                 1.8,
@@ -710,23 +1696,36 @@ export function RoomsEngine({
               );
               picLight.position.set(wallX * 0.75, ROOM_HEIGHT / 2 - 0.3, fz);
               picLight.target.position.set(wallX * 0.8, 0, fz);
-              scene.add(picLight);
-              scene.add(picLight.target);
-              lightsRef.current.push(picLight as unknown as THREE.PointLight);
+
+              addLight(picLight);
+            } else if (isGuest && manyRooms && f === 0) {
+              const picLight = new THREE.PointLight(goldLtCol, 0.9, 4.0, 2.2);
+              picLight.position.set(
+                wallX * 0.75,
+                ROOM_HEIGHT / 2 - 0.4,
+                rZ - ROOM_LENGTH / 2,
+              );
+
+              addLight(picLight);
             }
+            // inEditor: nothing added
           }
 
           // ── WALL SCONCE (between the two frames) ──
           const sconceZ = rZ - ROOM_LENGTH / 2;
-          const sconcePt = new THREE.PointLight(
-            goldLtCol,
-            1.4,
-            ROOM_WIDTH * 1.1,
-            2.0,
-          );
-          sconcePt.position.set(wallX * 0.82, ROOM_HEIGHT / 2 - 0.7, sconceZ);
-          scene.add(sconcePt);
-          lightsRef.current.push(sconcePt);
+
+          // Sconce lights: guest page only — iframe and editor rely on globe emissive
+          if (isGuest) {
+            const sconcePt = new THREE.PointLight(
+              goldLtCol,
+              manyRooms ? 1.0 : 1.4,
+              ROOM_WIDTH * 1.1,
+              2.0,
+            );
+            sconcePt.position.set(wallX * 0.82, ROOM_HEIGHT / 2 - 0.7, sconceZ);
+
+            addLight(sconcePt);
+          }
 
           // Sconce geometry: backplate + arm + globe
           const sconceGrp = new THREE.Group();
@@ -740,9 +1739,8 @@ export function RoomsEngine({
           sconceGrp.add(
             new THREE.Mesh(
               new THREE.BoxGeometry(0.28, 0.38, 0.04),
-              new THREE.MeshStandardMaterial({
+              new THREE.MeshLambertMaterial({
                 color: darkCol,
-                roughness: 0.7,
               }),
             ),
           );
@@ -882,51 +1880,56 @@ export function RoomsEngine({
         }
         group.add(chand);
 
-        // Main chandelier light
-        const chanLight = new THREE.PointLight(
-          goldLtCol,
-          4.0,
-          ROOM_LENGTH * 1.3,
-          1.5,
-        );
-        chanLight.position.set(0, ROOM_HEIGHT / 2 - 0.85, chanZ);
+        // Editor preview: no dynamic lights at all — ambient + emissive only
+        if (!inEditor) {
+          const chanLight = new THREE.PointLight(
+            goldLtCol,
+            4.0,
+            inIframe
+              ? ROOM_LENGTH * 0.9
+              : manyRooms
+                ? ROOM_LENGTH * 1.0
+                : ROOM_LENGTH * 1.3,
+            1.5,
+          );
+          chanLight.position.set(0, ROOM_HEIGHT / 2 - 0.85, chanZ);
+          chanLight.castShadow = isGuest && !manyRooms;
+          if (isGuest && !manyRooms) chanLight.shadow.mapSize.set(256, 256);
 
-        const inPrev = window.self !== window.top;
-        chanLight.castShadow = !inPrev;
-        if (!inPrev) chanLight.shadow.mapSize.set(256, 256);
-
-        scene.add(chanLight);
-        lightsRef.current.push(chanLight);
+          addLight(chanLight);
+        }
 
         // ── HERALDIC BANNERS hanging between frames ──
-        for (const wallX of [-ROOM_WIDTH / 2, ROOM_WIDTH / 2]) {
-          const bannerGrp = new THREE.Group();
-          const bannerMesh = new THREE.Mesh(
-            new THREE.PlaneGeometry(0.55, 1.2),
-            bannerMat,
-          );
-          // Hang from ceiling edge
-          const bx = wallX + (wallX < 0 ? 0.1 : -0.1);
-          bannerGrp.position.set(
-            bx,
-            ROOM_HEIGHT / 2 - 0.7,
-            rZ - ROOM_LENGTH / 2 + 0.5,
-          );
-          bannerGrp.rotation.y = wallX < 0 ? Math.PI / 2 : -Math.PI / 2;
-          // Slight forward tilt for realism
-          bannerGrp.rotation.z = wallX < 0 ? 0.04 : -0.04;
-          bannerGrp.add(bannerMesh);
+        if (section.key !== "timeline") {
+          for (const wallX of [-ROOM_WIDTH / 2, ROOM_WIDTH / 2]) {
+            const bannerGrp = new THREE.Group();
+            const bannerMesh = new THREE.Mesh(
+              new THREE.PlaneGeometry(0.55, 1.2),
+              bannerMat,
+            );
+            // Hang from ceiling edge
+            const bx = wallX + (wallX < 0 ? 0.1 : -0.1);
+            bannerGrp.position.set(
+              bx,
+              ROOM_HEIGHT / 2 - 0.7,
+              rZ - ROOM_LENGTH / 2 + 0.5,
+            );
+            bannerGrp.rotation.y = wallX < 0 ? Math.PI / 2 : -Math.PI / 2;
+            // Slight forward tilt for realism
+            bannerGrp.rotation.z = wallX < 0 ? 0.04 : -0.04;
+            bannerGrp.add(bannerMesh);
 
-          // Hanging rod above banner
-          const bannerRod = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.015, 0.015, 0.6, 6),
-            goldMat,
-          );
-          bannerRod.position.set(0, 0.62, 0);
-          bannerRod.rotation.set(0, 0, Math.PI / 2);
-          bannerGrp.add(bannerRod);
+            // Hanging rod above banner
+            const bannerRod = new THREE.Mesh(
+              new THREE.CylinderGeometry(0.015, 0.015, 0.6, 6),
+              goldMat,
+            );
+            bannerRod.position.set(0, 0.62, 0);
+            bannerRod.rotation.set(0, 0, Math.PI / 2);
+            bannerGrp.add(bannerRod);
 
-          group.add(bannerGrp);
+            group.add(bannerGrp);
+          }
         }
 
         // ── DECORATIVE COLUMNS flanking the arch ──
@@ -934,10 +1937,8 @@ export function RoomsEngine({
           // Column shaft
           const shaft = new THREE.Mesh(
             new THREE.CylinderGeometry(0.14, 0.16, ROOM_HEIGHT * 0.88, 12),
-            new THREE.MeshStandardMaterial({
+            new THREE.MeshLambertMaterial({
               color: darkCol,
-              roughness: 0.6,
-              metalness: 0.1,
             }),
           );
           shaft.position.set(
@@ -979,9 +1980,8 @@ export function RoomsEngine({
           torchGrp.add(
             new THREE.Mesh(
               new THREE.CylinderGeometry(0.025, 0.02, 0.5, 8),
-              new THREE.MeshStandardMaterial({
+              new THREE.MeshLambertMaterial({
                 color: darkCol,
-                roughness: 0.8,
               }),
             ),
           );
@@ -1003,16 +2003,17 @@ export function RoomsEngine({
           torchGrp.add(torchFlame);
           group.add(torchGrp);
 
-          // Torch flickering light
-          const torchLight = new THREE.PointLight(
-            new THREE.Color(1, 0.55, 0.12),
-            2.2,
-            ROOM_WIDTH * 0.85,
-            2.2,
-          );
-          torchLight.position.set(tx, -0.04, rZ - 0.18);
-          scene.add(torchLight);
-          lightsRef.current.push(torchLight);
+          if (!inEditor) {
+            const torchLight = new THREE.PointLight(
+              new THREE.Color(1, 0.55, 0.12),
+              2.0,
+              inIframe ? 3.0 : ROOM_WIDTH * 0.85,
+              2.5,
+            );
+            torchLight.position.set(tx, -0.04, rZ - 0.18);
+
+            addLight(torchLight);
+          }
         }
 
         // ════════════════════════════════════════════════════════════════════
@@ -1064,9 +2065,8 @@ export function RoomsEngine({
           for (const wx of [-ROOM_WIDTH / 2, ROOM_WIDTH / 2]) {
             const shoulder = new THREE.Mesh(
               new THREE.PlaneGeometry(wallShift - 0.05, ROOM_HEIGHT),
-              new THREE.MeshStandardMaterial({
+              new THREE.MeshLambertMaterial({
                 map: wallTex,
-                roughness: 0.9,
                 color: bgMidCol,
                 side: THREE.DoubleSide,
               }),
@@ -1087,19 +2087,25 @@ export function RoomsEngine({
             -CORRIDOR_WIDTH / 2 + 0.08,
             CORRIDOR_WIDTH / 2 - 0.08,
           ]) {
-            const corrLight = new THREE.PointLight(
-              goldLtCol,
-              0.8,
-              CORRIDOR_WIDTH * 2,
-              2.5,
-            );
-            corrLight.position.set(
+            // Corridor lights: guest page only, and only one side when many rooms
+            const corrLightPos = new THREE.Vector3(
               cx,
               CORRIDOR_HEIGHT / 2 - ROOM_HEIGHT / 2 - 0.4,
               corrMid,
             );
-            scene.add(corrLight);
-            lightsRef.current.push(corrLight);
+            const isFirstCorrSide = cx === -CORRIDOR_WIDTH / 2 + 0.08;
+            if (isGuest && (!manyRooms || isFirstCorrSide)) {
+              const corrLight = new THREE.PointLight(
+                goldLtCol,
+                manyRooms ? 1.0 : 0.8,
+                CORRIDOR_WIDTH * 2,
+                2.5,
+              );
+
+              corrLight.position.copy(corrLightPos);
+
+              addLight(corrLight);
+            }
 
             const cGlobe = new THREE.Mesh(
               new THREE.SphereGeometry(0.045, 8, 6),
@@ -1110,7 +2116,8 @@ export function RoomsEngine({
                 roughness: 0,
               }),
             );
-            cGlobe.position.copy(corrLight.position);
+            // cGlobe.position.copy(corrLight.position);
+            cGlobe.position.copy(corrLightPos);
             group.add(cGlobe);
           }
 
@@ -1158,15 +2165,16 @@ export function RoomsEngine({
       scene.add(dust);
       dustRef.current = dust;
     },
-    [sections],
+    [sections, config],
   );
 
   // ── Three.js initialisation ───────────────────────────────────────────────
   useEffect(() => {
     const mount = mountRef.current;
     if (!mount) return;
-    const W = mount.clientWidth || window.innerWidth;
-    const H = mount.clientHeight || window.innerHeight;
+
+    const W = mount.clientWidth || mount.offsetWidth || 0;
+    const H = mount.clientHeight || mount.offsetHeight || 0;
 
     // Renderer
     const renderer = new THREE.WebGLRenderer({
@@ -1177,7 +2185,8 @@ export function RoomsEngine({
 
     // In the editor preview iframe, cap pixel ratio at 1 and disable shadows
     // to keep the frame budget manageable
-    const inPreview = window.self !== window.top;
+    // const inPreview = window.self !== window.top;
+    const inPreview = isEditorPreview || window.self !== window.top;
     renderer.setPixelRatio(
       inPreview ? 1 : Math.min(window.devicePixelRatio, 1.5),
     );
@@ -1192,11 +2201,7 @@ export function RoomsEngine({
 
     // Scene + fog
     const scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(
-      hexCol(theme.bg).getHex(),
-      ROOM_LENGTH * 0.8,
-      ROOM_LENGTH * 2.6,
-    );
+    scene.fog = new THREE.Fog(hexCol(theme.bg).getHex(), 8, ROOM_LENGTH * 1.8);
     sceneRef.current = scene;
 
     // Camera
@@ -1205,16 +2210,26 @@ export function RoomsEngine({
     camera.lookAt(0, CAM_Y, -1);
     cameraRef.current = camera;
 
-    // Ambient
+    // Ambient — stronger in editor where we skip dynamic lights
     scene.add(
       new THREE.AmbientLight(
-        hexCol(theme.bg).lerp(new THREE.Color("#fff"), 0.25),
-        0.5,
+        hexCol(theme.bg).lerp(new THREE.Color("#fff"), 0.35),
+        isEditorPreview ? 1.8 : 0.5,
       ),
     );
+    // Add a hemisphere light for editor mode to give depth without uniforms
+    if (isEditorPreview) {
+      scene.add(
+        new THREE.HemisphereLight(
+          hexCol(theme.goldLight).getHex(),
+          hexCol(theme.curtainDark).getHex(),
+          0.6,
+        ),
+      );
+    }
 
     // Build geometry
-    buildScene(scene, theme, W, H);
+    buildScene(scene, theme, W, H, config);
 
     // ── Motion-blur accumulation setup ──
     const prevRT = new THREE.WebGLRenderTarget(W, H);
@@ -1234,15 +2249,32 @@ export function RoomsEngine({
     blurQuadRef.current = blurQuad;
 
     // Resize
-    const onResize = () => {
-      const w = mount.clientWidth;
-      const h = mount.clientHeight;
+    const onResize = (entries?: ResizeObserverEntry[]) => {
+      // const w = mount.clientWidth || mount.offsetWidth;
+      // const h = mount.clientHeight || mount.offsetHeight;
+      // if (!w || !h) return;
+      // Use ResizeObserver contentRect when available — gives exact container
+      // dimensions regardless of window size, critical for inline editor preview
+      const w =
+        entries?.[0]?.contentRect.width ||
+        mount.clientWidth ||
+        mount.offsetWidth;
+      const h =
+        entries?.[0]?.contentRect.height ||
+        mount.clientHeight ||
+        mount.offsetHeight;
+      if (!w || !h) return;
       renderer.setSize(w, h);
       prevRT.setSize(w, h);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
+      setIsNarrow(w < 520);
     };
-    window.addEventListener("resize", onResize);
+
+    const ro = new ResizeObserver((entries) => onResize(entries));
+    ro.observe(mount);
+    window.addEventListener("resize", () => onResize());
+    requestAnimationFrame(() => onResize());
 
     // ── Render loop ──
     let last = performance.now();
@@ -1277,25 +2309,90 @@ export function RoomsEngine({
         camVelRef.current = 0;
         animatingRef.current = false;
         setIsAnimating(false);
-        setShowContent(true);
+        setTimeout(() => setShowContent(true), 120);
       }
 
       // Camera position: Z tracks room travel, bob + sway when moving
       bobTimeRef.current += dt;
       const bobAmt = moving ? 0.025 : 0.008;
       const swayAmt = moving ? 0.018 : 0.005;
-      camera.position.set(
-        Math.sin(bobTimeRef.current * 1.1) * swayAmt,
-        CAM_Y + Math.abs(Math.sin(bobTimeRef.current * 2.4)) * bobAmt,
-        CAM_Z_OFFSET - currentZRef.current,
-      );
 
-      // Camera tilt forward when moving (lean into the walk)
-      const tiltTarget = moving ? -0.04 : 0;
-      camera.rotation.x += (tiltTarget - camera.rotation.x) * 0.08;
+      const camX = Math.sin(bobTimeRef.current * 1.1) * swayAmt;
+      const camY =
+        CAM_Y + Math.abs(Math.sin(bobTimeRef.current * 2.4)) * bobAmt;
+      const camZ = CAM_Z_OFFSET - currentZRef.current;
+      // const camZ = currentZRef.current - CAM_Z_OFFSET;
+
+      camera.position.set(camX, camY, camZ);
+
+      // Look ahead into the room — fixed point far ahead on the Z axis
+      // Slight downward tilt when moving for a natural walking lean
+      const lookTiltY = moving ? camY - 0.04 : camY;
+      peekXRef.current +=
+        (peekTargetRef.current * 4.0 - peekXRef.current) * 0.08;
+
+      // ── Timeline: use peek buttons to cycle through event plaques ──
+      const activeSection = sections[activeRef.current];
+      if (activeSection?.key === "timeline" && peekTargetRef.current !== 0) {
+        // Find the active room group
+        if (!peekCooldownRef.current) {
+          peekCooldownRef.current = true;
+          setTimeout(() => {
+            peekCooldownRef.current = false;
+          }, 600);
+
+          const dir = peekTargetRef.current > 0 ? 1 : -1;
+          sceneRef.current?.traverse((obj) => {
+            if (
+              obj instanceof THREE.Group &&
+              obj.userData.isRoom &&
+              obj.userData.timelinePlaques
+            ) {
+              const plaques: THREE.Mesh[] = obj.userData.timelinePlaques;
+              const total: number = obj.userData.timelineTotal;
+              const cur: number = obj.userData.timelineActiveIdx;
+              const next = Math.max(0, Math.min(total - 1, cur + dir));
+              if (next === cur) return;
+
+              // Fade out current, fade in next
+              (plaques[cur].material as THREE.MeshBasicMaterial).opacity = 0;
+              (plaques[next].material as THREE.MeshBasicMaterial).opacity = 1;
+              obj.userData.timelineActiveIdx = next;
+
+              // Update badge texture
+              const bCtx: CanvasRenderingContext2D =
+                obj.userData.timelineBadgeCtx;
+              const badgeTex: THREE.CanvasTexture =
+                obj.userData.timelineBadgeTex;
+              const t2 = theme; // closure — theme is in scope
+              bCtx.clearRect(0, 0, 256, 64);
+              bCtx.fillStyle = hexAlpha(t2.bg, 0.85);
+              bCtx.fillRect(0, 0, 256, 64);
+              bCtx.strokeStyle = hexAlpha(t2.gold, 0.4);
+              bCtx.lineWidth = 1.5;
+              bCtx.strokeRect(4, 4, 248, 56);
+              bCtx.font = "bold 22px monospace";
+              bCtx.fillStyle = hexAlpha(t2.gold, 0.9);
+              bCtx.textAlign = "center";
+              bCtx.textBaseline = "middle";
+              bCtx.fillText(`${next + 1} / ${total}`, 128, 32);
+              badgeTex.needsUpdate = true;
+            }
+          });
+        }
+
+        // Don't rotate camera for timeline — zero out peek so wall stays centred
+        peekXRef.current = 0;
+      }
+
+      // Use a close forward distance so the horizontal offset creates real angular rotation.
+      // camZ - 5 means we look 5 units ahead — a 4-unit sideways offset gives ~38° peek angle.
+      camera.lookAt(camX + peekXRef.current, lookTiltY, camZ - 5);
+
+      // camera.lookAt(camX, lookTiltY, camZ - 100);
 
       // Field-of-view pulse when moving (zoom-out slight)
-      const fovTarget = moving ? 74 : 70;
+      const fovTarget = moving ? 71 : 70;
       camera.fov += (fovTarget - camera.fov) * 0.06;
       camera.updateProjectionMatrix();
 
@@ -1344,7 +2441,8 @@ export function RoomsEngine({
       });
 
       // Skip per-light animation in preview when camera is idle — saves ~2ms/frame
-      const inPreview = window.self !== window.top;
+      // const inPreview = window.self !== window.top;
+      const inPreview = isEditorPreview || window.self !== window.top;
       if (!inPreview || moving || animatingRef.current) {
         // ── Torch flicker (warm orange lights) ──
         lightsRef.current.forEach((light, li) => {
@@ -1375,7 +2473,8 @@ export function RoomsEngine({
 
     return () => {
       cancelAnimationFrame(frameRef.current);
-      window.removeEventListener("resize", onResize);
+      ro.disconnect();
+      window.removeEventListener("resize", () => onResize());
       renderer.dispose();
       if (mount.contains(renderer.domElement))
         mount.removeChild(renderer.domElement);
@@ -1386,12 +2485,8 @@ export function RoomsEngine({
   useEffect(() => {
     const scene = sceneRef.current;
     if (!scene) return;
-    scene.fog = new THREE.Fog(
-      hexCol(theme.bg).getHex(),
-      ROOM_LENGTH * 0.8,
-      ROOM_LENGTH * 2.6,
-    );
-    buildScene(scene, theme, window.innerWidth, window.innerHeight);
+    scene.fog = new THREE.Fog(hexCol(theme.bg).getHex(), 8, ROOM_LENGTH * 1.8);
+    buildScene(scene, theme, window.innerWidth, window.innerHeight, config);
   }, [theme, buildScene]);
 
   // ── Input handlers ────────────────────────────────────────────────────────
@@ -1408,19 +2503,44 @@ export function RoomsEngine({
 
   useEffect(() => {
     const handler = (e: MessageEvent) => {
-      if (e.data?.type === "SCROLL_TO" && typeof e.data.index === "number")
+      if (e.data?.type === "RESET_PREVIEW") {
+        // Reset camera and navigation state to room 0
+        activeRef.current = 0;
+        setActiveIndex(0);
+        targetZRef.current = 0;
+        currentZRef.current = 0;
+        camVelRef.current = 0;
+        animatingRef.current = false;
+        setIsAnimating(false);
+        setShowContent(true);
+        return;
+      }
+
+      if (e.data?.type === "SCROLL_TO" && typeof e.data.index === "number") {
+        // Ignore echoed messages in inline mode — only act on messages
+        // that originate from a different source (the jump bar button click
+        // posts directly, not via the RoomsEngine itself)
+        if (e.data._fromRooms) return;
         goTo(e.data.index);
+      }
     };
     window.addEventListener("message", handler);
     return () => window.removeEventListener("message", handler);
   }, [goTo]);
 
   const onTouchStart = (e: React.TouchEvent) => {
+    // Don't start a navigation swipe if peeking is active
+    if (peekTargetRef.current !== 0) return;
     touchStartX.current = e.touches[0].clientX;
   };
 
   const onTouchEnd = (e: React.TouchEvent) => {
     if (touchStartX.current === null) return;
+    // Don't navigate if peek was activated during this touch
+    if (peekTargetRef.current !== 0) {
+      touchStartX.current = null;
+      return;
+    }
     const dx = touchStartX.current - e.changedTouches[0].clientX;
     if (Math.abs(dx) > 45) goTo(activeRef.current + (dx > 0 ? 1 : -1));
     touchStartX.current = null;
@@ -1428,19 +2548,20 @@ export function RoomsEngine({
 
   return (
     <div
-      className="fixed inset-0 overflow-hidden"
+      // className="fixed inset-0 overflow-hidden"
+      className="absolute inset-0 overflow-hidden"
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
       {/* Three.js canvas */}
-      <div ref={mountRef} className="absolute inset-0" />
+      <div ref={mountRef} className="absolute inset-0 size-full" />
 
       {/* Dynamic vignette — darkens edges during room travel */}
       <div
         ref={vignetteRef}
         className="absolute inset-0 pointer-events-none z-10 transition-opacity duration-300"
         style={{
-          opacity: isAnimating ? 1 : 0,
+          opacity: !showContent ? 1 : 0,
           background:
             "radial-gradient(ellipse 70% 65% at 50% 50%, transparent 40%, rgba(0,0,0,0.72) 100%)",
         }}
@@ -1483,35 +2604,64 @@ export function RoomsEngine({
       {/* ── Content panel — fades in once camera arrives ── */}
       <div
         ref={overlayRef}
-        className="absolute inset-0 pointer-events-none transition-opacity duration-600"
+        className="absolute inset-0 pointer-events-none transition-opacity duration-300"
         style={{ opacity: showContent ? 1 : 0 }}
       >
-        {sections.map((section, i) => (
-          <div
-            key={section.key}
-            data-rooms-panel
-            className="absolute inset-0 overflow-y-auto"
-            style={{
-              display: i === activeIndex ? "block" : "none",
-              pointerEvents: i === activeIndex && showContent ? "auto" : "none",
-              // Vignette: blend content into room at edges
-              WebkitMaskImage:
-                "radial-gradient(ellipse 78% 70% at 50% 50%, black 30%, transparent 100%)",
-              maskImage:
-                "radial-gradient(ellipse 78% 70% at 50% 50%, black 30%, transparent 100%)",
-            }}
-          >
-            {section.node}
-          </div>
-        ))}
+        {sections.map((section, i) => {
+          // Sections fully replaced by 3D wall geometry — no HTML overlay needed
+          const promotedTo3D = new Set([
+            "timeline",
+            // "countdown"
+          ]);
+          if (promotedTo3D.has(section.key)) return null;
+
+          return (
+            <div
+              key={section.key}
+              data-rooms-panel
+              className="absolute inset-0"
+              style={{
+                display: i === activeIndex ? "block" : "none",
+                pointerEvents:
+                  i === activeIndex && showContent ? "auto" : "none",
+                overflowY: i === activeIndex ? "auto" : "hidden",
+                background: "transparent",
+                WebkitMaskImage:
+                  "radial-gradient(ellipse 78% 70% at 50% 50%, black 30%, transparent 100%)",
+                maskImage:
+                  "radial-gradient(ellipse 78% 70% at 50% 50%, black 30%, transparent 100%)",
+              }}
+            >
+              {section.node}
+            </div>
+          );
+        })}
       </div>
+
+      {/* Timeline: hint that both walls have portrait frames */}
+      {showContent && sections[activeIndex]?.key === "timeline" && (
+        <div
+          className="absolute bottom-28 left-1/2 -translate-x-1/2 z-20 pointer-events-none"
+          style={{ opacity: 0.55 }}
+        >
+          <p
+            className="font-label font-semibold text-[9px] text-center tracking-[0.4em] uppercase"
+            style={{ color: theme.gold }}
+          >
+            {config.timeline?.length
+              ? `Our story · ${config.timeline.length} moments · use ‹ › to browse`
+              : "Our story · look left and right"}
+          </p>
+        </div>
+      )}
 
       {/* ── Room name — bottom centre HUD ── */}
       <div
-        className="absolute bottom-20 left-1/2 -translate-x-1/2 z-20 pointer-events-none"
+        className="absolute bottom-20 left-1/2 -translate-x-1/2 z-20 pointer-events-none @container-[rooms-preview]/[max-width:300px]:hidden"
         style={{
           opacity: showContent ? 1 : 0,
           transition: "opacity 0.5s ease",
+          display: isNarrow ? "none" : undefined,
         }}
       >
         <div
@@ -1526,6 +2676,86 @@ export function RoomsEngine({
           {sections[activeIndex]?.label}
         </div>
       </div>
+
+      {/* ── Peek left/right — only for sections with side-wall frame content ── */}
+      {showContent &&
+        !isAnimating &&
+        ["timeline", "gallery"].includes(sections[activeIndex]?.key) && (
+          <div className="absolute inset-y-0 left-0 right-0 pointer-events-none z-20 flex items-center justify-between px-3!">
+            <button
+              className="pointer-events-auto flex items-center justify-center rounded-full transition-all cursor-pointer opacity-40 hover:opacity-90"
+              style={{
+                width: 32,
+                height: 32,
+                background: `${theme.bg}CC`,
+                border: `1px solid ${theme.gold}40`,
+                color: theme.gold,
+              }}
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                peekTargetRef.current = -1;
+              }}
+              onPointerUp={(e) => {
+                e.stopPropagation();
+                peekTargetRef.current = 0;
+              }}
+              onPointerLeave={(e) => {
+                e.stopPropagation();
+                peekTargetRef.current = 0;
+              }}
+              onTouchStart={(e) => {
+                e.stopPropagation();
+                peekTargetRef.current = -1;
+              }}
+              onTouchEnd={(e) => {
+                e.stopPropagation();
+                peekTargetRef.current = 0;
+              }}
+              onTouchCancel={(e) => {
+                e.stopPropagation();
+                peekTargetRef.current = 0;
+              }}
+            >
+              <ChevronLeftIcon className="size-3.5" />
+            </button>
+            <button
+              className="pointer-events-auto flex items-center justify-center rounded-full transition-all cursor-pointer opacity-40 hover:opacity-90"
+              style={{
+                width: 32,
+                height: 32,
+                background: `${theme.bg}CC`,
+                border: `1px solid ${theme.gold}40`,
+                color: theme.gold,
+              }}
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                peekTargetRef.current = 1;
+              }}
+              onPointerUp={(e) => {
+                e.stopPropagation();
+                peekTargetRef.current = 0;
+              }}
+              onPointerLeave={(e) => {
+                e.stopPropagation();
+                peekTargetRef.current = 0;
+              }}
+              onTouchStart={(e) => {
+                e.stopPropagation();
+                peekTargetRef.current = 1;
+              }}
+              onTouchEnd={(e) => {
+                e.stopPropagation();
+                peekTargetRef.current = 0;
+              }}
+              onTouchCancel={(e) => {
+                e.stopPropagation();
+                peekTargetRef.current = 0;
+              }}
+            >
+              <ChevronRightIcon className="size-3.5" />
+            </button>
+          </div>
+        )}
 
       {/* ── Navigation arrows — game-style, bottom corners ── */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-4">

@@ -564,7 +564,7 @@ export function Finale({
     [0, 600, 1200].forEach((delay) => {
       setTimeout(() => {
         fireConfetti({
-          count: 60,
+          count: 180,
           fixed: true,
           colors: [theme.gold, theme.goldLight, "#ffffff", theme.curtain],
           origin: { x: "50%", y: "50%" },
@@ -622,24 +622,33 @@ export function Finale({
 
     const scrollContainer = document.querySelector("[data-scroll-container]");
 
-    const st = ScrollTrigger.create({
-      trigger: section,
-      ...(scrollContainer ? { scroller: scrollContainer } : {}),
-      start: "top 55%",
-      once: true,
-      onEnter: () => {
-        if (!content) return;
-        gsap.to(content, {
-          opacity: 1,
-          scale: 1,
-          duration: 1.3,
-          ease: "power3.out",
-        });
-        fireFinaleConfetti();
-      },
-    });
+    const stRef = { current: null as ScrollTrigger | null };
 
-    return () => st.kill();
+    const timer = setTimeout(() => {
+      const scrollContainer = document.querySelector("[data-scroll-container]");
+      ScrollTrigger.refresh();
+      stRef.current = ScrollTrigger.create({
+        trigger: section,
+        ...(scrollContainer ? { scroller: scrollContainer } : {}),
+        start: "top 55%",
+        once: true,
+        onEnter: () => {
+          if (!content) return;
+          gsap.to(content, {
+            opacity: 1,
+            scale: 1,
+            duration: 1.3,
+            ease: "power3.out",
+          });
+          fireFinaleConfetti();
+        },
+      });
+    }, 500);
+
+    return () => {
+      clearTimeout(timer);
+      stRef.current?.kill();
+    };
   }, [isRooms, theme, fireFinaleConfetti]);
 
   return (
@@ -677,7 +686,7 @@ export function Finale({
       <div ref={contentRef} className="relative z-10 space-y-6!">
         {/* Bride & Groom SVG */}
         {showCoupleIllustration && (
-          <div className="py-4">
+          <div className="py-4 flex items-center justify-center">
             <BrideGroomSVG
               gold={theme.gold}
               curtain={theme.curtain}
@@ -724,14 +733,14 @@ export function Finale({
         />
 
         <p
-          className="font-label tracking-[0.4em] text-sm font-semibold"
+          className="font-label tracking-[0.4em] text-sm sm:text-lg lg:text-2xl font-semibold"
           style={{ color: `${theme.gold}85`, marginTop: "16px" }}
         >
           {formattedDate(displayDate, true)}
         </p>
 
         <p
-          className="font-display italic leading-relaxed max-w-sm mx-auto font-semibold"
+          className="font-display italic leading-relaxed font-semibold w-full"
           style={{ color: `${theme.text}55`, fontSize: "clamp(18px,2vw,22px)" }}
         >
           {finaleTagLine ?? (

@@ -109,6 +109,15 @@ export function EditorShell({ initialConfig, isNew }: Props) {
   }, []);
 
   const handleHardReset = useCallback(() => {
+    const isRooms = (config.navMode ?? "scroll") === "rooms";
+
+    if (isRooms) {
+      // Rooms mode: RoomsEngine lives inline (not in iframe), post to same window
+      window.postMessage({ type: "RESET_PREVIEW" }, "*");
+      return;
+    }
+
+    // Scroll mode: also reset the iframe if it exists
     const iframe = previewIframeRef.current;
     if (!iframe) return;
 

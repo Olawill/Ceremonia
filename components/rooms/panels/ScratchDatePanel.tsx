@@ -75,33 +75,68 @@ export function ScratchDatePanel({
 }: Props) {
   const { theme } = useTheme();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const lastSampleRef = useRef(0);
+
   const [revealed, setRevealed] = useState(false);
   const [progress, setProgress] = useState(0);
   const [visible, setVisible] = useState(false);
+  const [canvasReady, setCanvasReady] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 150);
     return () => clearTimeout(t);
   }, []);
 
+  const themeRef = useRef(theme);
+  useEffect(() => {
+    themeRef.current = theme;
+  }, [theme]);
+
+  const onRevealedRef = useRef(onRevealed);
+  useEffect(() => {
+    onRevealedRef.current = onRevealed;
+  }, [onRevealed]);
+
   const handleReveal = useCallback(() => {
     setRevealed(true);
-    onRevealed();
+    onRevealedRef.current();
     fireConfetti({
       count: 120,
       fixed: true,
-      colors: [theme.gold, theme.goldLight, "#ffffff", theme.curtain],
+      colors: [
+        themeRef.current.gold,
+        themeRef.current.goldLight,
+        "#ffffff",
+        themeRef.current.curtain,
+      ],
       origin: { x: "50%", y: "45%" },
+      containerId: "scratch-panel-confetti",
     });
-  }, [theme, onRevealed]);
+  }, []);
 
   useEffect(() => {
     if (revealed) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
+
+    const rect0 = canvas.getBoundingClientRect();
+    if (rect0.width === 0) {
+      // Panel is hidden — wait for it to become display:block before initialising
+      const panel = canvas.closest<HTMLElement>("[data-rooms-panel]");
+      if (!panel) return;
+      const obs = new MutationObserver(() => {
+        if (panel.style.display !== "none") {
+          obs.disconnect();
+          setCanvasReady(true);
+        }
+      });
+      obs.observe(panel, { attributes: true, attributeFilter: ["style"] });
+      return () => obs.disconnect();
+    }
+
     const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
-    const W = (canvas.width = 280);
-    const H = (canvas.height = 100);
+    const W = (canvas.width = Math.round(rect0.width) || 280);
+    const H = (canvas.height = Math.round(rect0.height) || 100);
 
     // Gold foil
     const grad = ctx.createLinearGradient(0, 0, W, H);
@@ -111,10 +146,11 @@ export function ScratchDatePanel({
     grad.addColorStop(1, "#B8960C");
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, H);
+
     // Noise
-    for (let i = 0; i < 3000; i++) {
+    for (let i = 0; i < 800; i++) {
       ctx.fillStyle = `rgba(0,0,0,${Math.random() * 0.05})`;
-      ctx.fillRect(Math.random() * W, Math.random() * H, 1, 1);
+      ctx.fillRect(Math.random() * W, Math.random() * H, 1.5, 1.5);
     }
     // Hint
     ctx.fillStyle = "rgba(0,0,0,0.25)";
@@ -143,35 +179,55 @@ export function ScratchDatePanel({
       ctx.beginPath();
       ctx.arc(x, y, 20, 0, Math.PI * 2);
       ctx.fill();
+
       ctx.globalCompositeOperation = "source-over";
+
+      // Throttle the expensive GPU→CPU pixel readback to every 150ms
+      const now = performance.now();
+      if (now - lastSampleRef.current < 150) return;
+      lastSampleRef.current = now;
+
       const data = ctx.getImageData(0, 0, W, H).data;
       let transparent = 0;
       for (let i = 3; i < data.length; i += 4) if (data[i] < 128) transparent++;
       const pct = (transparent / (W * H)) * 100;
       setProgress(Math.min(pct, 100));
-      if (pct > 65) handleReveal();
+      if (pct > 95) handleReveal();
     };
-    canvas.addEventListener("mousedown", (e) => {
+
+    const onMouseDown = (e: MouseEvent) => {
       drawing = true;
       scratch(e);
-    });
-    canvas.addEventListener("mousemove", scratch);
-    canvas.addEventListener("mouseup", () => {
+    };
+    const onMouseMove = (e: MouseEvent) => scratch(e);
+    const onMouseUp = () => {
       drawing = false;
-    });
-    canvas.addEventListener(
-      "touchstart",
-      (e) => {
-        drawing = true;
-        scratch(e);
-      },
-      { passive: false },
-    );
-    canvas.addEventListener("touchmove", scratch, { passive: false });
-    canvas.addEventListener("touchend", () => {
+    };
+    const onTouchStart = (e: TouchEvent) => {
+      drawing = true;
+      scratch(e);
+    };
+    const onTouchMove = (e: TouchEvent) => scratch(e);
+    const onTouchEnd = () => {
       drawing = false;
-    });
-  }, [revealed, handleReveal]);
+    };
+
+    canvas.addEventListener("mousedown", onMouseDown);
+    canvas.addEventListener("mousemove", onMouseMove);
+    canvas.addEventListener("mouseup", onMouseUp);
+    canvas.addEventListener("touchstart", onTouchStart, { passive: false });
+    canvas.addEventListener("touchmove", onTouchMove, { passive: false });
+    canvas.addEventListener("touchend", onTouchEnd);
+
+    return () => {
+      canvas.removeEventListener("mousedown", onMouseDown);
+      canvas.removeEventListener("mousemove", onMouseMove);
+      canvas.removeEventListener("mouseup", onMouseUp);
+      canvas.removeEventListener("touchstart", onTouchStart);
+      canvas.removeEventListener("touchmove", onTouchMove);
+      canvas.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [revealed, handleReveal, canvasReady]);
 
   const doneMessage: Record<string, string> = {
     wedding: "We can't wait to celebrate with you ♡",
@@ -182,7 +238,10 @@ export function ScratchDatePanel({
   };
 
   return (
-    <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 px-6!">
+    <div
+      id="scratch-panel-confetti"
+      className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-5! overflow-hidden"
+    >
       {/* Heading */}
       <div
         className="text-center flex flex-col items-center gap-2"
@@ -241,7 +300,7 @@ export function ScratchDatePanel({
       >
         {/* Scratch card — sits on the table */}
         <div
-          className="relative rounded-xl overflow-hidden"
+          className="relative rounded-xl overflow-hidden w-full"
           style={{
             width: 280,
             height: 100,
@@ -251,17 +310,18 @@ export function ScratchDatePanel({
         >
           {/* Revealed layer */}
           <div
-            className="absolute inset-0 flex flex-col items-center justify-center gap-1"
+            className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-center px-2!"
             style={{
               background: `linear-gradient(135deg, ${theme.curtain}60, ${theme.bg}CC)`,
+              overflow: "hidden",
             }}
           >
             <p
               className="font-label font-semibold"
               style={{
-                fontSize: "clamp(18px,5vw,28px)",
+                fontSize: "clamp(13px,3.5vw,22px)",
+                letterSpacing: "0.05em",
                 color: theme.gold,
-                letterSpacing: "0.12em",
                 textShadow: `0 0 20px ${theme.gold}80`,
               }}
             >

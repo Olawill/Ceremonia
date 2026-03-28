@@ -23,10 +23,6 @@ interface Props {
 }
 
 // ── Wall faces ───────────────────────────────────────────────────────────────
-// The room camera starts facing "north" (the back wall). We allow the guest to
-// pan left/right to reveal the east and west walls, each showing a hotel.
-// The south wall (behind the camera) is revealed with a full pan.
-const FACE_ANGLES = [0, 90, 180, 270]; // degrees — N, E, S, W
 
 function Stars({ count, gold }: { count: number; gold: string }) {
   return (
@@ -499,7 +495,7 @@ function IntroWall({
 function WallCompass({ label, gold }: { label: string; gold: string }) {
   return (
     <div
-      className="font-label text-[8px] tracking-[0.5em] uppercase px-3 py-1 rounded-full"
+      className="font-label text-[8px] tracking-[0.5em] uppercase px-3! py-1! rounded-full"
       style={{
         border: `1px solid ${gold}25`,
         color: `${gold}50`,
@@ -630,6 +626,7 @@ export function AccommodationPanel({ accommodation }: Props) {
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
+      background: "transparent",
       transform: `translateX(${translateX}px) translateZ(${translateZ}px) rotateY(${rotateY}deg)`,
       opacity,
       pointerEvents,
@@ -647,46 +644,57 @@ export function AccommodationPanel({ accommodation }: Props) {
       className="absolute inset-0 flex flex-col items-center justify-center overflow-hidden select-none"
       style={{
         cursor: isDragging ? "grabbing" : "grab",
-        perspective: "800px",
-        perspectiveOrigin: "50% 50%",
+        // perspective: "800px",
+        // perspectiveOrigin: "50% 50%",
+        background: "transparent",
       }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerLeave={onPointerUp}
     >
-      {/* ── 3D cylinder of walls ── */}
       <div
-        className="relative w-full flex items-center justify-center"
+        className="absolute inset-0 flex flex-col items-center justify-center"
         style={{
-          height: "100%",
-          transformStyle: "preserve-3d",
+          perspective: "800px",
+          perspectiveOrigin: "50% 50%",
+          background: "transparent",
         }}
       >
-        {/* Intro face */}
-        <div style={getFaceStyle(0)}>
-          <IntroWall
-            intro={intro}
-            totalHotels={options.length}
-            gold={theme.gold}
-            text={theme.text}
-            curtain={theme.curtain}
-            isActive={activeFace === 0}
-          />
-        </div>
-
-        {/* One face per hotel */}
-        {options.map((option, i) => (
-          <div key={option.id} style={getFaceStyle(i + 1)}>
-            <HotelPlacard
-              option={option}
+        {/* ── 3D cylinder of walls ── */}
+        <div
+          className="relative w-full flex items-center justify-center"
+          style={{
+            height: "100%",
+            transformStyle: "preserve-3d",
+            background: "transparent",
+          }}
+        >
+          {/* Intro face */}
+          <div style={getFaceStyle(0)}>
+            <IntroWall
+              intro={intro}
+              totalHotels={options.length}
               gold={theme.gold}
               text={theme.text}
               curtain={theme.curtain}
-              isActive={activeFace === i + 1}
+              isActive={activeFace === 0}
             />
           </div>
-        ))}
+
+          {/* One face per hotel */}
+          {options.map((option, i) => (
+            <div key={option.id} style={getFaceStyle(i + 1)}>
+              <HotelPlacard
+                option={option}
+                gold={theme.gold}
+                text={theme.text}
+                curtain={theme.curtain}
+                isActive={activeFace === i + 1}
+              />
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* ── Bottom HUD ── */}

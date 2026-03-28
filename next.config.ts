@@ -1,7 +1,15 @@
 import type { NextConfig } from "next";
 
+const NGROK_URL = process.env.NGROK_URL;
+// Extract just the hostname: "legible-workable-lion.ngrok-free.app"
+const NGROK_HOSTNAME = NGROK_URL ? new URL(NGROK_URL).hostname : undefined;
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  ...(NGROK_HOSTNAME && {
+    allowedDevOrigins: [NGROK_HOSTNAME],
+    // assetPrefix: NGROK_URL,
+  }),
   async rewrites() {
     return [
       {
@@ -11,6 +19,10 @@ const nextConfig: NextConfig = {
       {
         source: "/ingest/:path*",
         destination: "https://us.i.posthog.com/:path*",
+      },
+      {
+        source: "/ingest/decide",
+        destination: "https://us.i.posthog.com/decide",
       },
     ];
   },

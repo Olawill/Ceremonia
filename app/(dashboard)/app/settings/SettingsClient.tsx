@@ -108,7 +108,7 @@ export function SettingsClient({
       </section>
 
       {plan === "agency" && (
-        <section className="rounded-2xl border border-dash-border bg-dash-gold/2 p-8 space-y-4">
+        <section className="rounded-2xl border border-dash-border bg-dash-gold/2 p-8! space-y-4!">
           <p className="font-label text-[11px] tracking-[0.4em] uppercase text-dash-gold">
             White-label
           </p>

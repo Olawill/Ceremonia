@@ -1,5 +1,7 @@
 "use client";
 
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useEffect, useState } from "react";
 
 import { CascadeCurtain } from "@/components/curtain/CascadeCurtain";
@@ -27,19 +29,23 @@ interface EventEngineProps {
   showWatermark?: boolean;
   brandName?: string;
   previewLocked?: boolean;
+  isEditorPreview?: boolean;
 }
+
+gsap.registerPlugin(ScrollTrigger);
 
 export function EventEngine({
   config = DEMO_EVENT_CONFIG,
   showWatermark,
   brandName,
   previewLocked = false,
+  isEditorPreview = false,
 }: EventEngineProps) {
   const { theme } = useTheme();
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [curtainOpen, setCurtainOpen] = useState(false);
-  const [dateRevealed, setDateRevealed] = useState(false);
+  const [dateRevealed, setDateRevealed] = useState(config.slug === "demo");
 
   const host1 = getHost1Name(config);
   const host2 = getHost2Name(config); // undefined for single-host events
@@ -70,16 +76,15 @@ export function EventEngine({
   const handleCurtainOpen = () => {
     if (previewLocked) return;
     setCurtainOpen(true);
-    if (window.self !== window.top) {
-      window.parent.postMessage({ type: "CURTAIN_OPEN" }, "*");
-    }
+    // Post to parent (iframe mode) or same window (inline mode)
+    const target = window.self !== window.top ? window.parent : window;
+    target.postMessage({ type: "CURTAIN_OPEN" }, "*");
   };
 
   const handleDateRevealed = () => {
     setDateRevealed(true);
-    if (window.self !== window.top) {
-      window.parent.postMessage({ type: "DATE_REVEALED" }, "*");
-    }
+    const target = window.self !== window.top ? window.parent : window;
+    target.postMessage({ type: "DATE_REVEALED" }, "*");
   };
 
   const sections = buildSections(
@@ -95,6 +100,10 @@ export function EventEngine({
 
     const container = document.querySelector("[data-scroll-container]");
     if (!container) return;
+
+    // Tell GSAP ScrollTrigger to use our custom scroll container
+    ScrollTrigger.defaults({ scroller: container });
+    ScrollTrigger.refresh();
 
     const sectionEls = Array.from(
       container.querySelectorAll<HTMLElement>("[data-section]"),
@@ -123,6 +132,13 @@ export function EventEngine({
     sectionEls.forEach((el) => observer.observe(el));
     return () => observer.disconnect();
   }, [curtainOpen, sections.length]);
+
+  const sectionBg = (i: number) => {
+    const cycle = i % 3;
+    if (cycle === 0) return theme.bg;
+    if (cycle === 1) return theme.bgMid;
+    return `${theme.curtainDark}40`; // darkest — curtain tint at 40% opacity
+  };
 
   return (
     <>
@@ -209,12 +225,92 @@ export function EventEngine({
                 scrollSnapAlign: "start",
                 scrollSnapStop: "always",
                 minHeight: "100vh",
-                background: i % 2 === 0 ? theme.bg : theme.bgMid,
+                position: "relative",
+                // background: i % 2 === 0 ? theme.bg : theme.bgMid,
+                background: sectionBg(i),
                 // Padding to keep content below the drape valance when drape is active
                 paddingTop:
                   curtainStyle === "drape" ? "clamp(140px, 24vh, 280px)" : 0,
               }}
             >
+              {/* Chapter marker */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  zIndex: 10,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 0,
+                }}
+              >
+                {/* Top gradient bar — thicker, more dramatic */}
+                <div
+                  style={{
+                    width: "100%",
+                    height: 3,
+                    background: `linear-gradient(90deg, transparent, ${theme.gold}90, transparent)`,
+                  }}
+                />
+                {/* Ornament pill */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: "6px 20px",
+                    background: sectionBg(i),
+                    border: `1px solid ${theme.gold}30`,
+                    borderTop: "none",
+                    borderRadius: "0 0 20px 20px",
+                  }}
+                >
+                  <span style={{ color: `${theme.gold}60`, fontSize: 8 }}>
+                    ✦
+                  </span>
+                  <span
+                    style={{
+                      color: `${theme.gold}90`,
+                      fontFamily: "var(--font-label)",
+                      fontSize: "8px",
+                      letterSpacing: "0.6em",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {section.label}
+                  </span>
+                  <span style={{ color: `${theme.gold}60`, fontSize: 8 }}>
+                    ✦
+                  </span>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 120,
+                  background: `linear-gradient(to bottom, ${theme.bg}CC, transparent)`,
+                  pointerEvents: "none",
+                  zIndex: 5,
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 3,
+                  background: `linear-gradient(90deg, transparent, ${theme.gold}, transparent)`,
+                }}
+              />
+
               {section.node}
             </div>
           ))}
@@ -227,6 +323,7 @@ export function EventEngine({
           sections={sections}
           dateRevealed={dateRevealed}
           onDateRevealed={handleDateRevealed}
+          isEditorPreview={isEditorPreview}
         />
       )}
 

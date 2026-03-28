@@ -57,7 +57,7 @@ function MonogramCipher({
   const i1 = h1.charAt(0).toUpperCase();
   const i2 = h2 ? h2.charAt(0).toUpperCase() : "";
   return (
-    <svg viewBox="0 0 80 80" className="w-16 h-16">
+    <svg viewBox="0 0 80 80" className="w-16 h-16 shrink-0">
       {/* Outer ring */}
       <circle
         cx="40"
@@ -183,7 +183,7 @@ export function ParallaxHeroPanel({
 
   return (
     <div
-      className="absolute inset-0 flex flex-col items-center justify-center px-8! gap-6 overflow-hidden"
+      className="absolute inset-0 flex flex-col items-center justify-center px-5! gap-3 overflow-hidden"
       style={{
         backgroundImage: heroPhotoUrl
           ? `linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url(${heroPhotoUrl})`
@@ -196,7 +196,7 @@ export function ParallaxHeroPanel({
 
       {/* Top label */}
       <div
-        className="flex flex-col items-center gap-4 text-center"
+        className="flex flex-col items-center gap-2 text-center"
         style={{
           opacity: phase >= 1 ? 1 : 0,
           transform: phase >= 1 ? "translateY(0)" : "translateY(-12px)",
@@ -205,7 +205,7 @@ export function ParallaxHeroPanel({
         }}
       >
         <p
-          className="font-label font-semibold text-[11px] tracking-[0.7em] uppercase"
+          className="font-label font-semibold text-[11px] tracking-[0.7em] uppercase  min-h-0"
           style={{
             color: `${theme.gold}`,
             textShadow: "0 1px 8px rgba(0,0,0,0.9)",
@@ -239,7 +239,7 @@ export function ParallaxHeroPanel({
         <h1
           className="font-display font-light leading-none"
           style={{
-            fontSize: "clamp(40px,8vw,80px)",
+            fontSize: "clamp(28px,7vw,72px)",
             color: theme.text,
             letterSpacing: "0.04em",
             textShadow: "0 2px 24px rgba(0,0,0,0.9), 0 1px 4px rgba(0,0,0,0.8)",
@@ -253,7 +253,7 @@ export function ParallaxHeroPanel({
             <span
               style={{
                 color: theme.gold,
-                fontSize: "clamp(20px,4vw,36px)",
+                fontSize: "clamp(14px,3.5vw,28px)",
                 textShadow: `0 0 20px ${theme.gold}60`,
                 opacity: 0.85,
               }}
@@ -263,7 +263,7 @@ export function ParallaxHeroPanel({
             <h1
               className="font-display font-light leading-none"
               style={{
-                fontSize: "clamp(40px,8vw,80px)",
+                fontSize: "clamp(28px,7vw,72px)",
                 color: theme.text,
                 letterSpacing: "0.04em",
                 textShadow:

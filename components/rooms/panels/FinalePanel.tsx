@@ -749,22 +749,64 @@ export function FinalePanel({
           fixed: true,
           colors: [theme.gold, theme.goldLight, "#ffffff", theme.curtain],
           origin: { x: "50%", y: "50%" },
+          containerId: "finale-panel-confetti",
         });
       }, delay);
     });
   }, [theme]);
 
   // Staggered entrance phases
+  const sectionRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase(1), 200);
-    const t2 = setTimeout(() => setPhase(2), 700);
-    const t3 = setTimeout(() => setPhase(3), 1200);
-    const t4 = setTimeout(fireFinaleConfetti, 1800);
+    // In rooms mode all panels mount simultaneously — we must wait until
+    // this panel's [data-rooms-panel] wrapper becomes visible (display: block)
+    // before starting animations, otherwise confetti fires on curtain open.
+    const el = sectionRef.current;
+    if (!el) return;
+
+    const parent = el.closest<HTMLElement>("[data-rooms-panel]");
+
+    const startAnimations = () => {
+      const t1 = setTimeout(() => setPhase(1), 200);
+      const t2 = setTimeout(() => setPhase(2), 700);
+      const t3 = setTimeout(() => setPhase(3), 1200);
+      const t4 = setTimeout(fireFinaleConfetti, 1800);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+        clearTimeout(t3);
+        clearTimeout(t4);
+      };
+    };
+
+    // If no rooms panel wrapper found (e.g. scroll mode fallback), start immediately
+    if (!parent) {
+      return startAnimations();
+    }
+
+    // If already visible (e.g. navigated back to this room), start immediately
+    if (parent.style.display !== "none") {
+      return startAnimations();
+    }
+
+    // Otherwise observe for when display changes to "block"
+    let cleanup: (() => void) | undefined;
+    const observer = new MutationObserver(() => {
+      if (parent.style.display !== "none") {
+        observer.disconnect();
+        cleanup = startAnimations();
+      }
+    });
+
+    observer.observe(parent, {
+      attributes: true,
+      attributeFilter: ["style"],
+    });
+
     return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-      clearTimeout(t4);
+      observer.disconnect();
+      cleanup?.();
     };
   }, [fireFinaleConfetti]);
 
@@ -818,6 +860,8 @@ export function FinalePanel({
 
   return (
     <div
+      ref={sectionRef}
+      id="finale-panel-confetti"
       className="absolute inset-0 flex flex-col items-center justify-center px-6! gap-5 text-center overflow-hidden"
       style={{
         background:

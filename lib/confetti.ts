@@ -32,7 +32,7 @@ export function fireConfetti({
     const isCircle = Math.random() > 0.5;
 
     el.style.cssText = `
-      position:${fixed ? "fixed" : "absolute"};
+      position:${fixed && !containerId ? "fixed" : "absolute"};
       left:${origin.x ?? "50%"};
       top:${origin.y ?? "50%"};
       width:${size}px;

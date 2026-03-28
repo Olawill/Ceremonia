@@ -6,7 +6,7 @@ const MarketingLayout = async ({ children }: { children: React.ReactNode }) => {
   const { userId } = await auth();
 
   return (
-    <div className="min-h-screen bg-dash-bg">
+    <div className="flex flex-col min-h-screen bg-dash-bg">
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8! py-5! border-b border-[#D4AF37] bg-dash-bg/90 backdrop-blur-md">
         <Link href="/" className="flex items-center gap-2">
@@ -41,7 +41,7 @@ const MarketingLayout = async ({ children }: { children: React.ReactNode }) => {
           )}
         </div>
       </nav>
-      {children}
+      <main className="flex-1">{children}</main>
 
       {/* Footer */}
       <footer className="border-t border-[#D4AF3720] px-8! py-8! flex flex-col sm:flex-row items-center justify-between gap-4">
