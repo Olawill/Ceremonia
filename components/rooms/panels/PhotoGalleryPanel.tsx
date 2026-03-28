@@ -7,9 +7,10 @@ import { useEffect, useState } from "react";
 interface Props {
   photos: string[];
   caption?: string;
+  sectionLabel?: string; // vocab.galleryLabel
 }
 
-export function PhotoGalleryPanel({ photos, caption }: Props) {
+export function PhotoGalleryPanel({ photos, caption, sectionLabel }: Props) {
   const { theme } = useTheme();
   const [visible, setVisible] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
@@ -56,7 +57,7 @@ export function PhotoGalleryPanel({ photos, caption }: Props) {
             letterSpacing: "0.06em",
           }}
         >
-          Photo Gallery
+          {sectionLabel ?? "Photo Gallery"}
         </h2>
       </div>
 

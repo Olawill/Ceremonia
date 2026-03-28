@@ -81,6 +81,7 @@ export function buildSections(
           heroPhotoUrl={config.heroPhotoUrl}
           topLabel={vocab.topLabel}
           eventType={config.eventType}
+          roomsNavPrompt={vocab.roomsNavPrompt}
         />
       ) : (
         <ParallaxHero
@@ -146,7 +147,7 @@ export function buildSections(
             key: "timeline",
             label: "Timeline",
             node: isRooms ? (
-              <TimelinePanel key="timeline" events={config.timeline} />
+              <TimelinePanel key="timeline" events={config.timeline} sectionLabel={vocab.timelineLabel} />
             ) : (
               <Timeline key="timeline" events={config.timeline} />
             ),
@@ -159,7 +160,7 @@ export function buildSections(
             key: "gallery",
             label: "Gallery",
             node: isRooms ? (
-              <PhotoGalleryPanel key="gallery" photos={config.galleryPhotos} />
+              <PhotoGalleryPanel key="gallery" photos={config.galleryPhotos} sectionLabel={vocab.galleryLabel} />
             ) : (
               <PhotoGallery key="gallery" photos={config.galleryPhotos} />
             ),
@@ -170,7 +171,7 @@ export function buildSections(
       key: "venue",
       label: "Venue",
       node: isRooms ? (
-        <VenueDetailsPanel key="venue" details={config.venueDetails} />
+        <VenueDetailsPanel key="venue" details={config.venueDetails} sectionLabel={vocab.venueLabel} />
       ) : (
         <VenueDetails key="venue" details={config.venueDetails} />
       ),
@@ -181,7 +182,7 @@ export function buildSections(
             key: "dresscode",
             label: "Dress Code",
             node: isRooms ? (
-              <DressCodePanel key="dresscode" dressCode={config.dressCode} />
+              <DressCodePanel key="dresscode" dressCode={config.dressCode} sectionLabel={vocab.attireLabel} />
             ) : (
               <DressCode key="dresscode" dressCode={config.dressCode} />
             ),
@@ -197,6 +198,8 @@ export function buildSections(
               <AccommodationPanel
                 key="accommodation"
                 accommodation={config.accommodation}
+                headingLabel={vocab.accommodationCardLabel}
+                introLabel={vocab.accommodationIntro}
               />
             ) : (
               <Accommodation
@@ -219,6 +222,9 @@ export function buildSections(
                 bride={host1}
                 groom={host2}
                 sectionLabel={vocab.partyLabel}
+                honourLabel={vocab.honourLabel}
+                brideSideLabel={vocab.brideSideLabel}
+                groomSideLabel={vocab.groomSideLabel}
               />
             ) : (
               <EventParty
@@ -238,7 +244,7 @@ export function buildSections(
             key: "faq",
             label: "FAQ",
             node: isRooms ? (
-              <FAQPanel key="faq" items={config.faq} />
+              <FAQPanel key="faq" items={config.faq} sectionLabel={vocab.faqLabel} />
             ) : (
               <FAQ key="faq" items={config.faq} />
             ),
@@ -257,6 +263,7 @@ export function buildSections(
                 title={config.livestreamTitle}
                 note={config.livestreamNote}
                 date={config.date}
+                sectionLabel={vocab.eventLabel}
               />
             ) : (
               <Livestream
@@ -280,6 +287,7 @@ export function buildSections(
                 key="travel"
                 items={config.travelItems}
                 city={location.value ?? ""}
+                sectionLabel={vocab.travelLabel}
               />
             ) : (
               <TravelGuide
@@ -322,6 +330,7 @@ export function buildSections(
           enabled={config.rsvpEnabled}
           rsvpDeadline={config.rsvpDeadline}
           eventLabel={vocab.eventLabel}
+          sectionLabel={vocab.rsvpLabel}
         />
       ) : (
         <RSVP
@@ -365,6 +374,7 @@ export function buildSections(
                 key="guestbook"
                 eventId={config.id ?? ""}
                 enabled={config.guestBookEnabled!}
+                sectionLabel={vocab.guestBookLabel}
               />
             ) : (
               <GuestBook
@@ -388,9 +398,7 @@ export function buildSections(
           finaleHeading={vocab.finaleHeading}
           date={config.date}
           eventType={config.eventType}
-          showCoupleIllustration={
-            config.eventType === "wedding" || config.eventType === "engagement"
-          }
+          showCoupleIllustration={vocab.showCoupleIllustration}
         />
       ) : (
         <Finale
@@ -400,9 +408,7 @@ export function buildSections(
           finaleTagLine={config.finaleTagLine}
           finaleHeading={vocab.finaleHeading}
           date={config.date}
-          showCoupleIllustration={
-            config.eventType === "wedding" || config.eventType === "engagement"
-          }
+          showCoupleIllustration={vocab.showCoupleIllustration}
           isRooms={false}
         />
       ),

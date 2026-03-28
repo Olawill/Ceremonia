@@ -11,6 +11,7 @@ interface Props {
   heroPhotoUrl?: string;
   topLabel?: string;
   eventType?: EventType;
+  roomsNavPrompt?: string; // vocab.roomsNavPrompt
 }
 
 // ── Floating gold dust particles ─────────────────────────────────────────────
@@ -157,6 +158,7 @@ export function ParallaxHeroPanel({
   heroPhotoUrl,
   topLabel,
   eventType = "wedding",
+  roomsNavPrompt,
 }: Props) {
   const { theme } = useTheme();
   const [phase, setPhase] = useState(0); // 0=hidden, 1=monogram, 2=names, 3=full
@@ -312,7 +314,7 @@ export function ParallaxHeroPanel({
             textShadow: "0 1px 6px rgba(0,0,0,0.8)",
           }}
         >
-          {roomCopy[eventType] ?? roomCopy.other}
+          {roomsNavPrompt ?? roomCopy[eventType] ?? roomCopy.other}
         </p>
       </div>
     </div>

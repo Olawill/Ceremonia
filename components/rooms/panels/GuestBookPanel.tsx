@@ -14,10 +14,12 @@ export function GuestBookPanel({
   eventId,
   enabled,
   existingMessages = [],
+  sectionLabel,
 }: {
   eventId: string;
   enabled: boolean;
   existingMessages?: Message[];
+  sectionLabel?: string; // vocab.guestBookLabel
 }) {
   const { theme } = useTheme();
   const { api } = useApi();
@@ -123,7 +125,7 @@ export function GuestBookPanel({
             textShadow: "0 2px 12px rgba(0,0,0,0.9)",
           }}
         >
-          Guest Book
+          {sectionLabel ?? "Guest Book"}
         </h2>
       </div>
 

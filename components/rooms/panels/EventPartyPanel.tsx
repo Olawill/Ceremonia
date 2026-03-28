@@ -8,7 +8,10 @@ interface Props {
   members: EventPartyMember[];
   bride: string;
   groom?: string;
-  sectionLabel?: string;
+  sectionLabel?: string; // vocab.partyLabel
+  honourLabel?: string; // vocab.honourLabel
+  brideSideLabel?: string; // vocab.brideSideLabel
+  groomSideLabel?: string; // vocab.groomSideLabel
 }
 
 const ROLE_LABELS: Record<EventPartyRole, string> = {
@@ -151,6 +154,9 @@ export function EventPartyPanel({
   bride,
   groom,
   sectionLabel,
+  honourLabel,
+  brideSideLabel,
+  groomSideLabel,
 }: Props) {
   const { theme } = useTheme();
   const [visible, setVisible] = useState(false);
@@ -215,7 +221,7 @@ export function EventPartyPanel({
             textShadow: "0 2px 12px rgba(0,0,0,0.9)",
           }}
         >
-          Hall of Honour
+          {honourLabel ?? "Hall of Honour"}
         </h2>
       </div>
 
@@ -246,7 +252,9 @@ export function EventPartyPanel({
                     : "1px solid transparent",
               }}
             >
-              {side === "bride" ? bride : (groom ?? "Partner")}&apos;s Side
+              {side === "bride"
+                ? brideSideLabel ?? `${bride}'s Side`
+                : groomSideLabel ?? `${groom ?? "Partner"}'s Side`}
             </button>
           ))}
         </div>

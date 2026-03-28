@@ -418,6 +418,40 @@ export interface EventVocabulary {
   /** Emoji used as shorthand in the dashboard list */
   emoji: string;
   registryLabel: string;
+  /** Countdown section label */
+  countdownLabel: string;
+  /** FAQ section label */
+  faqLabel: string;
+  /** Photo gallery section label */
+  galleryLabel: string;
+  /** Venue details section label */
+  venueLabel: string;
+  /** Timeline section label */
+  timelineLabel: string;
+  /** Travel guide section label */
+  travelLabel: string;
+  /** Guest book section label */
+  guestBookLabel: string;
+  /** RSVP section label */
+  rsvpLabel: string;
+  /** Sub-heading for the party panel — e.g. "Hall of Honour" */
+  honourLabel: string;
+  /** Bride's side label in the party panel — e.g. "Bride's Side" */
+  brideSideLabel: string;
+  /** Groom's side label in the party panel — e.g. "Groom's Side" */
+  groomSideLabel: string;
+  /** Scratch/reveal section — pre-reveal heading */
+  revealTitle: string;
+  /** Scratch/reveal section — helper text */
+  revealHint: string;
+  /** Intro text shown on the Accommodation intro wall */
+  accommodationIntro: string;
+  /** Label for individual hotel cards on Accommodation wall */
+  accommodationCardLabel: string;
+  /** Rooms-mode scroll prompt (shown at the hero) */
+  roomsNavPrompt: string;
+  /** Whether to show the couple illustration in the finale */
+  showCoupleIllustration: boolean;
 }
 
 export const EVENT_VOCABULARY: Record<EventType, EventVocabulary> = {
@@ -437,6 +471,24 @@ export const EVENT_VOCABULARY: Record<EventType, EventVocabulary> = {
     menuSubLabel: "Dinner Banquet",
     menuDescription: "A culinary journey curated with love",
     registryLabel: "Wedding Registry",
+    countdownLabel: "Countdown",
+    faqLabel: "FAQ",
+    galleryLabel: "Gallery",
+    venueLabel: "Venue",
+    timelineLabel: "Our Story",
+    travelLabel: "Travel",
+    guestBookLabel: "Guestbook",
+    revealTitle: "Reveal Our Date",
+    revealHint: "Scratch the golden foil below",
+    accommodationIntro:
+      "We've arranged preferential rates at the following hotels. Please book before the deadline to secure the group rate.",
+    accommodationCardLabel: "Where to Stay",
+    roomsNavPrompt: "Navigate to begin the journey →",
+    showCoupleIllustration: true,
+    rsvpLabel: "RSVP",
+    honourLabel: "Hall of Honour",
+    brideSideLabel: "Bride's Side",
+    groomSideLabel: "Groom's Side",
   },
   birthday: {
     eventLabel: "Birthday Party",
@@ -453,6 +505,24 @@ export const EVENT_VOCABULARY: Record<EventType, EventVocabulary> = {
     menuSubLabel: "Party Refreshments",
     menuDescription: "Food and drinks for the celebration",
     registryLabel: "Wish List",
+    countdownLabel: "Countdown",
+    faqLabel: "FAQ",
+    galleryLabel: "Gallery",
+    venueLabel: "Venue",
+    timelineLabel: "Timeline",
+    travelLabel: "Getting There",
+    guestBookLabel: "Guestbook",
+    revealTitle: "Reveal the Date",
+    revealHint: "Scratch to reveal",
+    accommodationIntro:
+      "We've picked some great places to stay nearby. Book early for the best rates.",
+    accommodationCardLabel: "Where to Stay",
+    roomsNavPrompt: "Navigate to join the celebration →",
+    showCoupleIllustration: false,
+    rsvpLabel: "RSVP",
+    honourLabel: "Guest of Honour",
+    brideSideLabel: "Celebrant's Side",
+    groomSideLabel: "Partner's Side",
   },
   baby_shower: {
     eventLabel: "Baby Shower",
@@ -470,6 +540,24 @@ export const EVENT_VOCABULARY: Record<EventType, EventVocabulary> = {
     menuSubLabel: "Shower Spread",
     menuDescription: "Delicious bites for a special occasion",
     registryLabel: "Baby Registry",
+    countdownLabel: "Countdown",
+    faqLabel: "FAQ",
+    galleryLabel: "Gallery",
+    venueLabel: "Venue",
+    timelineLabel: "Timeline",
+    travelLabel: "Getting There",
+    guestBookLabel: "Guestbook",
+    revealTitle: "Reveal Our Date",
+    revealHint: "Scratch to reveal",
+    accommodationIntro:
+      "We've arranged accommodation suggestions for our guests. Please book by the deadline.",
+    accommodationCardLabel: "Where to Stay",
+    roomsNavPrompt: "Navigate to meet the little one →",
+    showCoupleIllustration: false,
+    rsvpLabel: "RSVP",
+    honourLabel: "Godparents & Family",
+    brideSideLabel: "Mum's Side",
+    groomSideLabel: "Partner's Side",
   },
   christening: {
     eventLabel: "Christening",
@@ -487,6 +575,24 @@ export const EVENT_VOCABULARY: Record<EventType, EventVocabulary> = {
     menuSubLabel: "Reception Refreshments",
     menuDescription: "Food and drinks after the service",
     registryLabel: "Gift Registry",
+    countdownLabel: "Countdown",
+    faqLabel: "FAQ",
+    galleryLabel: "Gallery",
+    venueLabel: "Venue",
+    timelineLabel: "Timeline",
+    travelLabel: "Getting There",
+    guestBookLabel: "Guestbook",
+    revealTitle: "Reveal Our Date",
+    revealHint: "Scratch to reveal",
+    accommodationIntro:
+      " Accommodation suggestions for guests traveling to the ceremony.",
+    accommodationCardLabel: "Where to Stay",
+    roomsNavPrompt: "Navigate to share the blessing →",
+    showCoupleIllustration: false,
+    rsvpLabel: "RSVP",
+    honourLabel: "Family & Godparents",
+    brideSideLabel: "Godfamily Side",
+    groomSideLabel: "Family Side",
   },
   bridal_shower: {
     eventLabel: "Bridal Shower",
@@ -503,6 +609,23 @@ export const EVENT_VOCABULARY: Record<EventType, EventVocabulary> = {
     menuSubLabel: "Brunch Spread",
     menuDescription: "A lovely brunch curated for the occasion",
     registryLabel: "Gift Ideas",
+    countdownLabel: "Countdown",
+    faqLabel: "FAQ",
+    galleryLabel: "Gallery",
+    venueLabel: "Venue",
+    timelineLabel: "Timeline",
+    travelLabel: "Getting There",
+    guestBookLabel: "Guestbook",
+    revealTitle: "Reveal the Date",
+    revealHint: "Scratch to reveal",
+    accommodationIntro: "A selection of places to stay near the venue.",
+    accommodationCardLabel: "Where to Stay",
+    roomsNavPrompt: "Navigate to celebrate the bride →",
+    showCoupleIllustration: false,
+    rsvpLabel: "RSVP",
+    honourLabel: "Bridal Party",
+    brideSideLabel: "Bride's Side",
+    groomSideLabel: "Bridesmaid's Side",
   },
   housewarming: {
     eventLabel: "Housewarming",
@@ -520,6 +643,23 @@ export const EVENT_VOCABULARY: Record<EventType, EventVocabulary> = {
     menuSubLabel: "Food & Drinks",
     menuDescription: "Come hungry, leave happy",
     registryLabel: "Home Wish List",
+    countdownLabel: "Countdown",
+    faqLabel: "FAQ",
+    galleryLabel: "Gallery",
+    venueLabel: "Venue",
+    timelineLabel: "Our Journey",
+    travelLabel: "Getting There",
+    guestBookLabel: "Guestbook",
+    revealTitle: "Reveal Our Date",
+    revealHint: "Scratch to reveal",
+    accommodationIntro: "Recommended places to stay for out-of-town guests.",
+    accommodationCardLabel: "Where to Stay",
+    roomsNavPrompt: "Navigate to see the new home →",
+    showCoupleIllustration: false,
+    rsvpLabel: "RSVP",
+    honourLabel: "Our Circle",
+    brideSideLabel: "Partner's Side",
+    groomSideLabel: "Co-host's Side",
   },
   anniversary: {
     eventLabel: "Anniversary",
@@ -537,6 +677,24 @@ export const EVENT_VOCABULARY: Record<EventType, EventVocabulary> = {
     menuSubLabel: "Celebration Dinner",
     menuDescription: "A special menu for a special evening",
     registryLabel: "Gift Ideas",
+    countdownLabel: "Countdown",
+    faqLabel: "FAQ",
+    galleryLabel: "Gallery",
+    venueLabel: "Venue",
+    timelineLabel: "Our Journey",
+    travelLabel: "Getting There",
+    guestBookLabel: "Guestbook",
+    revealTitle: "Reveal Our Date",
+    revealHint: "Scratch to reveal",
+    accommodationIntro:
+      "A selection of hotels for guests traveling to celebrate with us.",
+    accommodationCardLabel: "Where to Stay",
+    roomsNavPrompt: "Navigate to celebrate with us →",
+    showCoupleIllustration: true,
+    rsvpLabel: "RSVP",
+    honourLabel: "Friends & Family",
+    brideSideLabel: "Partner's Side",
+    groomSideLabel: "Co-host's Side",
   },
   graduation: {
     eventLabel: "Graduation Party",
@@ -553,6 +711,23 @@ export const EVENT_VOCABULARY: Record<EventType, EventVocabulary> = {
     menuSubLabel: "Party Food",
     menuDescription: "Food and drinks for the celebration",
     registryLabel: "Gift Registry",
+    countdownLabel: "Countdown",
+    faqLabel: "FAQ",
+    galleryLabel: "Gallery",
+    venueLabel: "Venue",
+    timelineLabel: "Timeline",
+    travelLabel: "Getting There",
+    guestBookLabel: "Guestbook",
+    revealTitle: "Reveal the Date",
+    revealHint: "Scratch to reveal",
+    accommodationIntro: "Places to stay for guests joining the celebration.",
+    accommodationCardLabel: "Where to Stay",
+    roomsNavPrompt: "Navigate to share the moment →",
+    showCoupleIllustration: false,
+    rsvpLabel: "RSVP",
+    honourLabel: "Class of [Year]",
+    brideSideLabel: "Graduate's Side",
+    groomSideLabel: "Friends & Family",
   },
   engagement: {
     eventLabel: "Engagement Party",
@@ -570,6 +745,24 @@ export const EVENT_VOCABULARY: Record<EventType, EventVocabulary> = {
     menuSubLabel: "Engagement Dinner",
     menuDescription: "A menu to celebrate the happy couple",
     registryLabel: "Gift Registry",
+    countdownLabel: "Countdown",
+    faqLabel: "FAQ",
+    galleryLabel: "Gallery",
+    venueLabel: "Venue",
+    timelineLabel: "Our Story",
+    travelLabel: "Getting There",
+    guestBookLabel: "Guestbook",
+    revealTitle: "Reveal Our Date",
+    revealHint: "Scratch to reveal",
+    accommodationIntro:
+      "Hotel recommendations for guests traveling to the celebration.",
+    accommodationCardLabel: "Where to Stay",
+    roomsNavPrompt: "Navigate to celebrate with us →",
+    showCoupleIllustration: true,
+    rsvpLabel: "RSVP",
+    honourLabel: "Couple's Circle",
+    brideSideLabel: "Partner's Side",
+    groomSideLabel: "Co-host's Side",
   },
   corporate: {
     eventLabel: "Corporate Event",
@@ -586,6 +779,24 @@ export const EVENT_VOCABULARY: Record<EventType, EventVocabulary> = {
     menuSubLabel: "Catering",
     menuDescription: "Refreshments provided throughout the event",
     registryLabel: "Gift Ideas",
+    countdownLabel: "Countdown",
+    faqLabel: "FAQ",
+    galleryLabel: "Gallery",
+    venueLabel: "Venue",
+    timelineLabel: "Agenda",
+    travelLabel: "Travel",
+    guestBookLabel: "Guestbook",
+    revealTitle: "Reveal the Date",
+    revealHint: "Scratch to reveal",
+    accommodationIntro:
+      "Accommodation options for visiting delegates and guests.",
+    accommodationCardLabel: "Where to Stay",
+    roomsNavPrompt: "Navigate to explore the event →",
+    showCoupleIllustration: false,
+    rsvpLabel: "RSVP",
+    honourLabel: "Guests of Honour",
+    brideSideLabel: "Guest's Side",
+    groomSideLabel: "Co-host's Side",
   },
   other: {
     eventLabel: "Event",
@@ -603,6 +814,23 @@ export const EVENT_VOCABULARY: Record<EventType, EventVocabulary> = {
     menuSubLabel: "Refreshments",
     menuDescription: "Food and drinks for our guests",
     registryLabel: "Gift Registry",
+    countdownLabel: "Countdown",
+    faqLabel: "FAQ",
+    galleryLabel: "Gallery",
+    venueLabel: "Venue",
+    timelineLabel: "Timeline",
+    travelLabel: "Getting There",
+    guestBookLabel: "Guestbook",
+    revealTitle: "Reveal the Date",
+    revealHint: "Scratch to reveal",
+    accommodationIntro: "A selection of places to stay for our guests.",
+    accommodationCardLabel: "Where to Stay",
+    roomsNavPrompt: "Navigate to continue →",
+    showCoupleIllustration: false,
+    rsvpLabel: "RSVP",
+    honourLabel: "Our Circle",
+    brideSideLabel: "Host's Side",
+    groomSideLabel: "Co-host's Side",
   },
 };
 

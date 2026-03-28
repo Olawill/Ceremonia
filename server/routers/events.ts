@@ -6,7 +6,7 @@ import { db } from "@/db";
 import { events, users } from "@/db/schema";
 
 import { hashPassword } from "@/lib/password";
-import { computeEventExpiry, PLAN_FEATURES } from "@/lib/plans";
+import { computeEventExpiry, MONTHLY_EVENTS, PLAN_FEATURES } from "@/lib/plans";
 
 import { ingestUsage } from "@/lib/polar-usage";
 import { getPostHogClient } from "@/lib/posthog-server";
@@ -104,6 +104,14 @@ export const eventsRouter = new Elysia({ prefix: "/events" })
       .limit(1);
 
     if (!event) return status(404, { message: "Not found" });
+
+    // Check if event has expired
+    if (event.expiresAt && new Date() > new Date(event.expiresAt)) {
+      return status(410, {
+        message: "This event has expired. Please renew your hosting plan.",
+      });
+    }
+
     return event;
   })
 
@@ -115,7 +123,12 @@ export const eventsRouter = new Elysia({ prefix: "/events" })
       if (!userId) return status(401, { message: "Unauthorized" });
 
       const [owner] = await db
-        .select({ plan: users.plan, starterIsOnce: users.starterIsOnce })
+        .select({
+          plan: users.plan,
+          starterIsOnce: users.starterIsOnce,
+          monthlyEventsCreated: users.monthlyEventsCreated,
+          eventPeriodStart: users.eventPeriodStart,
+        })
         .from(users)
         .where(eq(users.id, userId))
         .limit(1);
@@ -125,25 +138,57 @@ export const eventsRouter = new Elysia({ prefix: "/events" })
       const expiresAt = computeEventExpiry(plan, isOnce);
 
       const features = PLAN_FEATURES[plan];
-      const [{ eventCount }] = await db
-        .select({ eventCount: count() })
-        .from(events)
-        .where(eq(events.userId, userId));
+      const monthlyLimit = MONTHLY_EVENTS[plan];
+      const now = new Date();
+      const periodStart = owner?.eventPeriodStart
+        ? new Date(owner.eventPeriodStart)
+        : now;
 
-      if (eventCount >= features.maxEvents) {
+      // Reset monthly quota if we've crossed into a new month
+      const isNewMonth =
+        now.getUTCMonth() !== periodStart.getUTCMonth() ||
+        now.getUTCFullYear() !== periodStart.getUTCFullYear();
+      const currentMonthlyCreated = isNewMonth ? 0 : (owner?.monthlyEventsCreated ?? 0);
+
+      // Check monthly quota (skip for one-time plans which use lifetime check)
+      if (!isOnce && monthlyLimit !== Infinity && currentMonthlyCreated >= monthlyLimit) {
         const posthog = getPostHogClient();
         posthog.capture({
           distinctId: userId,
           event: "plan_limit_hit",
           properties: {
-            feature: "max_events",
+            feature: "monthly_events",
             plan,
-            limit: features.maxEvents,
+            limit: monthlyLimit,
           },
         });
         await posthog.shutdown();
         return status(403, {
-          message: `Your ${plan} plan allows a maximum of ${features.maxEvents} event(s). Please upgrade.`,
+          message: `Your ${plan} plan allows ${monthlyLimit} event(s) per month. Please upgrade or wait until next month.`,
+        });
+      }
+
+      // Lifetime cap still applies to free and one-time starter
+      const lifetimeCap = features.maxEvents;
+      const [{ eventCount }] = await db
+        .select({ eventCount: count() })
+        .from(events)
+        .where(eq(events.userId, userId));
+
+      if (eventCount >= lifetimeCap) {
+        const posthog = getPostHogClient();
+        posthog.capture({
+          distinctId: userId,
+          event: "plan_limit_hit",
+          properties: {
+            feature: "lifetime_events",
+            plan,
+            limit: lifetimeCap,
+          },
+        });
+        await posthog.shutdown();
+        return status(403, {
+          message: `Your ${plan} plan allows a maximum of ${lifetimeCap} event(s). Please upgrade.`,
         });
       }
 
@@ -175,6 +220,15 @@ export const eventsRouter = new Elysia({ prefix: "/events" })
             expiresAt,
           })
           .returning();
+
+        // Increment monthly event counter and reset period if new month
+        await db
+          .update(users)
+          .set({
+            monthlyEventsCreated: isNewMonth ? 1 : (currentMonthlyCreated + 1),
+            eventPeriodStart: isNewMonth ? now : periodStart,
+          })
+          .where(eq(users.id, userId));
 
         // Non-blocking — don't await at the top level:
         ingestUsage("event_created", {

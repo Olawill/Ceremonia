@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 
 interface Props {
   dressCode: DressCodeConfig;
+  sectionLabel?: string;
 }
 
 const STYLE_META: Record<
@@ -255,10 +256,11 @@ function ColourSwatches({
   );
 }
 
-export function DressCodePanel({ dressCode }: Props) {
+export function DressCodePanel({ dressCode, sectionLabel }: Props) {
   const { theme } = useTheme();
   const [visible, setVisible] = useState(false);
   const meta = STYLE_META[dressCode.style];
+  const label = sectionLabel ?? "Dress Code";
 
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 100);
@@ -324,7 +326,7 @@ export function DressCodePanel({ dressCode }: Props) {
               className="font-label text-[8px] tracking-[0.5em] uppercase"
               style={{ color: `${theme.gold}90` }}
             >
-              Dress Code
+              {label}
             </p>
             <span
               style={{

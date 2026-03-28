@@ -20,6 +20,9 @@ export const users = pgTable("users", {
   brandName: text("brand_name"),
   plan: planEnum("plan").default("free"),
   starterIsOnce: boolean("starter_is_once").default(false),
+  // Monthly event creation quota
+  monthlyEventsCreated: integer("monthly_events_created").default(0),
+  eventPeriodStart: timestamp("event_period_start").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

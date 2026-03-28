@@ -24,6 +24,22 @@ export interface PlanFeatures {
   registryScraper: boolean; // URL scraping feature
 }
 
+/** Monthly event creation limits (null = unlimited, 0 = none) */
+export const MONTHLY_EVENTS: Record<Plan, number> = {
+  free: 1,      // 1 per month, does not roll over
+  starter: 1,   // 1/month for monthly subscribers
+  pro: 5,       // 5/month
+  agency: Infinity,
+};
+
+/** Lifetime event caps — enforced only for free/starter one-time */
+export const LIFETIME_EVENTS: Record<Plan, number> = {
+  free: 1,
+  starter: Infinity, // monthly subscribers have no lifetime cap
+  pro: Infinity,
+  agency: Infinity,
+};
+
 export const PLAN_FEATURES: Record<Plan, PlanFeatures> = {
   free: {
     maxEvents: 1,
@@ -139,6 +155,12 @@ export const PLAN_HOSTING_DAYS: Record<Plan, number | null> = {
  * Subscriptions use PLAN_HOSTING_DAYS (null = no expiry).
  */
 export const STARTER_ONCE_HOSTING_DAYS = 365; // 12 months
+
+/** Returns the start of the current monthly period (UTC) */
+export function getCurrentPeriodStart(): Date {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+}
 
 /**
  * Computes the expiry date for a newly created event.

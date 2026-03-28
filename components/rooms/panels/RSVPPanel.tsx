@@ -28,6 +28,7 @@ interface Props {
   enabled?: boolean;
   rsvpDeadline?: string;
   eventLabel?: string;
+  sectionLabel?: string; // vocab.rsvpLabel
 }
 
 export function RSVPPanel({
@@ -35,6 +36,7 @@ export function RSVPPanel({
   enabled = true,
   rsvpDeadline,
   eventLabel,
+  sectionLabel,
 }: Props) {
   const { theme } = useTheme();
   const api = useApi();
@@ -171,7 +173,7 @@ export function RSVPPanel({
             textShadow: "0 2px 16px rgba(0,0,0,0.9)",
           }}
         >
-          RSVP
+          {sectionLabel ?? "RSVP"}
         </h2>
         <div
           className="h-px w-16"

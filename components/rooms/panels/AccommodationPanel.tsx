@@ -20,6 +20,8 @@ import type { AccommodationConfig, AccommodationOption } from "@/types/event";
 
 interface Props {
   accommodation: AccommodationConfig;
+  headingLabel?: string; // vocab.accommodationCardLabel
+  introLabel?: string; // vocab.accommodationIntro
 }
 
 // ── Wall faces ───────────────────────────────────────────────────────────────
@@ -368,6 +370,8 @@ function HotelPlacard({
 // ── Intro wall — the north face, shown first ──────────────────────────────────
 function IntroWall({
   intro,
+  introLabel,
+  headingLabel,
   totalHotels,
   gold,
   text,
@@ -375,6 +379,8 @@ function IntroWall({
   isActive,
 }: {
   intro?: string;
+  introLabel?: string;
+  headingLabel?: string;
   totalHotels: number;
   gold: string;
   text: string;
@@ -409,7 +415,7 @@ function IntroWall({
           className="font-label text-[9px] tracking-[0.6em] uppercase"
           style={{ color: `${gold}70` }}
         >
-          Where to Stay
+          {headingLabel ?? "Where to Stay"}
         </p>
         <h2
           className="font-display font-light"
@@ -420,7 +426,7 @@ function IntroWall({
             textShadow: `0 2px 20px rgba(0,0,0,0.8), 0 0 40px ${gold}20`,
           }}
         >
-          Accommodation
+          {introLabel ?? "Accommodation"}
         </h2>
       </div>
 
@@ -509,7 +515,7 @@ function WallCompass({ label, gold }: { label: string; gold: string }) {
 }
 
 // ── Main component ─────────────────────────────────────────────────────────────
-export function AccommodationPanel({ accommodation }: Props) {
+export function AccommodationPanel({ accommodation, headingLabel, introLabel }: Props) {
   const { theme } = useTheme();
   const { options, intro } = accommodation;
 
@@ -674,6 +680,7 @@ export function AccommodationPanel({ accommodation }: Props) {
           <div style={getFaceStyle(0)}>
             <IntroWall
               intro={intro}
+              introLabel={introLabel}
               totalHotels={options.length}
               gold={theme.gold}
               text={theme.text}

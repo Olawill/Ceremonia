@@ -9,6 +9,7 @@ interface Props {
   title?: string;
   note?: string;
   date: string;
+  sectionLabel?: string; // vocab.eventLabel
 }
 
 function MiniCountdown({ date, gold }: { date: string; gold: string }) {
@@ -61,7 +62,7 @@ function MiniCountdown({ date, gold }: { date: string; gold: string }) {
   );
 }
 
-export function LivestreamPanel({ url, title, note, date }: Props) {
+export function LivestreamPanel({ url, title, note, date, sectionLabel }: Props) {
   const { theme } = useTheme();
   const [visible, setVisible] = useState(false);
   const [pulse, setPulse] = useState(false);
@@ -153,7 +154,7 @@ export function LivestreamPanel({ url, title, note, date }: Props) {
             textShadow: "0 2px 12px rgba(0,0,0,0.9)",
           }}
         >
-          {title ?? "Watch Live"}
+          {title ?? (sectionLabel ?? "Watch Live")}
         </h2>
         <MiniCountdown date={date} gold={theme.gold} />
       </div>

@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 
 interface Props {
   details: VenueEvent[];
+  sectionLabel?: string; // vocab.venueLabel
 }
 
 // ── Blueprint floor-plan SVG ──────────────────────────────────────────────────
@@ -232,7 +233,7 @@ function VenueCard({
   );
 }
 
-export function VenueDetailsPanel({ details }: Props) {
+export function VenueDetailsPanel({ details, sectionLabel }: Props) {
   const { theme } = useTheme();
   const [visible, setVisible] = useState(false);
   const [activeCard, setActiveCard] = useState(0);
@@ -297,7 +298,7 @@ export function VenueDetailsPanel({ details }: Props) {
             textShadow: "0 2px 12px rgba(0,0,0,0.9)",
           }}
         >
-          Venue Details
+          {sectionLabel ?? "Venue Details"}
         </h2>
       </div>
 

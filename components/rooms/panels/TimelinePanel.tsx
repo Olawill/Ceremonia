@@ -12,6 +12,7 @@ interface TimelineEvent {
 
 interface Props {
   events?: TimelineEvent[];
+  sectionLabel?: string; // vocab.timelineLabel
 }
 
 const DEMO: TimelineEvent[] = [
@@ -209,7 +210,7 @@ function PortraitFrame({
   );
 }
 
-export function TimelinePanel({ events }: Props) {
+export function TimelinePanel({ events, sectionLabel }: Props) {
   const { theme } = useTheme();
   const [visible, setVisible] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -251,7 +252,7 @@ export function TimelinePanel({ events }: Props) {
             textShadow: "0 1px 6px rgba(0,0,0,0.9)",
           }}
         >
-          Gallery
+          Timeline
         </p>
         <h2
           className="font-display font-light"
@@ -262,7 +263,7 @@ export function TimelinePanel({ events }: Props) {
             textShadow: "0 2px 16px rgba(0,0,0,0.9)",
           }}
         >
-          Our Story
+          {sectionLabel ?? "Our Story"}
         </h2>
         <div
           className="h-px w-16"

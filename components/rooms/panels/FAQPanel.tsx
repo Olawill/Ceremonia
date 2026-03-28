@@ -4,7 +4,7 @@ import { useTheme } from "@/lib/ThemeContext";
 import type { FaqItem } from "@/types/event";
 import { useEffect, useState } from "react";
 
-export function FAQPanel({ items }: { items: FaqItem[] }) {
+export function FAQPanel({ items, sectionLabel }: { items: FaqItem[]; sectionLabel?: string }) {
   const { theme } = useTheme();
   const [visible, setVisible] = useState(false);
   const [openIndex, setOpenIndex] = useState<number | null>(null);
@@ -65,7 +65,7 @@ export function FAQPanel({ items }: { items: FaqItem[] }) {
             textShadow: "0 2px 12px rgba(0,0,0,0.9)",
           }}
         >
-          FAQs
+          {sectionLabel ?? "FAQ"}
         </h2>
       </div>
 

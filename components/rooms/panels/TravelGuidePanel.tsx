@@ -33,9 +33,11 @@ function MapPinSVG({ gold, curtain }: { gold: string; curtain: string }) {
 export function TravelGuidePanel({
   items,
   city,
+  sectionLabel,
 }: {
   items: TravelItem[];
   city: string;
+  sectionLabel?: string; // vocab.travelLabel
 }) {
   const { theme } = useTheme();
   const [visible, setVisible] = useState(false);
@@ -87,7 +89,7 @@ export function TravelGuidePanel({
             textShadow: "0 2px 12px rgba(0,0,0,0.9)",
           }}
         >
-          Travel & Stay
+          {sectionLabel ?? "Travel & Stay"}
         </h2>
         <div
           className="h-px w-16"

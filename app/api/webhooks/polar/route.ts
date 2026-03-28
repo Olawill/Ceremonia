@@ -42,6 +42,8 @@ async function syncUserFromState(
     const mapped = PRODUCT_TO_PLAN[sub.productId];
     if (mapped && mapped !== "free") {
       plan = mapped;
+      // Any active subscription means the user is NOT a one-time purchaser
+      starterIsOnce = false;
       break;
     }
   }
@@ -95,6 +97,18 @@ export const POST = Webhooks({
       data.activeSubscriptions ?? [],
       [], // orders not in customer.state_changed — handled via starterIsOnce on order webhooks
     );
+
+    // If the user activated/renewed a paid subscription, reset their monthly event quota
+    // so they get a fresh allocation for the new billing period
+    if (plan === "starter" || plan === "pro" || plan === "agency") {
+      await db
+        .update(users)
+        .set({
+          monthlyEventsCreated: 0,
+          eventPeriodStart: new Date(),
+        })
+        .where(eq(users.id, externalId));
+    }
 
     // If the user just upgraded to agency, ensure their credits row exists
     // with the free monthly allowance. getCreditsRow handles the upsert logic.
@@ -159,6 +173,9 @@ export const POST = Webhooks({
         plan,
         polarCustomerId: data.customer.id,
         starterIsOnce: isStillValid,
+        // Reset monthly quota counters for one-time purchase
+        monthlyEventsCreated: 0,
+        eventPeriodStart: new Date(),
       })
       .where(eq(users.id, externalId));
 
