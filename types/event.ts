@@ -52,6 +52,15 @@ export type EntryStyle = (typeof ENTRY_STYLES)[number];
 export const NAV_MODES = ["scroll", "rooms"] as const;
 export type NavMode = (typeof NAV_MODES)[number];
 
+export const FEATURE_MODES = [
+  "castle",
+  "farm",
+  "arcade",
+  "garden",
+  "beach",
+] as const;
+export type FeatureMode = (typeof FEATURE_MODES)[number];
+
 export interface TravelItem {
   type: "hotel" | "airport" | "tip";
   name: string;
@@ -79,6 +88,7 @@ export interface EventConfig {
   curtainStyle: CurtainStyle;
   entryStyle?: EntryStyle;
   navMode?: NavMode;
+  featureMode?: FeatureMode;
   audioUrl?: string;
   heroPhotoUrl?: string;
   timeline: TimelineEvent[];

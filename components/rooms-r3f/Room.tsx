@@ -15,8 +15,7 @@ import { FarmShell } from "@/components/rooms-r3f/rooms/FarmShell";
 import { GardenShell } from "@/components/rooms-r3f/rooms/GardenShell";
 import { TorchSconce } from "@/components/rooms-r3f/rooms/TorchSconce";
 import { hexCol } from "@/lib/roomTextures";
-
-export type FeatureMode = "castle" | "farm" | "arcade" | "garden" | "beach";
+import { FeatureMode } from "@/types/event";
 
 export interface RoomTheme {
   floor: string;
@@ -28,6 +27,8 @@ export interface RoomTheme {
   curtain: string;
   curtainDark: string;
 }
+
+export type { FeatureMode } from "@/types/event";
 
 export const FEATURE_THEMES: Record<FeatureMode, RoomTheme> = {
   castle: {
