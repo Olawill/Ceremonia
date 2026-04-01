@@ -175,6 +175,13 @@ export function VelvetCurtain({ onOpen }: Props) {
       {/* ── Centre CTA ─────────────────────────────────────────────────── */}
       {!clicked && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 z-10">
+          {/* Dark backdrop behind text for contrast */}
+          <div
+            className="absolute inset-0 pointer-events-none z-[-1]"
+            style={{
+              background: "radial-gradient(ellipse 60% 50% at 50% 50%, rgba(0,0,0,0.55) 0%, transparent 70%)",
+            }}
+          />
           <p className="font-display animate-pulse-soft text-center text-[clamp(28px,5vw,56px)] text-(--theme-gold) [text-shadow:0_0_40px_var(--theme-gold-80),0_2px_4px_rgba(0,0,0,0.9)] tracking-[0.15em]">
             You Are Invited
           </p>

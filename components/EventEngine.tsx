@@ -15,7 +15,7 @@ import { EnvelopeCurtain } from "@/components/entry/EnvelopeCurtain";
 
 import { DrapeFrame } from "@/components/effects/DrapeFrame";
 import { DustParticles } from "@/components/effects/DustParticles";
-import { RoomsEngine } from "@/components/rooms/RoomsEngine";
+import { RoomsEngineR3F } from "@/components/rooms-r3f/R3FAdapter";
 import { AudioPlayer } from "@/components/ui/AudioPlayer";
 
 import { useTheme } from "@/lib/ThemeContext";
@@ -318,7 +318,7 @@ export function EventEngine({
       )}
 
       {navMode === "rooms" && curtainOpen && (
-        <RoomsEngine
+        <RoomsEngineR3F
           config={config}
           sections={sections}
           dateRevealed={dateRevealed}

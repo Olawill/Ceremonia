@@ -510,6 +510,15 @@ export function DrapedCurtain({ onOpen }: Props) {
           className="absolute inset-0 flex flex-col items-center justify-center gap-4 z-30"
           style={{ paddingTop: "clamp(200px, 33vh, 380px)" }}
         >
+          {/* Dark radial backdrop behind text for guaranteed contrast */}
+          <div
+            className="absolute pointer-events-none"
+            style={{
+              inset: 0,
+              zIndex: -1,
+              background: "radial-gradient(ellipse 80% 70% at 50% 45%, rgba(0,0,0,0.6) 0%, transparent 70%)",
+            }}
+          />
           <p
             className="font-display animate-pulse-soft text-center"
             style={{

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { EventEngine } from "@/components/EventEngine";
 import { buildSections } from "@/lib/eventSections";
-import { ThemeProvider } from "@/lib/ThemeContext";
+import { ThemeProvider, useTheme } from "@/lib/ThemeContext";
 import type { EventConfig } from "@/types/event";
 import { RefreshCwIcon } from "lucide-react";
 
@@ -12,6 +12,20 @@ interface Props {
   config: EventConfig;
   iframeRef: React.RefObject<HTMLIFrameElement | null>;
   previewLocked?: boolean;
+}
+
+// Propagates custom theme changes into the ThemeProvider context without remounting
+function ThemeUpdater({ config }: { config: EventConfig }) {
+  const { setCustomTheme, setThemeKey } = useTheme();
+  useEffect(() => {
+    if (config.customTheme) {
+      setCustomTheme(config.customTheme);
+    } else {
+      // Built-in theme selected — reset the theme key so context picks it up
+      setThemeKey(config.themeKey ?? "royal");
+    }
+  }, [config.customTheme, config.themeKey, setCustomTheme, setThemeKey]);
+  return null;
 }
 
 function buildUrl(config: EventConfig): string {
@@ -252,6 +266,7 @@ export function PreviewFrame({
               isolation: "isolate",
               containerType: "inline-size",
               containerName: "rooms-preview",
+              zIndex: 10,
             }}
           >
             {previewLocked ? (
@@ -289,9 +304,10 @@ export function PreviewFrame({
               </div>
             ) : (
               <ThemeProvider
-                key={roomsResetKey}
+                key={`rooms-base-${roomsResetKey}`}
                 initialThemeKey={config.themeKey ?? "royal"}
               >
+                <ThemeUpdater config={config} />
                 <EventEngine
                   config={config}
                   previewLocked={false}

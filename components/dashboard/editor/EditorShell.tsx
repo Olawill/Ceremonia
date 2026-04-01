@@ -4,10 +4,12 @@ import clsx from "clsx";
 import {
   AlertCircleIcon,
   CheckIcon,
+  DockIcon,
   EyeIcon,
   Loader2Icon,
   RefreshCwIcon,
   SaveIcon,
+  Undo2Icon,
   XIcon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -64,6 +66,10 @@ export function EditorShell({ initialConfig, isNew }: Props) {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [roomsCredits, setRoomsCredits] = useState<RoomsCredits | null>(null);
 
+  // Undock/dock state — preview can be popped into its own window on desktop
+  const [isUndocked, setIsUndocked] = useState(false);
+  const undockedWindowRef = useRef<Window | null>(null);
+
   const hasOpenedPreviewRef = useRef(false);
   const hasEverSavedRef = useRef(!isNew); // true for existing events, false for brand new ones
 
@@ -100,6 +106,66 @@ export function EditorShell({ initialConfig, isNew }: Props) {
     setConfig((prev) => ({ ...prev, ...patch }));
     setIsDirty(true);
   }, []);
+
+  // Undock the preview into a popup window
+  const handleUndock = useCallback(() => {
+    const encoded = btoa(
+      Array.from(new TextEncoder().encode(JSON.stringify(config)))
+        .map((b) => String.fromCharCode(b))
+        .join(""),
+    );
+    const w = window.open(
+      `/event/preview?initial=${encodeURIComponent(encoded)}`,
+      "_blank",
+      "width=1200,height=800,menubar=no,toolbar=no",
+    );
+    if (w) {
+      undockedWindowRef.current = w;
+      setIsUndocked(true);
+    }
+  }, [config]);
+
+  // Dock the preview back — close the undocked window and restore inline preview
+  const handleDock = useCallback(() => {
+    undockedWindowRef.current?.close();
+    undockedWindowRef.current = null;
+    setIsUndocked(false);
+    setPreviewOpen(true);
+  }, []);
+
+  // When navigating away (route change), auto-dock — close the undocked window and restore inline preview
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      undockedWindowRef.current?.close();
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
+
+  // When the undocked window is closed by the user (e.g. clicking X), dock back automatically
+  useEffect(() => {
+    if (!isUndocked || !undockedWindowRef.current) return;
+
+    const pollClosed = setInterval(() => {
+      if (undockedWindowRef.current?.closed) {
+        clearInterval(pollClosed);
+        undockedWindowRef.current = null;
+        setIsUndocked(false);
+        setPreviewOpen(true);
+      }
+    }, 300);
+
+    return () => clearInterval(pollClosed);
+  }, [isUndocked]);
+
+  // Sync config to undocked window whenever it changes
+  useEffect(() => {
+    if (!isUndocked || !undockedWindowRef.current) return;
+    undockedWindowRef.current.postMessage(
+      { type: "PREVIEW_CONFIG", config, previewLocked: false },
+      "*",
+    );
+  }, [config, isUndocked]);
 
   const handleNewEventConfirm = useCallback((values: NewEventValues) => {
     setConfig((prev) => ({
@@ -376,6 +442,27 @@ export function EditorShell({ initialConfig, isNew }: Props) {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Undock / Dock button — desktop only */}
+            {!isUndocked ? (
+              <button
+                onClick={handleUndock}
+                className="hidden lg:flex items-center gap-1.5 font-label font-semibold text-[9px] tracking-[0.3em] uppercase px-2.5! py-1.5! rounded-lg border border-[#D4AF3780] text-[#D4AF3780] hover:text-[#D4AF37] transition-all hover:border-[#D4AF37] cursor-pointer bg-transparent"
+                title="Pop the preview into a separate window"
+              >
+                <Undo2Icon className="size-3" />
+                Undock
+              </button>
+            ) : (
+              <button
+                onClick={handleDock}
+                className="hidden lg:flex items-center gap-1.5 font-label font-semibold text-[9px] tracking-[0.3em] uppercase px-2.5! py-1.5! rounded-lg border border-[#D4AF3780] text-[#D4AF3780] hover:text-[#D4AF37] transition-all hover:border-[#D4AF37] cursor-pointer bg-transparent"
+                title="Dock the preview back into this window"
+              >
+                <DockIcon className="size-3" />
+                Dock
+              </button>
+            )}
+
             {/* Reset preview — reopens curtain from scratch with current config */}
             <button
               onClick={handleHardReset}
@@ -396,11 +483,29 @@ export function EditorShell({ initialConfig, isNew }: Props) {
           </div>
         </div>
         <div className="flex-1 overflow-hidden">
-          <PreviewFrame
-            config={config}
-            iframeRef={previewIframeRef}
-            previewLocked={!hasEverSavedRef.current}
-          />
+          {isUndocked ? (
+            <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-[#050505]">
+              <p
+                className="font-label text-[11px] tracking-[0.3em] uppercase"
+                style={{ color: "#D4AF3780" }}
+              >
+                Preview is in a separate window
+              </p>
+              <button
+                onClick={handleDock}
+                className="flex items-center gap-2 font-label text-[11px] tracking-[0.3em] uppercase px-4! py-2! rounded-xl border border-[#D4AF3760] text-[#D4AF37] hover:bg-[#D4AF3710] transition-all cursor-pointer"
+              >
+                <DockIcon className="size-4" />
+                Dock Back
+              </button>
+            </div>
+          ) : (
+            <PreviewFrame
+              config={config}
+              iframeRef={previewIframeRef}
+              previewLocked={!hasEverSavedRef.current}
+            />
+          )}
         </div>
       </div>
     </div>

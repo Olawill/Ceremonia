@@ -1,0 +1,15 @@
+[gd_resource type="StandardMaterial3D" load_steps=5 format=3 uid="acg_16whqufd"]
+
+[ext_resource type="Texture2D" uid="uid://acg_o2xw8zey" id="Color" path="./Marble010_1K-JPG_Color.jpg"]
+[ext_resource type="Texture2D" uid="uid://acg_of8jurv5" id="Displacement" path="./Marble010_1K-JPG_Displacement.jpg"]
+[ext_resource type="Texture2D" uid="uid://acg_ahsw5dz8" id="Roughness" path="./Marble010_1K-JPG_Roughness.jpg"]
+[ext_resource type="Texture2D" uid="uid://acg_08vp21y6" id="NormalGL" path="./Marble010_1K-JPG_NormalGL.jpg"]
+[resource]
+albedo_texture = ExtResource("Color")
+roughness_texture = ExtResource("Roughness")
+roughness_texture_channel = 4
+normal_texture = ExtResource("NormalGL")
+normal_enabled = true
+heightmap_texture = ExtResource("Displacement")
+heightmap_scale = 1.0
+heightmap_enabled = true

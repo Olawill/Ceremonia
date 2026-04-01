@@ -2,6 +2,7 @@
 
 import {
   BedDoubleIcon,
+  type LucideIcon,
   MapPinIcon,
   PlaneIcon,
   PlusIcon,
@@ -10,6 +11,7 @@ import {
 
 import { SectionToggle } from "@/components/dashboard/editor/SectionToggle";
 import { Field, Input, Textarea } from "@/components/ui/FormPrimitives";
+
 import type { EventConfig, TravelItem } from "@/types/event";
 import { getVocabulary } from "@/types/event";
 
@@ -21,7 +23,7 @@ interface Props {
 const TYPE_OPTIONS: {
   value: TravelItem["type"];
   label: string;
-  icon: React.ElementType;
+  icon: LucideIcon;
 }[] = [
   { value: "hotel", label: "Hotel", icon: BedDoubleIcon },
   { value: "airport", label: "Airport", icon: PlaneIcon },
@@ -74,23 +76,27 @@ export function TravelGuideEditor({ config, onChange }: Props) {
                 {/* Type selector */}
                 <div className="flex items-center justify-between">
                   <div className="flex gap-2">
-                    {TYPE_OPTIONS.map(({ value, label, icon: Icon }) => (
-                      <button
-                        key={value}
-                        onClick={() => update(i, { type: value })}
-                        className="flex items-center gap-1.5 px-2.5! py-1.5! rounded-lg border font-label text-[10px] tracking-widest uppercase transition-all cursor-pointer"
-                        style={{
-                          borderColor:
-                            item.type === value ? "#D4AF3790" : "#D4AF3730",
-                          background:
-                            item.type === value ? "#D4AF3715" : "transparent",
-                          color: item.type === value ? "#D4AF37" : "#F5F0E870",
-                        }}
-                      >
-                        <Icon className="size-3" />
-                        {label}
-                      </button>
-                    ))}
+                    {TYPE_OPTIONS.map(({ value, label, icon }) => {
+                      const Icon = icon;
+                      return (
+                        <button
+                          key={value}
+                          onClick={() => update(i, { type: value })}
+                          className="flex items-center gap-1.5 px-2.5! py-1.5! rounded-lg border font-label text-[10px] tracking-widest uppercase transition-all cursor-pointer"
+                          style={{
+                            borderColor:
+                              item.type === value ? "#D4AF3790" : "#D4AF3730",
+                            background:
+                              item.type === value ? "#D4AF3715" : "transparent",
+                            color:
+                              item.type === value ? "#D4AF37" : "#F5F0E870",
+                          }}
+                        >
+                          <Icon className="size-3" />
+                          {label}
+                        </button>
+                      );
+                    })}
                   </div>
                   <button
                     onClick={() => remove(i)}
