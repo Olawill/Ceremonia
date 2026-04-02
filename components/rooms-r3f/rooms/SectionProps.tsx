@@ -160,41 +160,181 @@ function Bookshelf({
   rotation?: [number, number, number];
 }) {
   const shelfCol = deskColor(featureMode);
-  const bookColors =
+  const acc = accentMetal(featureMode);
+
+  const bookCols =
     featureMode === "arcade"
-      ? ["#00ffff", "#ff00ff", "#ffff00", "#00ff00", "#ff4444"]
+      ? [
+          "#00cccc",
+          "#cc00cc",
+          "#cccc00",
+          "#cc2222",
+          "#22cc22",
+          "#2222cc",
+          "#cc6600",
+        ]
       : featureMode === "garden"
-        ? ["#4a6741", "#8b6340", "#6b8b5a", "#c4a35a", "#3d5636"]
+        ? [
+            "#4a6741",
+            "#8b6340",
+            "#c4a35a",
+            "#6b8b5a",
+            "#3d5636",
+            "#7a8b40",
+            "#5a3d28",
+          ]
         : featureMode === "beach"
-          ? ["#87ceeb", "#ff6b6b", "#c4a35a", "#6bb8d9", "#ff8844"]
-          : ["#8b3a3a", "#3a5a8b", "#3a8b3a", "#8b6b3a", "#5a3a8b"];
+          ? [
+              "#5a9ab5",
+              "#cc5555",
+              "#b89040",
+              "#4a8aaa",
+              "#cc7733",
+              "#6688aa",
+              "#aa6644",
+            ]
+          : [
+              "#8b1a1a",
+              "#1a3a6b",
+              "#1a5a1a",
+              "#7a5a1a",
+              "#4a1a6b",
+              "#8b4a1a",
+              "#1a4a4a",
+            ];
+
+  const SHELF_W = 2.4;
+  const SHELF_H = ROOM_HEIGHT * 0.7;
+  const SHELF_D = 0.3;
+  const NUM_ROWS = 3;
+  const rowBottomY = [-SHELF_H * 0.38, -SHELF_H * 0.04, SHELF_H * 0.3];
+  const rowTopY = [-SHELF_H * 0.04, SHELF_H * 0.3, SHELF_H * 0.62];
+
+  const bookData = useRef(
+    Array.from({ length: NUM_ROWS }, (_, row) => {
+      const rowH = rowTopY[row] - rowBottomY[row] - 0.04;
+      const books: {
+        w: number;
+        h: number;
+        lean: number;
+        colorIdx: number;
+        gap: boolean;
+      }[] = [];
+      let usedW = 0;
+      const maxW = SHELF_W - 0.18;
+      let i = 0;
+      while (usedW < maxW - 0.1 && i < 20) {
+        const w = 0.13 + ((i * 7 + row * 3) % 7) * 0.018;
+        const h = rowH * (0.65 + ((i * 5 + row * 11) % 10) * 0.035);
+        const lean =
+          (i * 3 + row * 7) % 5 === 0 ? (i % 2 === 0 ? 1 : -1) * 0.08 : 0;
+        const gap = (i * row + i) % 11 === 0 && i > 0;
+        books.push({
+          w,
+          h,
+          lean,
+          colorIdx: (i + row * 3) % bookCols.length,
+          gap,
+        });
+        usedW += w + (gap ? 0.08 : 0.005);
+        i++;
+      }
+      return books;
+    }),
+  );
 
   return (
     <group position={position} rotation={rotation as unknown as THREE.Euler}>
-      {/* Frame */}
-      <mesh>
-        <boxGeometry args={[2.4, ROOM_HEIGHT * 0.7, 0.3]} />
+      {/* Back panel */}
+      <mesh position={[0, 0, -SHELF_D / 2 + 0.02]}>
+        <boxGeometry args={[SHELF_W, SHELF_H, 0.04]} />
+        <meshStandardMaterial color={shelfCol} roughness={0.75} />
+      </mesh>
+      {/* Side panels */}
+      <mesh position={[-SHELF_W / 2 + 0.04, 0, 0]}>
+        <boxGeometry args={[0.06, SHELF_H, SHELF_D]} />
         <meshStandardMaterial color={shelfCol} roughness={0.7} />
       </mesh>
-      {/* Book spines — 3 shelves × 8 books */}
-      {[0, 1, 2].map((shelf) =>
-        Array.from({ length: 8 }).map((_, b) => (
-          <mesh
-            key={`${shelf}-${b}`}
-            position={[
-              -1.0 + b * 0.28,
-              -ROOM_HEIGHT * 0.25 + shelf * 0.38,
-              0.1,
-            ]}
-          >
-            <boxGeometry args={[0.22, 0.34, 0.16]} />
-            <meshStandardMaterial
-              color={bookColors[b % bookColors.length]}
-              roughness={0.8}
-            />
-          </mesh>
-        )),
-      )}
+      <mesh position={[SHELF_W / 2 - 0.04, 0, 0]}>
+        <boxGeometry args={[0.06, SHELF_H, SHELF_D]} />
+        <meshStandardMaterial color={shelfCol} roughness={0.7} />
+      </mesh>
+      {/* Top and bottom */}
+      <mesh position={[0, SHELF_H / 2 - 0.03, 0]}>
+        <boxGeometry args={[SHELF_W, 0.06, SHELF_D]} />
+        <meshStandardMaterial color={shelfCol} roughness={0.7} />
+      </mesh>
+      <mesh position={[0, -SHELF_H / 2 + 0.03, 0]}>
+        <boxGeometry args={[SHELF_W, 0.06, SHELF_D]} />
+        <meshStandardMaterial color={shelfCol} roughness={0.7} />
+      </mesh>
+
+      {/* Shelf planks */}
+      {rowBottomY.map((y, i) => (
+        <mesh key={`plank-${i}`} position={[0, y, 0]}>
+          <boxGeometry args={[SHELF_W - 0.08, 0.04, SHELF_D - 0.04]} />
+          <meshStandardMaterial color={shelfCol} roughness={0.65} />
+        </mesh>
+      ))}
+
+      {/* Books */}
+      {bookData.current.map((shelfBooks, row) => {
+        const plankY = rowBottomY[row] + 0.02;
+        const rowH = rowTopY[row] - rowBottomY[row] - 0.04;
+        let xCursor = -SHELF_W / 2 + 0.1;
+
+        return shelfBooks.map((book, b) => {
+          const bookX = xCursor + book.w / 2 + (book.gap ? 0.06 : 0);
+          xCursor += book.w + (book.gap ? 0.08 : 0.005);
+          const bookY = plankY + book.h / 2;
+
+          return (
+            <group
+              key={`${row}-${b}`}
+              position={[bookX, bookY, 0.02]}
+              rotation={[0, 0, book.lean]}
+            >
+              <mesh>
+                <boxGeometry args={[book.w, book.h, SHELF_D * 0.7]} />
+                <meshStandardMaterial
+                  color={bookCols[book.colorIdx]}
+                  roughness={0.85}
+                />
+              </mesh>
+              <mesh position={[0, 0, SHELF_D * 0.36]}>
+                <boxGeometry args={[book.w - 0.01, book.h - 0.02, 0.008]} />
+                <meshStandardMaterial
+                  color={bookCols[book.colorIdx]}
+                  roughness={0.5}
+                  emissive={bookCols[book.colorIdx]}
+                  emissiveIntensity={0.08}
+                />
+              </mesh>
+              <mesh position={[0, book.h / 2 - 0.006, 0]}>
+                <boxGeometry args={[book.w - 0.01, 0.01, SHELF_D * 0.65]} />
+                <meshStandardMaterial color="#f0ead8" roughness={0.9} />
+              </mesh>
+            </group>
+          );
+        });
+      })}
+
+      {/* Bookends */}
+      {([-1, 1] as const).map((side, i) => (
+        <mesh
+          key={`bookend-${i}`}
+          position={[side * (SHELF_W / 2 - 0.16), rowBottomY[0] + 0.09, 0.02]}
+        >
+          <boxGeometry args={[0.04, 0.18, SHELF_D * 0.6]} />
+          <meshStandardMaterial color={acc} roughness={0.25} metalness={0.8} />
+        </mesh>
+      ))}
+
+      {/* Crown rail */}
+      <mesh position={[0, SHELF_H / 2 + 0.04, 0.02]}>
+        <boxGeometry args={[SHELF_W + 0.04, 0.06, 0.06]} />
+        <meshStandardMaterial color={acc} roughness={0.2} metalness={0.85} />
+      </mesh>
     </group>
   );
 }
@@ -323,22 +463,30 @@ function VaultProps({
       {/* Central writing desk */}
       <Desk
         featureMode={featureMode}
-        position={[0, -ROOM_HEIGHT / 2 + 0.0, -ROOM_LENGTH / 2]}
+        position={[0, -ROOM_HEIGHT / 2 + 0.0, -ROOM_LENGTH * 0.65]}
       />
       {/* Banker's lamp */}
       <Lamp
         featureMode={featureMode}
-        position={[-0.6, -ROOM_HEIGHT / 2 + 1.1, -ROOM_LENGTH / 2 - 0.1]}
+        position={[-0.6, -ROOM_HEIGHT / 2 + 1.1, -ROOM_LENGTH * 0.65 - 0.1]}
       />
       {/* Bookshelves on side walls */}
       <Bookshelf
         featureMode={featureMode}
-        position={[-ROOM_WIDTH / 2 + 0.2, 0, -ROOM_LENGTH / 2]}
+        position={[
+          -ROOM_WIDTH / 2 + 0.2,
+          -ROOM_HEIGHT / 2 + (ROOM_HEIGHT * 0.7) / 2,
+          -ROOM_LENGTH * 0.65,
+        ]}
         rotation={[0, Math.PI / 2, 0]}
       />
       <Bookshelf
         featureMode={featureMode}
-        position={[ROOM_WIDTH / 2 - 0.2, 0, -ROOM_LENGTH / 2]}
+        position={[
+          ROOM_WIDTH / 2 - 0.2,
+          -ROOM_HEIGHT / 2 + (ROOM_HEIGHT * 0.7) / 2,
+          -ROOM_LENGTH * 0.65,
+        ]}
         rotation={[0, -Math.PI / 2, 0]}
       />
       {/* Scratch card surface — gold frame on desk */}
@@ -374,14 +522,14 @@ function CountdownProps({
       <ClockFace
         featureMode={featureMode}
         label="MINUTES"
-        position={[-ROOM_WIDTH / 2 + 0.15, 0, -ROOM_LENGTH / 2]}
+        position={[-ROOM_WIDTH / 2 + 0.15, 0, -ROOM_LENGTH * 0.65]}
         rotation={[0, Math.PI / 2, 0]}
       />
       {/* Right wall — HOURS */}
       <ClockFace
         featureMode={featureMode}
         label="HOURS"
-        position={[ROOM_WIDTH / 2 - 0.15, 0, -ROOM_LENGTH / 2]}
+        position={[ROOM_WIDTH / 2 - 0.15, 0, -ROOM_LENGTH * 0.65]}
         rotation={[0, -Math.PI / 2, 0]}
       />
       {/* Floor compass rose */}
@@ -412,7 +560,7 @@ function LibraryProps({
       {/* Central reading table */}
       <Desk
         featureMode={featureMode}
-        position={[0, -ROOM_HEIGHT / 2 + 0.0, -ROOM_LENGTH / 2]}
+        position={[0, -ROOM_HEIGHT / 2 + 0.0, -ROOM_LENGTH * 0.65]}
       />
       {/* Large binder on table */}
       <mesh position={[0, -ROOM_HEIGHT / 2 + 0.9, -ROOM_LENGTH / 2 - 0.1]}>
@@ -421,28 +569,41 @@ function LibraryProps({
       </mesh>
       <Lamp
         featureMode={featureMode}
-        position={[0.7, -ROOM_HEIGHT / 2 + 1.1, -ROOM_LENGTH / 2 + 0.3]}
+        position={[0.7, -ROOM_HEIGHT / 2 + 1.1, -ROOM_LENGTH * 0.6]}
       />
       {/* Wall shelves — both sides */}
+      {/* Side wall shelves — bottom sits on floor */}
       <Bookshelf
         featureMode={featureMode}
-        position={[-ROOM_WIDTH / 2 + 0.2, 0, -ROOM_LENGTH / 2]}
+        position={[
+          -ROOM_WIDTH / 2 + 0.2,
+          -ROOM_HEIGHT / 2 + (ROOM_HEIGHT * 0.7) / 2,
+          -ROOM_LENGTH * 0.65,
+        ]}
         rotation={[0, Math.PI / 2, 0]}
       />
       <Bookshelf
         featureMode={featureMode}
-        position={[ROOM_WIDTH / 2 - 0.2, 0, -ROOM_LENGTH / 2]}
+        position={[
+          ROOM_WIDTH / 2 - 0.2,
+          -ROOM_HEIGHT / 2 + (ROOM_HEIGHT * 0.7) / 2,
+          -ROOM_LENGTH * 0.65,
+        ]}
         rotation={[0, -Math.PI / 2, 0]}
       />
-      {/* Back wall shelves */}
+      {/* Back wall shelf — slightly offset so it clears the wall face */}
       <Bookshelf
         featureMode={featureMode}
-        position={[0, 0, -ROOM_LENGTH + 0.2]}
+        position={[
+          0,
+          -ROOM_HEIGHT / 2 + (ROOM_HEIGHT * 0.7) / 2,
+          -ROOM_LENGTH + 0.18,
+        ]}
         rotation={[0, 0, 0]}
       />
       {/* Armchairs */}
       {([-1.8, 1.8] as number[]).map((x, i) => (
-        <group key={i} position={[x, -ROOM_HEIGHT / 2, -ROOM_LENGTH / 2 + 1.5]}>
+        <group key={i} position={[x, -ROOM_HEIGHT / 2, -ROOM_LENGTH * 0.5]}>
           <mesh position={[0, 0.3, 0]}>
             <boxGeometry args={[0.8, 0.1, 0.8]} />
             <meshStandardMaterial
@@ -479,10 +640,10 @@ function MapRoomProps({
       {/* Central table */}
       <Desk
         featureMode={featureMode}
-        position={[0, -ROOM_HEIGHT / 2, -ROOM_LENGTH / 2]}
+        position={[0, -ROOM_HEIGHT / 2, -ROOM_LENGTH * 0.65]}
       />
       {/* Spinning globe */}
-      <group position={[2.5, -ROOM_HEIGHT / 2 + 1.2, -ROOM_LENGTH / 2]}>
+      <group position={[2.5, -ROOM_HEIGHT / 2 + 1.2, -ROOM_LENGTH * 0.65]}>
         <mesh ref={globeRef}>
           <sphereGeometry args={[0.45, 16, 16]} />
           <meshStandardMaterial
@@ -530,7 +691,7 @@ function BanquetProps({
   return (
     <group>
       {/* Long dining table */}
-      <mesh position={[0, -ROOM_HEIGHT / 2 + 0.42, -ROOM_LENGTH / 2]}>
+      <mesh position={[0, -ROOM_HEIGHT / 2 + 0.42, -ROOM_LENGTH * 0.62]}>
         <boxGeometry args={[ROOM_WIDTH * 0.7, 0.08, 2.0]} />
         <meshStandardMaterial color={deskColor(featureMode)} roughness={0.3} />
       </mesh>
@@ -558,7 +719,7 @@ function BanquetProps({
       {([-1.5, 0, 1.5] as number[]).map((x, i) => (
         <group
           key={i}
-          position={[x, -ROOM_HEIGHT / 2 + 0.55, -ROOM_LENGTH / 2]}
+          position={[x, -ROOM_HEIGHT / 2 + 0.55, -ROOM_LENGTH * 0.62]}
         >
           <mesh>
             <cylinderGeometry args={[0.04, 0.06, 0.35, 8]} />
@@ -597,11 +758,11 @@ function DefaultProps({
     <group>
       <Desk
         featureMode={featureMode}
-        position={[0, -ROOM_HEIGHT / 2 + 0.0, -ROOM_LENGTH / 2]}
+        position={[0, -ROOM_HEIGHT / 2 + 0.0, -ROOM_LENGTH * 0.65]}
       />
       <Lamp
         featureMode={featureMode}
-        position={[-0.6, -ROOM_HEIGHT / 2 + 1.1, -ROOM_LENGTH / 2 - 0.1]}
+        position={[-0.6, -ROOM_HEIGHT / 2 + 1.1, -ROOM_LENGTH * 0.65 - 0.1]}
       />
     </group>
   );

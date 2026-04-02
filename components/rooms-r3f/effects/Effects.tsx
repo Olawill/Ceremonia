@@ -10,24 +10,31 @@ export function Effects() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    // Defer mounting EffectComposer until the WebGL context attributes are
-    // confirmed readable. In popup windows (undocked preview) the context
-    // initialises asynchronously and getContextAttributes() returns null on
-    // the first frame, causing postprocessing's addPass to crash.
-    const ctx = gl.getContext();
-    if (ctx && ctx.getContextAttributes() !== null) {
-      setReady(true);
-      return;
-    }
-    // Poll until the context is ready (resolves within 1-2 frames normally)
-    const id = setInterval(() => {
-      const c = gl.getContext();
-      if (c && c.getContextAttributes() !== null) {
-        setReady(true);
-        clearInterval(id);
+    let cancelled = false;
+    let attempts = 0;
+    const MAX = 60; // max ~1 second of polling
+
+    const check = () => {
+      if (cancelled) return;
+      attempts++;
+      try {
+        const ctx = gl.getContext();
+        if (ctx?.getContextAttributes() !== null) {
+          setReady(true);
+          return;
+        }
+      } catch {
+        // context not yet ready
       }
-    }, 16);
-    return () => clearInterval(id);
+      if (attempts < MAX) {
+        setTimeout(check, 16);
+      }
+    };
+
+    check();
+    return () => {
+      cancelled = true;
+    };
   }, [gl]);
 
   if (!ready) return null;

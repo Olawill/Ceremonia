@@ -4,9 +4,9 @@ export const ROOM_WIDTH = 9;
 export const ROOM_HEIGHT = 4.5;
 
 // ── Camera constants ──────────────────────────────────────────────────────────
-export const CAM_Y = 0.0;
+export const CAM_Y = 0.4;
 // export const CAM_Z_OFFSET = 4.8;
-export const CAM_Z_OFFSET = -3.0;
+// export const CAM_Z_OFFSET = -3.0;
 export const CAM_SPRING_STIFFNESS = 180;
 export const CAM_SPRING_DAMPING = 22;
 
@@ -21,6 +21,12 @@ export const TOTAL_SEGMENT = ROOM_LENGTH + CORRIDOR_LENGTH;
 // ── Particle constants ────────────────────────────────────────────────────────
 export const DUST_COUNT_FULL = 320;
 export const DUST_COUNT_PREVIEW = 80;
+
+// Camera outside a room — standing in front of the door, facing it
+export const CAM_Z_OUTSIDE = 3.5; // positive = in front of room front face
+
+// Camera inside a room — standing inside, looking toward back wall
+export const CAM_Z_INSIDE = -3.0; // negative = past the front face, inside
 
 // ── Travel ease (for legacy imperative engine) ───────────────────────────────
 export const TRAVEL_EASE = 0.072;

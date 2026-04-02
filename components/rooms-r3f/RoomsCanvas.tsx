@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Component, type ReactNode } from "react";
+import { Component, useRef, type ReactNode } from "react";
 
 import { SpringCamera } from "@/components/rooms-r3f/camera/SpringCamera";
 import { CastleDoor } from "@/components/rooms-r3f/CastleDoor";
@@ -25,6 +25,7 @@ import { useRoomsStore } from "@/components/rooms-r3f/store";
 import { EventConfig } from "@/types/event";
 import { Environment, useCursor } from "@react-three/drei";
 import { useState } from "react";
+import { WorldEnvironment } from "./world/WorldEnvironment";
 
 // Dynamically import Canvas with SSR disabled to avoid WebGL context errors
 // during server-side rendering and in restricted preview environments.
@@ -116,33 +117,26 @@ function InteractiveRoom({
     : Math.min(1, sections.length - 1);
   const canNudge = isActive && !isMoving && index < hardMax;
 
+  const roomPhase = useRoomsStore((s) => s.roomPhase);
+  const enterRoom = useRoomsStore((s) => s.enterRoom);
+  const isOutside = roomPhase === "outside" && isActive;
+  const isInside = roomPhase === "inside" && isActive;
+
   return (
     <group>
-      {/* Hoverable floor plane for this room */}
-      <mesh
-        position={[0, -ROOM_HEIGHT / 2 + 0.01, roomZ]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        onPointerEnter={() => setHovered(true)}
-        onPointerLeave={() => setHovered(false)}
-        onClick={(e) => {
-          e.stopPropagation();
-          if (canNudge) onNudgeRight();
-        }}
-      >
-        <planeGeometry args={[ROOM_WIDTH, ROOM_LENGTH]} />
-        <meshBasicMaterial transparent opacity={0} depthWrite={false} />
-      </mesh>
-
-      {/* Invisible clickable zone at the far end of the room to nudge forward */}
-      {isActive && !isMoving && (
+      {/* Clickable floor — only active when inside the room */}
+      {isInside && !isMoving && (
         <mesh
-          position={[0, 0, roomZ - ROOM_LENGTH * 0.35]}
+          position={[0, -ROOM_HEIGHT / 2 + 0.01, roomZ - ROOM_LENGTH * 0.3]}
+          rotation={[-Math.PI / 2, 0, 0]}
+          onPointerEnter={() => setHovered(true)}
+          onPointerLeave={() => setHovered(false)}
           onClick={(e) => {
             e.stopPropagation();
             if (canNudge) onNudgeRight();
           }}
         >
-          <boxGeometry args={[ROOM_WIDTH * 0.6, ROOM_HEIGHT * 0.5, 0.5]} />
+          <planeGeometry args={[ROOM_WIDTH, ROOM_LENGTH * 0.6]} />
           <meshBasicMaterial transparent opacity={0} depthWrite={false} />
         </mesh>
       )}
@@ -157,22 +151,36 @@ function InteractiveRoom({
         onDateRevealed={onDateRevealed}
       />
 
-      {/* Entry door */}
-      <CastleDoor
-        position={[0, 0, roomZ + ROOM_LENGTH / 2]}
-        rotation={[0, Math.PI, 0]}
-        theme={theme}
-        isOpen={index === 0 ? dateRevealed : false}
-        isLocked={index === 0 ? !dateRevealed : false}
-        onEnter={index === 0 ? onDateRevealed : undefined}
-      />
+      {/* Exit door — at the BACK of the room, what the camera looks toward */}
+      {index < sections.length - 1 && (
+        <CastleDoor
+          position={[0, 0, roomZ - ROOM_LENGTH / 2]}
+          rotation={[0, 0, 0]}
+          theme={theme}
+          isOpen={activeRoomIndex > index}
+          isLocked={!dateRevealed && index >= 1}
+          onEnter={() => {
+            const { roomPhase, enterRoom } = useRoomsStore.getState();
+            if (roomPhase === "outside" && isActive) {
+              // Camera is outside — enter the room first, don't navigate yet
+              enterRoom();
+            } else if (canNudge) {
+              // Camera is inside — exit through back door to next room
+              onNudgeRight();
+            }
+          }}
+        />
+      )}
 
-      {/* Corridor to next room */}
-      <Corridor
-        position={[0, 0, roomZ + ROOM_LENGTH / 2 + CORRIDOR_LENGTH / 2]}
-        theme={corridorTheme}
-        featureMode={featureMode}
-      />
+      {/* Corridor AFTER the exit door — leads into the next room */}
+      {index < sections.length - 1 && (
+        <Corridor
+          position={[0, 0, roomZ - ROOM_LENGTH / 2 - CORRIDOR_LENGTH / 2]}
+          theme={corridorTheme}
+          featureMode={featureMode}
+          isLocked={!dateRevealed && index >= 1}
+        />
+      )}
     </group>
   );
 }
@@ -240,6 +248,62 @@ class WebGLErrorBoundary extends Component<
   }
 }
 
+// Add near the top of the file, after imports:
+function WebGLLoadingOverlay({
+  ready,
+  gold,
+}: {
+  ready: boolean;
+  gold: string;
+}) {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        zIndex: 50,
+        background: "#050505",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 16,
+        transition: "opacity 0.6s ease",
+        opacity: ready ? 0 : 1,
+        pointerEvents: ready ? "none" : "auto",
+      }}
+    >
+      {/* Spinning ring */}
+      <div
+        style={{
+          width: 48,
+          height: 48,
+          borderRadius: "50%",
+          border: `2px solid ${gold}20`,
+          borderTopColor: gold,
+          animation: "rooms-spin 1s linear infinite",
+        }}
+      />
+      <p
+        style={{
+          fontFamily: "var(--font-label, sans-serif)",
+          fontSize: 10,
+          letterSpacing: "0.4em",
+          textTransform: "uppercase",
+          color: `${gold}70`,
+        }}
+      >
+        Preparing rooms
+      </p>
+      <style>{`
+        @keyframes rooms-spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 function SceneContent({
   sections,
   theme,
@@ -272,6 +336,8 @@ function SceneContent({
     accent: theme.gold,
   };
 
+  const peekTarget = useRoomsStore((s) => s.peekTarget);
+
   return (
     <>
       {/* Spring camera */}
@@ -279,6 +345,7 @@ function SceneContent({
         activeRoomIndex={activeRoomIndex}
         targetRoom={targetRoom}
         isMoving={isMoving}
+        peekTarget={peekTarget}
       />
 
       {/* Lighting — color shifts per room to match section atmosphere */}
@@ -334,6 +401,13 @@ function SceneContent({
         blur={0.5}
       />
 
+      {/* World environment — fills the void with a themed world */}
+      <WorldEnvironment
+        featureMode={featureMode}
+        sectionCount={sections.length}
+        accentColor={theme.gold}
+      />
+
       {/* Rooms and corridors */}
       {sections.map((section, index) => {
         // Only render the active room and its immediate neighbours.
@@ -378,125 +452,182 @@ const SECTION_VIBE: Record<
   hero: {
     fogColor: "#0a0508",
     lightColor: "#ffe8b0",
-    fogNear: 10,
-    fogFar: 16,
+    fogNear: 12,
+    fogFar: 45,
     accentHex: "#d4af37",
   },
   scratch: {
     fogColor: "#0a0510",
     lightColor: "#e8d0ff",
-    fogNear: 10,
-    fogFar: 16,
+    fogNear: 12,
+    fogFar: 40,
     accentHex: "#b08aff",
   },
   countdown: {
     fogColor: "#080a10",
     lightColor: "#c0e8ff",
-    fogNear: 10,
-    fogFar: 16,
+    fogNear: 12,
+    fogFar: 46,
     accentHex: "#60c0ff",
   },
   timeline: {
     fogColor: "#0a0805",
     lightColor: "#e8f0c0",
-    fogNear: 10,
-    fogFar: 16,
+    fogNear: 12,
+    fogFar: 46,
     accentHex: "#c0e080",
   },
   gallery: {
     fogColor: "#0a0508",
     lightColor: "#ffd0e8",
-    fogNear: 10,
-    fogFar: 16,
+    fogNear: 12,
+    fogFar: 46,
     accentHex: "#ff80c0",
   },
   venue: {
     fogColor: "#050a08",
     lightColor: "#c0ffe8",
-    fogNear: 10,
-    fogFar: 16,
+    fogNear: 12,
+    fogFar: 46,
     accentHex: "#40e0a0",
   },
   dresscode: {
     fogColor: "#0a0508",
     lightColor: "#ffc0e0",
-    fogNear: 10,
-    fogFar: 16,
+    fogNear: 12,
+    fogFar: 46,
     accentHex: "#ff60b0",
   },
   accommodation: {
     fogColor: "#050808",
     lightColor: "#c0f0e8",
-    fogNear: 10,
-    fogFar: 16,
+    fogNear: 12,
+    fogFar: 46,
     accentHex: "#40c0b0",
   },
   eventParty: {
     fogColor: "#0a0805",
     lightColor: "#ffe080",
-    fogNear: 10,
-    fogFar: 16,
+    fogNear: 12,
+    fogFar: 46,
     accentHex: "#ffd040",
   },
   faq: {
     fogColor: "#080810",
     lightColor: "#d0e8ff",
-    fogNear: 10,
-    fogFar: 16,
+    fogNear: 12,
+    fogFar: 46,
     accentHex: "#6090ff",
   },
   livestream: {
     fogColor: "#080810",
     lightColor: "#e0c0ff",
-    fogNear: 10,
-    fogFar: 16,
+    fogNear: 12,
+    fogFar: 46,
     accentHex: "#a060ff",
   },
   travel: {
     fogColor: "#050a08",
     lightColor: "#c0ffc0",
-    fogNear: 10,
-    fogFar: 16,
+    fogNear: 12,
+    fogFar: 46,
     accentHex: "#40ff80",
   },
   menu: {
     fogColor: "#100a05",
     lightColor: "#ffe0a0",
-    fogNear: 10,
-    fogFar: 16,
+    fogNear: 12,
+    fogFar: 46,
     accentHex: "#ffb040",
   },
   rsvp: {
     fogColor: "#050510",
     lightColor: "#e0d0ff",
-    fogNear: 10,
-    fogFar: 16,
+    fogNear: 12,
+    fogFar: 46,
     accentHex: "#9080ff",
   },
   registry: {
     fogColor: "#0a0510",
     lightColor: "#ffd0e0",
-    fogNear: 10,
-    fogFar: 16,
+    fogNear: 12,
+    fogFar: 46,
     accentHex: "#ff80a0",
   },
   guestbook: {
     fogColor: "#080510",
     lightColor: "#f0e0ff",
-    fogNear: 10,
-    fogFar: 16,
+    fogNear: 12,
+    fogFar: 46,
     accentHex: "#c080ff",
   },
   finale: {
     fogColor: "#0a0505",
     lightColor: "#ffe0d0",
-    fogNear: 10,
-    fogFar: 16,
+    fogNear: 12,
+    fogFar: 46,
     accentHex: "#ff8060",
   },
 };
 function getVibe(key: string) {
   return SECTION_VIBE[key] ?? SECTION_VIBE.hero;
+}
+
+function PanContainer({ children }: { children: React.ReactNode }) {
+  const setPeek = useRoomsStore((s) => s.setPeek);
+  const isMoving = useRoomsStore((s) => s.isMoving);
+  const dragStartX = useRef<number | null>(null);
+  const dragStartPeek = useRef(0);
+  const currentPeek = useRef(0);
+
+  const MAX_PEEK = 4.5; // world units — max horizontal look offset
+
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    // Only left button or touch
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    dragStartX.current = e.clientX;
+    dragStartPeek.current = currentPeek.current;
+    (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+  };
+
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (dragStartX.current === null) return;
+    if (isMoving) return;
+    const dx = e.clientX - dragStartX.current;
+    // 400px drag = MAX_PEEK world units
+    const peek = Math.max(
+      -MAX_PEEK,
+      Math.min(MAX_PEEK, dragStartPeek.current - (dx / 400) * MAX_PEEK),
+    );
+    currentPeek.current = peek;
+    setPeek(peek);
+  };
+
+  const onPointerUp = () => {
+    if (dragStartX.current === null) return;
+    dragStartX.current = null;
+    // Spring back to centre
+    currentPeek.current = 0;
+    setPeek(0);
+  };
+
+  return (
+    <div
+      style={{
+        position: "relative",
+        width: "100%",
+        height: "100%",
+        overflow: "hidden",
+        cursor: "grab",
+      }}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
+    >
+      {children}
+    </div>
+  );
 }
 
 // Section keys that have a full 3D room implementation in SectionProps.
@@ -518,6 +649,7 @@ export function RoomsCanvas({
   const isMoving = useRoomsStore((s) => s.isMoving);
 
   const [boundaryKey, setBoundaryKey] = useState(0);
+  const [canvasReady, setCanvasReady] = useState(false);
 
   const activeSection = sections[activeRoom];
   const vibe = activeSection ? getVibe(activeSection.key) : SECTION_VIBE.hero;
@@ -537,20 +669,14 @@ export function RoomsCanvas({
   }
 
   return (
-    <div
-      style={{
-        position: "relative",
-        width: "100%",
-        height: "100%",
-        overflow: "hidden",
-      }}
-    >
+    <PanContainer>
       {/* Canvas is wrapped in an error boundary so WebGL failures don't crash the app */}
       <WebGLErrorBoundary
         key={boundaryKey}
         onError={() => {
           // After a short delay, remount the boundary with a clean slate.
           // By then Effects.tsx's deferred mount will avoid the crash.
+          setCanvasReady(false);
           setTimeout(() => setBoundaryKey((k) => k + 1), 100);
         }}
         fallback={
@@ -596,6 +722,9 @@ export function RoomsCanvas({
             frameloop="always"
             onCreated={({ gl }) => {
               gl.setClearColor(0x050505, 1);
+              // Defer ready signal — gives postprocessing time to mount without crashing
+              setTimeout(() => setCanvasReady(true), 400);
+
               gl.domElement.addEventListener("webglcontextlost", (e) => {
                 console.warn("[RoomsCanvas] WebGL context lost");
                 e.preventDefault();
@@ -629,8 +758,11 @@ export function RoomsCanvas({
         </div>
       </WebGLErrorBoundary>
 
+      {/* Loading overlay — shown until WebGL canvas is ready, sits above boundary */}
+      <WebGLLoadingOverlay ready={canvasReady} gold={theme.gold} />
+
       {/* Room info panel — HTML overlay that changes per room, rendered outside Canvas */}
-      {activePanel && !SECTIONS_WITH_3D_ROOM.has(activeSection?.key ?? "") && (
+      {/* {activePanel && !SECTIONS_WITH_3D_ROOM.has(activeSection?.key ?? "") && (
         <div
           style={{
             position: "absolute",
@@ -659,7 +791,7 @@ export function RoomsCanvas({
             {activePanel.node}
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Navigation controls render outside Canvas — always visible */}
       <div
@@ -679,6 +811,6 @@ export function RoomsCanvas({
           dateRevealed={dateRevealed}
         />
       </div>
-    </div>
+    </PanContainer>
   );
 }

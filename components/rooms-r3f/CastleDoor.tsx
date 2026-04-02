@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
+import { useRef, useState } from "react";
 import * as THREE from "three";
 
 interface CastleDoorProps {
@@ -34,6 +34,8 @@ export function CastleDoor({
   const targetOpen = isOpen ? 1 : 0;
   const currentOpen = useRef(0);
 
+  const [hovered, setHovered] = useState(false);
+
   useFrame((_, delta) => {
     // Smoothly animate door opening
     currentOpen.current = THREE.MathUtils.lerp(
@@ -44,13 +46,14 @@ export function CastleDoor({
 
     if (doorRef.current) {
       // Swing door open on Y axis
-      doorRef.current.rotation.y = currentOpen.current * Math.PI * 0.6;
+      doorRef.current.rotation.y = -currentOpen.current * Math.PI * 0.6;
     }
 
     // Animate glow
     if (glowRef.current) {
       const mat = glowRef.current.material as THREE.MeshBasicMaterial;
-      mat.opacity = 0.06 + Math.sin(Date.now() * 0.003) * 0.03;
+      const base = hovered && !isLocked ? 0.18 : 0.06;
+      mat.opacity = base + Math.sin(Date.now() * 0.003) * 0.04;
     }
   });
 
@@ -80,9 +83,9 @@ export function CastleDoor({
       </mesh>
 
       {/* Wooden door panel */}
-      <group ref={doorRef} position={[0, -0.1, 0.15]}>
+      <group ref={doorRef} position={[-0.9, -0.1, 0.15]}>
         {/* Main door body */}
-        <mesh castShadow>
+        <mesh position={[0.9, 0, 0]} castShadow>
           <boxGeometry args={[1.8, 3.8, 0.12]} />
           <meshStandardMaterial
             color={woodColor}
@@ -93,7 +96,7 @@ export function CastleDoor({
 
         {/* Iron bands */}
         {[-1.2, 0, 1.2].map((y, i) => (
-          <mesh key={i} position={[0, y, 0.07]}>
+          <mesh key={i} position={[0.9, y, 0.07]}>
             <boxGeometry args={[1.7, 0.15, 0.04]} />
             <meshStandardMaterial
               color={metalColor}
@@ -104,7 +107,7 @@ export function CastleDoor({
         ))}
 
         {/* Door handle / ring */}
-        <mesh position={[0.5, 0.2, 0.1]} rotation={[0, 0, Math.PI / 2]}>
+        <mesh position={[1.4, 0.2, 0.1]} rotation={[0, 0, Math.PI / 2]}>
           <torusGeometry args={[0.12, 0.025, 8, 16]} />
           <meshStandardMaterial
             color={goldColor}
@@ -114,7 +117,7 @@ export function CastleDoor({
         </mesh>
 
         {/* Vertical handle bar */}
-        <mesh position={[0.5, 0.2, 0.08]}>
+        <mesh position={[1.4, 0.2, 0.08]}>
           <boxGeometry args={[0.05, 0.5, 0.03]} />
           <meshStandardMaterial
             color={goldColor}
@@ -125,10 +128,10 @@ export function CastleDoor({
 
         {/* Decorative studs */}
         {[
-          [-0.4, 1.4],
-          [0.4, 1.4],
-          [-0.4, -1.4],
-          [0.4, -1.4],
+          [0.5, 1.4],
+          [1.3, 1.4],
+          [0.5, -1.4],
+          [1.3, -1.4],
         ].map(([x, y], i) => (
           <mesh key={i} position={[x, y, 0.08]}>
             <sphereGeometry args={[0.04, 8, 8]} />

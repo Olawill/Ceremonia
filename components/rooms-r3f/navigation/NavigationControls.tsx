@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { useCallback, useEffect } from "react";
+import { useRoomsStore } from "../store";
 
 interface Section {
   key: string;
@@ -27,16 +28,39 @@ export function NavigationControls({
 }: NavigationControlsProps) {
   const canGoLeft = activeRoomIndex > 0;
   // Date reveal gate: before reveal, can only navigate within the first 2 rooms (hero + scratch)
-  const hardMax = dateRevealed ? sections.length - 1 : Math.min(1, sections.length - 1);
-  const canGoRight = activeRoomIndex < hardMax;
+  const hardMax = dateRevealed
+    ? sections.length - 1
+    : Math.min(1, sections.length - 1);
+
+  const roomPhase = useRoomsStore((s) => s.roomPhase);
+  // Right is enabled if: outside (can enter), or inside and there's a next room
+  const canGoRight = roomPhase === "outside" || activeRoomIndex < hardMax;
 
   const goLeft = useCallback(() => {
-    if (canGoLeft) onNavigate(activeRoomIndex - 1);
+    const { roomPhase: phase } = useRoomsStore.getState();
+    if (phase === "outside" && activeRoomIndex > 0) {
+      // Go back inside the previous room
+      onNavigate(activeRoomIndex - 1);
+    } else if (phase === "inside" && canGoLeft) {
+      onNavigate(activeRoomIndex - 1);
+    }
   }, [canGoLeft, activeRoomIndex, onNavigate]);
 
   const goRight = useCallback(() => {
-    if (canGoRight) onNavigate(activeRoomIndex + 1);
-  }, [canGoRight, activeRoomIndex, onNavigate]);
+    const { roomPhase: phase, enterRoom: enter } = useRoomsStore.getState();
+    if (phase === "outside") {
+      enter();
+    } else {
+      // Inside — navigate to next room only if allowed
+      const { dateRevealed: revealed } = useRoomsStore.getState();
+      const max = revealed
+        ? sections.length - 1
+        : Math.min(1, sections.length - 1);
+      if (activeRoomIndex < max) {
+        onNavigate(activeRoomIndex + 1);
+      }
+    }
+  }, [activeRoomIndex, onNavigate, sections.length]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

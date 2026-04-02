@@ -6,7 +6,8 @@ import * as THREE from "three";
 
 import {
   CAM_Y,
-  CAM_Z_OFFSET,
+  CAM_Z_INSIDE,
+  CAM_Z_OUTSIDE,
   TOTAL_SEGMENT,
 } from "@/components/rooms-r3f/constants";
 import { useRoomsStore } from "@/components/rooms-r3f/store";
@@ -42,12 +43,14 @@ export function SpringCamera({
   const setArrived = useRoomsStore((s) => s.setArrived);
 
   // Current logical Z position (before offset) — starts at camera's initial z
-  const currentZRef = useRef(camera.position.z - CAM_Z_OFFSET);
+  const currentZRef = useRef(camera.position.z - CAM_Z_INSIDE);
   const fovRef = useRef(65);
   const hasArrivedRef = useRef(false);
 
   // Target index — changes trigger a new target position
   const targetIndexRef = useRef(activeRoomIndex);
+
+  const roomPhaseRef = useRef<"outside" | "inside">("outside");
 
   // Smoothness constants (higher = faster snap)
   const POS_LAMBDA = 4; // Position damping — higher = snappier, no overshoot
@@ -62,6 +65,12 @@ export function SpringCamera({
     }
   }, [targetRoom]);
 
+  const roomPhase = useRoomsStore((s) => s.roomPhase);
+  useEffect(() => {
+    roomPhaseRef.current = roomPhase;
+    hasArrivedRef.current = false; // retrigger arrival detection on phase change
+  }, [roomPhase]);
+
   // Initialise Z from camera position on first frame
   const initRef = useRef(false);
   const lookAtPosRef = useRef(new THREE.Vector3(peekX, 0, 0));
@@ -71,11 +80,18 @@ export function SpringCamera({
 
     // Initialise once camera is available
     if (!initRef.current) {
-      currentZRef.current = camera.position.z - CAM_Z_OFFSET;
+      currentZRef.current = camera.position.z - CAM_Z_INSIDE;
       initRef.current = true;
     }
 
-    const targetZ = -targetIndexRef.current * TOTAL_SEGMENT;
+    // const targetZ = -targetIndexRef.current * TOTAL_SEGMENT;
+
+    const roomOriginZ = -targetIndexRef.current * TOTAL_SEGMENT;
+    // Outside = in front of the room's front face (positive offset)
+    // Inside  = past the front face, looking toward back wall (negative offset)
+    const phaseOffset =
+      roomPhaseRef.current === "outside" ? CAM_Z_OUTSIDE : CAM_Z_INSIDE;
+    const targetZ = roomOriginZ + phaseOffset;
 
     // Smooth exponential ease toward target — never overshoots
     currentZRef.current = damp(
@@ -93,17 +109,21 @@ export function SpringCamera({
       LOOK_LAMBDA,
       clampedDelta,
     );
-    // lookAtPosRef.current.z = damp(lookAtPosRef.current.z, currentZRef.current, LOOK_LAMBDA, clampedDelta);
-    // Look toward the back of the room — 8 units ahead of camera
+
+    const lookAhead =
+      roomPhaseRef.current === "outside"
+        ? roomOriginZ - 2 // look at the door face when outside
+        : roomOriginZ + phaseOffset - 8; // look deep into the room when inside
+
     lookAtPosRef.current.z = damp(
       lookAtPosRef.current.z,
-      currentZRef.current - 8,
+      lookAhead,
       LOOK_LAMBDA,
       clampedDelta,
     );
 
     // Apply camera position
-    camera.position.set(peekX, CAM_Y, currentZRef.current + CAM_Z_OFFSET);
+    camera.position.set(peekX, CAM_Y, currentZRef.current);
     camera.lookAt(lookAtPosRef.current);
 
     // Cinematic FOV — wider when moving, narrower at rest
@@ -119,7 +139,7 @@ export function SpringCamera({
       if (dist < 0.05) {
         hasArrivedRef.current = true;
         currentZRef.current = targetZ; // snap to exact target
-        setArrived(true);
+        setArrived();
       }
     }
   });

@@ -7,8 +7,10 @@ interface RoomsState {
   dateRevealed: boolean;
   peekX: number;
   peekTarget: number;
+  roomPhase: "outside" | "inside";
   navigate: (index: number) => void;
-  setArrived: (arrived: boolean) => void;
+  enterRoom: () => void;
+  setArrived: () => void;
   setDateRevealed: (revealed: boolean) => void;
   setPeek: (target: number) => void;
   setTarget: (target: number) => void;
@@ -21,22 +23,22 @@ export const useRoomsStore = create<RoomsState>((set) => ({
   dateRevealed: false,
   peekX: 0,
   peekTarget: 0,
+  roomPhase: "outside",
 
   navigate: (index: number) =>
-    set({ targetRoom: index, isMoving: true }),
+    set({ targetRoom: index, isMoving: true, roomPhase: "outside" }),
 
-  setArrived: (arrived: boolean) =>
+  enterRoom: () => set({ roomPhase: "inside", isMoving: true }),
+
+  setArrived: () =>
     set((state) => ({
       isMoving: false,
-      activeRoom: arrived ? state.targetRoom : state.activeRoom,
+      activeRoom: state.targetRoom,
     })),
 
-  setDateRevealed: (revealed: boolean) =>
-    set({ dateRevealed: revealed }),
+  setDateRevealed: (revealed: boolean) => set({ dateRevealed: revealed }),
 
-  setPeek: (target: number) =>
-    set({ peekTarget: target }),
+  setPeek: (target: number) => set({ peekTarget: target }),
 
-  setTarget: (target: number) =>
-    set({ targetRoom: target }),
+  setTarget: (target: number) => set({ targetRoom: target }),
 }));
