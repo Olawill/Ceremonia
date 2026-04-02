@@ -3,9 +3,8 @@
 import { useMemo } from "react";
 
 import { useTheme } from "@/lib/ThemeContext";
-import { type EventConfig } from "@/types/event";
+import { FeatureMode, getFeatureMode, type EventConfig } from "@/types/event";
 
-import { type FeatureMode } from "@/components/rooms-r3f/Room";
 import { RoomsCanvas } from "@/components/rooms-r3f/RoomsCanvas";
 
 interface Section {
@@ -22,31 +21,6 @@ interface RoomsEngineR3FProps {
   isEditorPreview?: boolean;
 }
 
-// Derive feature mode from event type
-function getFeatureMode(eventType: string): FeatureMode {
-  switch (eventType) {
-    case "wedding":
-    case "engagement":
-    case "anniversary":
-      return "castle";
-    case "birthday":
-      return "arcade";
-    case "baby_shower":
-    case "bridal_shower":
-      return "garden";
-    case "graduation":
-      return "arcade";
-    case "housewarming":
-      return "farm";
-    case "christening":
-      return "garden";
-    case "corporate":
-      return "arcade";
-    default:
-      return "castle";
-  }
-}
-
 export function RoomsEngineR3F({
   config,
   sections,
@@ -57,8 +31,9 @@ export function RoomsEngineR3F({
   const { theme } = useTheme();
 
   const featureMode = useMemo(
-    () => getFeatureMode(config.eventType),
-    [config.eventType],
+    () =>
+      (config.featureMode ?? getFeatureMode(config.eventType)) as FeatureMode,
+    [config.featureMode, config.eventType],
   );
 
   // Map theme to the format expected by RoomsCanvas
@@ -94,6 +69,7 @@ export function RoomsEngineR3F({
       featureMode={featureMode}
       isEditorPreview={isEditorPreview}
       panelContents={sections.map((s) => ({ key: s.key, node: s.node }))}
+      config={config}
     />
   );
 }

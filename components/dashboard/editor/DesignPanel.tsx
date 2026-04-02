@@ -12,9 +12,18 @@ import { PlanGate } from "@/components/ui/PlanGate";
 import { useApi } from "@/hooks/useApi";
 import { usePlan } from "@/hooks/usePlan";
 import { useToast } from "@/hooks/useToast";
-import { Plan, planMeetsRequirement, ROOMS_CREDITS_PACK_PRICE } from "@/lib/plans";
+import {
+  Plan,
+  planMeetsRequirement,
+  ROOMS_CREDITS_PACK_PRICE,
+} from "@/lib/plans";
 import { themes } from "@/themes";
-import type { EntryStyle, EventConfig, NavMode } from "@/types/event";
+import {
+  getFeatureMode,
+  type EntryStyle,
+  type EventConfig,
+  type NavMode,
+} from "@/types/event";
 import type { ThemeKey } from "@/types/theme";
 import { toast } from "sonner";
 
@@ -69,7 +78,12 @@ const navModes = [
   },
 ] as const;
 
-export function DesignPanel({ config, onChange, previewIframeRef, roomsCredits }: Props) {
+export function DesignPanel({
+  config,
+  onChange,
+  previewIframeRef,
+  roomsCredits,
+}: Props) {
   const { features, plan: ownerPlan } = usePlan();
   const { api } = useApi();
   const { handleApiError } = useToast();
@@ -264,6 +278,50 @@ export function DesignPanel({ config, onChange, previewIframeRef, roomsCredits }
             onChange({ navMode: "rooms" });
           }}
         />
+      )}
+
+      {config.navMode === "rooms" && (
+        <>
+          <div
+            className="h-px"
+            style={{
+              background:
+                "linear-gradient(90deg, transparent, #D4AF3730, transparent)",
+            }}
+          />
+          <p className="font-label text-[12px] text-[#D4AF37] font-bold tracking-[0.5em] uppercase">
+            Room Style
+          </p>
+          <div className="grid grid-cols-3 gap-2!">
+            {(
+              [
+                { value: "castle", emoji: "🏰", label: "Castle" },
+                { value: "farm", emoji: "🌾", label: "Farm" },
+                { value: "arcade", emoji: "🕹️", label: "Arcade" },
+                { value: "garden", emoji: "🌿", label: "Garden" },
+                { value: "beach", emoji: "🏖️", label: "Beach" },
+              ] as const
+            ).map(({ value, emoji, label }) => {
+              const active =
+                (config.featureMode ?? getFeatureMode(config.eventType)) ===
+                value;
+              return (
+                <button
+                  key={value}
+                  onClick={() => onChange({ featureMode: value })}
+                  className={clsx(
+                    "py-2.5! rounded-xl border font-label text-[11px] font-bold! tracking-widest uppercase transition-all w-full",
+                    active
+                      ? "border-[#D4AF3790] text-[#D4AF37] bg-[#D4AF3710]"
+                      : "border-[#D4AF3740] text-[#D4AF3770] bg-transparent cursor-pointer",
+                  )}
+                >
+                  {emoji} {label}
+                </button>
+              );
+            })}
+          </div>
+        </>
       )}
 
       {(config.entryStyle ?? "curtain") === "curtain" && (

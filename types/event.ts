@@ -120,6 +120,27 @@ export interface EventConfig {
   livestreamNote?: string;
 }
 
+export function getFeatureMode(eventType: EventType): FeatureMode {
+  switch (eventType) {
+    case "wedding":
+    case "engagement":
+    case "anniversary":
+      return "castle";
+    case "birthday":
+    case "graduation":
+    case "corporate":
+      return "arcade";
+    case "baby_shower":
+    case "bridal_shower":
+    case "christening":
+      return "garden";
+    case "housewarming":
+      return "farm";
+    default:
+      return "castle";
+  }
+}
+
 export type DressCodeStyle =
   // Western formal
   | "black-tie"

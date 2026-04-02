@@ -12,7 +12,7 @@ import { consumeRoomCredit, getRoomCreditBalance } from "@/lib/rooms-credits";
 import { ingestUsage } from "@/lib/polar-usage";
 import { getPostHogClient } from "@/lib/posthog-server";
 import { getAuthUserId } from "@/server/auth";
-import { CURTAIN_STYLES } from "@/types/event";
+import { CURTAIN_STYLES, FEATURE_MODES } from "@/types/event";
 
 // Zod-compatible Elysia schema for a VenueEvent
 const VenueEventSchema = t.Object({
@@ -76,6 +76,7 @@ const EventBodySchema = t.Object({
   travelGuideEnabled: t.Optional(t.Boolean()),
   travelItems: t.Optional(t.Any()),
   navMode: t.Optional(t.UnionEnum(["scroll", "rooms"])),
+  featureMode: t.Optional(t.UnionEnum(FEATURE_MODES)),
 });
 
 export const eventsRouter = new Elysia({ prefix: "/events" })

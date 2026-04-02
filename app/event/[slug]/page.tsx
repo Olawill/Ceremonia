@@ -18,6 +18,8 @@ import type {
   EventConfig,
   EventPartyMember,
   FaqItem,
+  FeatureMode,
+  NavMode,
   TimelineEvent,
   TravelItem,
   VenueEvent,
@@ -214,6 +216,8 @@ export default async function EventPage({ params }: Props) {
     galleryPhotos: (event.galleryPhotos as string[]) ?? [],
     travelGuideEnabled: event.travelGuideEnabled ?? false,
     travelItems: (event.travelItems as TravelItem[]) ?? [],
+    navMode: (event.navMode as NavMode) ?? "scroll",
+    featureMode: (event.featureMode as FeatureMode) ?? "castle",
   };
 
   const cookieStore = await cookies();

@@ -318,13 +318,21 @@ export function EventEngine({
       )}
 
       {navMode === "rooms" && curtainOpen && (
-        <RoomsEngineR3F
-          config={config}
-          sections={sections}
-          dateRevealed={dateRevealed}
-          onDateRevealed={handleDateRevealed}
-          isEditorPreview={isEditorPreview}
-        />
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 100,
+          }}
+        >
+          <RoomsEngineR3F
+            config={config}
+            sections={sections}
+            dateRevealed={dateRevealed}
+            onDateRevealed={handleDateRevealed}
+            isEditorPreview={isEditorPreview}
+          />
+        </div>
       )}
 
       {/* Float nav */}

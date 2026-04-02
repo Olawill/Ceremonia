@@ -50,9 +50,9 @@ export function SpringCamera({
   const targetIndexRef = useRef(activeRoomIndex);
 
   // Smoothness constants (higher = faster snap)
-  const POS_LAMBDA = 4;    // Position damping — higher = snappier, no overshoot
-  const LOOK_LAMBDA = 6;   // LookAt damping — slightly higher for responsive feel
-  const FOV_LAMBDA = 3;    // FOV animation — slower for cinematic feel
+  const POS_LAMBDA = 4; // Position damping — higher = snappier, no overshoot
+  const LOOK_LAMBDA = 6; // LookAt damping — slightly higher for responsive feel
+  const FOV_LAMBDA = 3; // FOV animation — slower for cinematic feel
 
   // Keep target index in sync
   useEffect(() => {
@@ -87,8 +87,20 @@ export function SpringCamera({
 
     // Smooth lookAt target
     const lookX = peekX + peekTarget;
-    lookAtPosRef.current.x = damp(lookAtPosRef.current.x, lookX, LOOK_LAMBDA, clampedDelta);
-    lookAtPosRef.current.z = damp(lookAtPosRef.current.z, currentZRef.current, LOOK_LAMBDA, clampedDelta);
+    lookAtPosRef.current.x = damp(
+      lookAtPosRef.current.x,
+      lookX,
+      LOOK_LAMBDA,
+      clampedDelta,
+    );
+    // lookAtPosRef.current.z = damp(lookAtPosRef.current.z, currentZRef.current, LOOK_LAMBDA, clampedDelta);
+    // Look toward the back of the room — 8 units ahead of camera
+    lookAtPosRef.current.z = damp(
+      lookAtPosRef.current.z,
+      currentZRef.current - 8,
+      LOOK_LAMBDA,
+      clampedDelta,
+    );
 
     // Apply camera position
     camera.position.set(peekX, CAM_Y, currentZRef.current + CAM_Z_OFFSET);

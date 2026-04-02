@@ -3,19 +3,23 @@
 import * as THREE from "three";
 
 import {
+  ROOM_ASSETS,
   ROOM_HEIGHT,
   ROOM_LENGTH,
   ROOM_WIDTH,
 } from "@/components/rooms-r3f/constants";
 import { ArcadeShell } from "@/components/rooms-r3f/rooms/ArcadeShell";
+import { BakedRoom } from "@/components/rooms-r3f/rooms/BakedRoom";
 import { BeachShell } from "@/components/rooms-r3f/rooms/BeachShell";
 import { CastleShell } from "@/components/rooms-r3f/rooms/CastleShell";
 import { Chandelier } from "@/components/rooms-r3f/rooms/Chandelier";
 import { FarmShell } from "@/components/rooms-r3f/rooms/FarmShell";
 import { GardenShell } from "@/components/rooms-r3f/rooms/GardenShell";
+import { SectionProps } from "@/components/rooms-r3f/rooms/SectionProps";
 import { TorchSconce } from "@/components/rooms-r3f/rooms/TorchSconce";
+
 import { hexCol } from "@/lib/roomTextures";
-import { FeatureMode } from "@/types/event";
+import { EventConfig, FeatureMode } from "@/types/event";
 
 export interface RoomTheme {
   floor: string;
@@ -568,62 +572,94 @@ interface RoomProps {
   position: [number, number, number];
   theme: RoomTheme;
   featureMode: FeatureMode;
+  sectionKey?: string;
+  config?: EventConfig;
+  onDateRevealed: () => void;
   children?: React.ReactNode;
 }
 
-export function Room({ position, theme, featureMode, children }: RoomProps) {
+export function Room({
+  position,
+  theme,
+  featureMode,
+  sectionKey,
+  config,
+  children,
+  onDateRevealed,
+}: RoomProps) {
+  const asset = ROOM_ASSETS[featureMode];
+
   return (
     <group position={position}>
-      {/* Theme-appropriate room shell */}
-      {featureMode === "castle" && (
-        <CastleShell position={[0, 0, 0]} theme={theme} />
-      )}
-      {featureMode === "farm" && (
-        <FarmShell position={[0, 0, 0]} theme={theme} />
-      )}
-      {featureMode === "arcade" && (
-        <ArcadeShell position={[0, 0, 0]} theme={theme} />
-      )}
-      {featureMode === "garden" && (
-        <GardenShell position={[0, 0, 0]} theme={theme} />
-      )}
-      {featureMode === "beach" && (
-        <BeachShell position={[0, 0, 0]} theme={theme} />
-      )}
-
-      {/* Feature-specific decorations (themed objects / furnishings) */}
-      {featureMode === "castle" && <CastleDecorations theme={theme} />}
-      {featureMode === "farm" && <FarmDecorations theme={theme} />}
-      {featureMode === "arcade" && <ArcadeDecorations theme={theme} />}
-      {featureMode === "garden" && <GardenDecorations theme={theme} />}
-      {featureMode === "beach" && <BeachDecorations theme={theme} />}
-
-      {/* Chandelier — castle/farm only (other themes have their own ceiling lights) */}
-      {(featureMode === "castle" || featureMode === "farm") && (
-        <Chandelier
-          position={[0, ROOM_HEIGHT / 2 - 0.5, -ROOM_LENGTH / 2 + 2]}
-          accentColor={theme.accent}
-        />
-      )}
-
-      {/* Wall torches — castle only */}
-      {featureMode === "castle" && (
+      {asset.ready ? (
+        // Baked Blender model — zero runtime lighting cost
+        <BakedRoom modelPath={asset.model} texturePath={asset.texture} />
+      ) : (
+        // Procedural fallback — used until Blender asset is ready
         <>
-          <TorchSconce
-            position={[-ROOM_WIDTH / 2 + 0.1, 0.5, -2]}
-            accentColor={theme.accent}
-            rotation={[0, Math.PI / 2, 0]}
-          />
-          <TorchSconce
-            position={[ROOM_WIDTH / 2 - 0.1, 0.5, -2]}
-            accentColor={theme.accent}
-            rotation={[0, -Math.PI / 2, 0]}
-          />
+          {/* Theme-appropriate room shell */}
+          {featureMode === "castle" && (
+            <CastleShell position={[0, 0, 0]} theme={theme} />
+          )}
+          {featureMode === "farm" && (
+            <FarmShell position={[0, 0, 0]} theme={theme} />
+          )}
+          {featureMode === "arcade" && (
+            <ArcadeShell position={[0, 0, 0]} theme={theme} />
+          )}
+          {featureMode === "garden" && (
+            <GardenShell position={[0, 0, 0]} theme={theme} />
+          )}
+          {featureMode === "beach" && (
+            <BeachShell position={[0, 0, 0]} theme={theme} />
+          )}
+
+          {/* Feature-specific decorations (themed objects / furnishings) */}
+          {featureMode === "castle" && <CastleDecorations theme={theme} />}
+          {featureMode === "farm" && <FarmDecorations theme={theme} />}
+          {featureMode === "arcade" && <ArcadeDecorations theme={theme} />}
+          {featureMode === "garden" && <GardenDecorations theme={theme} />}
+          {featureMode === "beach" && <BeachDecorations theme={theme} />}
+
+          {/* Chandelier — castle/farm only (other themes have their own ceiling lights) */}
+          {(featureMode === "castle" || featureMode === "farm") && (
+            <Chandelier
+              position={[0, ROOM_HEIGHT / 2 - 0.5, -ROOM_LENGTH / 2 + 2]}
+              accentColor={theme.accent}
+            />
+          )}
+
+          {/* Wall torches — castle only */}
+          {featureMode === "castle" && (
+            <>
+              <TorchSconce
+                position={[-ROOM_WIDTH / 2 + 0.1, 0.5, -2]}
+                accentColor={theme.accent}
+                rotation={[0, Math.PI / 2, 0]}
+              />
+              <TorchSconce
+                position={[ROOM_WIDTH / 2 - 0.1, 0.5, -2]}
+                accentColor={theme.accent}
+                rotation={[0, -Math.PI / 2, 0]}
+              />
+            </>
+          )}
         </>
       )}
 
       {/* Children for room-specific content */}
       {children}
+
+      {/* Section-specific props — furniture styled to featureMode */}
+      {sectionKey && (
+        <SectionProps
+          sectionKey={sectionKey}
+          featureMode={featureMode}
+          theme={theme}
+          onDateRevealed={onDateRevealed}
+          config={config}
+        />
+      )}
     </group>
   );
 }

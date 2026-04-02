@@ -1,12 +1,15 @@
 "use client";
 
 import {
+  CORRIDOR_ASSET,
   CORRIDOR_HEIGHT,
   CORRIDOR_LENGTH,
   CORRIDOR_WIDTH,
 } from "@/components/rooms-r3f/constants";
 import type { FeatureMode } from "@/components/rooms-r3f/Room";
+import { BakedCorridor } from "@/components/rooms-r3f/rooms/BakedCorridor";
 import { PortcullisGate } from "@/components/rooms-r3f/rooms/PortcullisGate";
+
 import {
   TEXTURE_CORRIDOR_STONE,
   TEXTURE_CORRIDOR_STONE_NORMAL,
@@ -78,6 +81,10 @@ export function Corridor({
   hasLight = true,
   featureMode = "castle",
 }: CorridorProps) {
+  if (CORRIDOR_ASSET.ready) {
+    return <BakedCorridor position={position} />;
+  }
+
   const floorColor = new THREE.Color(theme.floor);
   const accentColor = new THREE.Color(theme.accent);
 

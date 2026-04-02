@@ -185,8 +185,12 @@ export function EditorShell({ initialConfig, isNew }: Props) {
     const isRooms = (config.navMode ?? "scroll") === "rooms";
 
     if (isRooms) {
-      // Rooms mode: RoomsEngine lives inline (not in iframe), post to same window
-      window.postMessage({ type: "RESET_PREVIEW" }, "*");
+      const target =
+        isUndocked && undockedWindowRef.current
+          ? undockedWindowRef.current
+          : window;
+
+      target.postMessage({ type: "RESET_PREVIEW" }, "*");
       return;
     }
 
@@ -203,7 +207,7 @@ export function EditorShell({ initialConfig, isNew }: Props) {
           .join(""),
       ),
     )}`;
-  }, [config]);
+  }, [config, isUndocked]);
 
   const handleSave = async () => {
     setSaveState("saving");
@@ -246,6 +250,7 @@ export function EditorShell({ initialConfig, isNew }: Props) {
         travelGuideEnabled: config.travelGuideEnabled,
         travelItems: config.travelItems,
         navMode: config.navMode,
+        featureMode: config.featureMode,
       } satisfies Parameters<typeof api.events.post>[0];
 
       if (isNew) {
