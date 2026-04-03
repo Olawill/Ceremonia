@@ -44,7 +44,7 @@ export const ROOM_ASSETS: Record<FeatureMode, RoomAsset> = {
   castle: {
     model: "/models/room-castle.glb",
     texture: "/textures/baked/room-castle-baked.jpg",
-    ready: true, // flip to true once Blender asset is exported
+    ready: false, // flip to true once Blender asset is exported
   },
   farm: {
     model: "/models/room-farm.glb",

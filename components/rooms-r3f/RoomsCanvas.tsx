@@ -12,7 +12,6 @@ import {
   ROOM_WIDTH,
   TOTAL_SEGMENT,
 } from "@/components/rooms-r3f/constants";
-import { Corridor } from "@/components/rooms-r3f/Corridor";
 import DustParticles from "@/components/rooms-r3f/effects/DustParticles";
 import { Effects } from "@/components/rooms-r3f/effects/Effects";
 import { NavigationControls } from "@/components/rooms-r3f/navigation/NavigationControls";
@@ -26,6 +25,7 @@ import { preloadAllRoomTextures } from "@/lib/roomTextures";
 import { EventConfig } from "@/types/event";
 import { Environment, useCursor } from "@react-three/drei";
 import { useState } from "react";
+import { Corridor } from "./Corridor";
 import { WorldEnvironment } from "./world/WorldEnvironment";
 
 // Dynamically import Canvas with SSR disabled to avoid WebGL context errors
@@ -94,6 +94,7 @@ interface InteractiveRoomProps {
   corridorTheme: { floor: string; wall: string; accent: string };
   featureMode: FeatureMode;
   config?: EventConfig;
+  targetRoom: number;
   onDateRevealed: () => void;
   onNudgeRight: () => void;
 }
@@ -103,6 +104,7 @@ function InteractiveRoom({
   index,
   activeRoomIndex,
   isMoving,
+  targetRoom,
   dateRevealed,
   sections,
   theme,
@@ -158,7 +160,8 @@ function InteractiveRoom({
       {/* Exit door — at the BACK of the room, what the camera looks toward */}
       {index < sections.length - 1 && (
         <CastleDoor
-          position={[0, 0, roomZ - ROOM_LENGTH / 2]}
+          // position={[0, 0, roomZ - ROOM_LENGTH / 2]}
+          position={[0, 0, roomZ - ROOM_LENGTH + 0.15]}
           rotation={[0, 0, 0]}
           theme={theme}
           isOpen={activeRoomIndex > index}
@@ -169,15 +172,18 @@ function InteractiveRoom({
         />
       )}
 
-      {/* Corridor AFTER the exit door — leads into the next room */}
-      {index < sections.length - 1 && (
-        <Corridor
-          position={[0, 0, roomZ - ROOM_LENGTH / 2 - CORRIDOR_LENGTH / 2]}
-          theme={corridorTheme}
-          featureMode={featureMode}
-          isLocked={!dateRevealed && index >= 1}
-        />
-      )}
+      {/* Corridor — only rendered while camera is travelling through it.
+    Show when moving and this room is either the departure or arrival point. */}
+      {index < sections.length - 1 &&
+        isMoving &&
+        (index === activeRoomIndex || index === targetRoom - 1) && (
+          <Corridor
+            position={[0, 0, roomZ - ROOM_LENGTH / 2 - CORRIDOR_LENGTH / 2]}
+            theme={corridorTheme}
+            featureMode={featureMode}
+            isLocked={false}
+          />
+        )}
     </group>
   );
 }
@@ -433,6 +439,7 @@ function SceneContent({
             featureMode={featureMode}
             activeRoomIndex={activeRoomIndex}
             isMoving={isMoving}
+            targetRoom={targetRoom}
             dateRevealed={dateRevealed}
             onDateRevealed={onDateRevealed}
             onNudgeRight={() => useRoomsStore.getState().navigate(index + 1)}

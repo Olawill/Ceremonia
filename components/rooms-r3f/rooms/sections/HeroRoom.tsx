@@ -135,218 +135,246 @@ function HeroBanner({
             ? "#8b3a2a"
             : theme.curtain;
 
-  const bannerW = ROOM_WIDTH * 0.68;
-  const bannerH = ROOM_HEIGHT * 0.72;
-
-  // Back wall is at Z = -ROOM_LENGTH, facing +Z (toward camera)
-  // So we place content at Z = -ROOM_LENGTH + small_offset
+  const accentHex = theme.accent;
+  // Hanging banner dimensions — tall and narrow like championship banners
+  const bannerW = ROOM_WIDTH * 0.52;
+  const bannerH = ROOM_HEIGHT * 0.88;
   const wallZ = -ROOM_LENGTH + 0.08;
+  // Banner top hangs near the ceiling
+  const bannerTopY = ROOM_HEIGHT / 2 - 0.1;
+  const bannerCentreY = bannerTopY - bannerH / 2;
+
+  // Rope attachment points — two points at the top
+  const ropeLeft = -bannerW * 0.36;
+  const ropeRight = bannerW * 0.36;
 
   return (
-    <group position={[0, 0.1, wallZ]}>
-      {/* Fabric backing */}
-      <mesh>
-        <planeGeometry args={[bannerW, bannerH]} />
-        <meshStandardMaterial color={bannerColor} roughness={0.88} />
-      </mesh>
+    <group position={[0, 0, wallZ]}>
+      {/* ── Hanging ropes from ceiling to banner top ── */}
+      {[ropeLeft, ropeRight].map((x, i) => (
+        <mesh key={i} position={[x, bannerTopY + 0.15, 0.02]}>
+          <cylinderGeometry args={[0.012, 0.012, 0.35, 6]} />
+          <meshStandardMaterial
+            color={accentHex}
+            roughness={0.3}
+            metalness={0.8}
+          />
+        </mesh>
+      ))}
 
-      {/* Gold border trim — 4 sides */}
-      {/* Top */}
-      <mesh position={[0, bannerH / 2, 0.01]}>
-        <planeGeometry args={[bannerW + 0.12, 0.06]} />
-        <meshStandardMaterial
-          color={theme.accent}
-          roughness={0.2}
-          metalness={0.85}
-        />
-      </mesh>
-      {/* Bottom */}
-      <mesh position={[0, -bannerH / 2, 0.01]}>
-        <planeGeometry args={[bannerW + 0.12, 0.06]} />
-        <meshStandardMaterial
-          color={theme.accent}
-          roughness={0.2}
-          metalness={0.85}
-        />
-      </mesh>
-      {/* Left */}
-      <mesh position={[-bannerW / 2, 0, 0.01]}>
-        <planeGeometry args={[0.06, bannerH]} />
-        <meshStandardMaterial
-          color={theme.accent}
-          roughness={0.2}
-          metalness={0.85}
-        />
-      </mesh>
-      {/* Right */}
-      <mesh position={[bannerW / 2, 0, 0.01]}>
-        <planeGeometry args={[0.06, bannerH]} />
-        <meshStandardMaterial
-          color={theme.accent}
-          roughness={0.2}
-          metalness={0.85}
-        />
-      </mesh>
-
-      {/* Top hanging rod */}
+      {/* ── Top mounting rod ── */}
       <mesh
-        position={[0, bannerH / 2 + 0.08, 0.04]}
+        position={[0, bannerTopY + 0.32, 0.02]}
         rotation={[0, 0, Math.PI / 2]}
       >
-        <cylinderGeometry args={[0.035, 0.035, bannerW + 0.4, 8]} />
+        <cylinderGeometry args={[0.018, 0.018, bannerW * 0.85, 8]} />
         <meshStandardMaterial
-          color={theme.accent}
+          color={accentHex}
           roughness={0.2}
-          metalness={0.85}
+          metalness={0.9}
         />
       </mesh>
-      {/* Rod finials */}
-      {([-1, 1] as const).map((side, i) => (
+      {/* Rod end finials */}
+      {[-1, 1].map((side, i) => (
         <mesh
           key={i}
-          position={[side * (bannerW / 2 + 0.22), bannerH / 2 + 0.08, 0.04]}
+          position={[side * bannerW * 0.43, bannerTopY + 0.32, 0.02]}
         >
-          <sphereGeometry args={[0.08, 10, 10]} />
+          <sphereGeometry args={[0.035, 8, 8]} />
           <meshStandardMaterial
-            color={theme.accent}
-            roughness={0.15}
-            metalness={0.9}
+            color={accentHex}
+            roughness={0.1}
+            metalness={0.95}
           />
         </mesh>
       ))}
 
-      {/* Rope fringe along bottom */}
-      {Array.from({ length: 16 }).map((_, i) => (
-        <mesh
-          key={i}
-          position={[
-            -bannerW / 2 + 0.25 + i * ((bannerW - 0.4) / 15),
-            -bannerH / 2 - 0.13,
-            0.02,
-          ]}
-        >
-          <cylinderGeometry args={[0.01, 0.007, 0.24, 5]} />
+      {/* ── Main banner fabric ── */}
+      <group position={[0, bannerCentreY, 0]}>
+        {/* Fabric panel */}
+        <mesh>
+          <planeGeometry args={[bannerW, bannerH]} />
+          <meshStandardMaterial color={bannerColor} roughness={0.85} />
+        </mesh>
+
+        {/* Gold border — top */}
+        <mesh position={[0, bannerH / 2 - 0.04, 0.01]}>
+          <planeGeometry args={[bannerW, 0.07]} />
           <meshStandardMaterial
-            color={theme.accent}
-            roughness={0.4}
-            metalness={0.5}
+            color={accentHex}
+            roughness={0.2}
+            metalness={0.85}
           />
         </mesh>
-      ))}
+        {/* Gold border — bottom */}
+        <mesh position={[0, -bannerH / 2 + 0.04, 0.01]}>
+          <planeGeometry args={[bannerW, 0.07]} />
+          <meshStandardMaterial
+            color={accentHex}
+            roughness={0.2}
+            metalness={0.85}
+          />
+        </mesh>
+        {/* Gold border — left */}
+        <mesh position={[-bannerW / 2 + 0.035, 0, 0.01]}>
+          <planeGeometry args={[0.07, bannerH]} />
+          <meshStandardMaterial
+            color={accentHex}
+            roughness={0.2}
+            metalness={0.85}
+          />
+        </mesh>
+        {/* Gold border — right */}
+        <mesh position={[bannerW / 2 - 0.035, 0, 0.01]}>
+          <planeGeometry args={[0.07, bannerH]} />
+          <meshStandardMaterial
+            color={accentHex}
+            roughness={0.2}
+            metalness={0.85}
+          />
+        </mesh>
 
-      {/* All text content via a single Html panel — crisp, properly sized */}
-      <Html
-        position={[0, 0, 0.06]}
-        center
-        transform
-        distanceFactor={9}
-        style={{ pointerEvents: "none" }}
-      >
-        <div
-          style={{
-            width: "560px",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "14px",
-            userSelect: "none",
-          }}
+        {/* Decorative horizontal divider line */}
+        <mesh position={[0, bannerH * 0.18, 0.015]}>
+          <planeGeometry args={[bannerW * 0.7, 0.018]} />
+          <meshStandardMaterial
+            color={accentHex}
+            roughness={0.2}
+            metalness={0.8}
+            transparent
+            opacity={0.7}
+          />
+        </mesh>
+        <mesh position={[0, -bannerH * 0.08, 0.015]}>
+          <planeGeometry args={[bannerW * 0.7, 0.018]} />
+          <meshStandardMaterial
+            color={accentHex}
+            roughness={0.2}
+            metalness={0.8}
+            transparent
+            opacity={0.7}
+          />
+        </mesh>
+
+        {/* Bottom tassel fringe — decorative triangles */}
+        {Array.from({ length: 9 }).map((_, i) => {
+          const x = (i - 4) * (bannerW / 9);
+          return (
+            <mesh key={i} position={[x, -bannerH / 2 - 0.09, 0.01]}>
+              <coneGeometry args={[0.045, 0.2, 4]} />
+              <meshStandardMaterial
+                color={accentHex}
+                roughness={0.3}
+                metalness={0.7}
+              />
+            </mesh>
+          );
+        })}
+
+        {/* Text content via Html */}
+        <Html
+          position={[0, 0, 0.02]}
+          center
+          occlude={false}
+          style={{ pointerEvents: "none", width: `${bannerW * 80}px` }}
         >
-          {/* Medallion */}
           <div
             style={{
-              width: "80px",
-              height: "80px",
-              borderRadius: "50%",
-              border: `2.5px solid ${theme.accent}`,
-              boxShadow: `0 0 20px ${theme.accent}50, inset 0 0 20px ${theme.accent}20`,
-              background: `${bannerColor}CC`,
+              textAlign: "center",
+              userSelect: "none",
               display: "flex",
+              flexDirection: "column",
               alignItems: "center",
-              justifyContent: "center",
-              position: "relative",
+              gap: "6px",
+              width: "100%",
             }}
           >
+            {/* Top label */}
+            {topLabel && (
+              <p
+                style={{
+                  fontFamily: "var(--font-label, sans-serif)",
+                  fontSize: "10px",
+                  fontWeight: 700,
+                  letterSpacing: "0.6em",
+                  textTransform: "uppercase",
+                  color: accentHex,
+                  margin: 0,
+                  opacity: 0.9,
+                }}
+              >
+                {topLabel}
+              </p>
+            )}
+
+            {/* Monogram */}
             <div
               style={{
-                position: "absolute",
-                inset: "6px",
+                width: 52,
+                height: 52,
                 borderRadius: "50%",
-                border: `1px solid ${theme.accent}55`,
+                border: `1.5px solid ${accentHex}80`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: `${accentHex}12`,
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: "serif",
+                  fontSize: groom ? "22px" : "28px",
+                  fontWeight: 300,
+                  color: accentHex,
+                  textShadow: `0 0 12px ${accentHex}80`,
+                  letterSpacing: "0.02em",
+                }}
+              >
+                {groom
+                  ? `${bride.charAt(0)} & ${groom.charAt(0)}`
+                  : bride.charAt(0)}
+              </span>
+            </div>
+
+            {/* Divider */}
+            <div
+              style={{
+                width: "70px",
+                height: "1px",
+                background: `linear-gradient(90deg, transparent, ${accentHex}90, transparent)`,
               }}
             />
-            <span
-              style={{
-                fontFamily: "serif",
-                fontSize: groom ? "34px" : "42px",
-                fontWeight: 300,
-                color: theme.accent,
-                textShadow: `0 0 14px ${theme.accent}80`,
-                letterSpacing: groom ? "0.02em" : "0",
-                lineHeight: 1,
-              }}
-            >
-              {groom
-                ? `${bride.charAt(0)} & ${groom.charAt(0)}`
-                : bride.charAt(0)}
-            </span>
-          </div>
 
-          {/* Top label */}
-          {topLabel && (
-            <p
-              style={{
-                fontFamily: "var(--font-label, sans-serif)",
-                fontSize: "8px",
-                fontWeight: 600,
-                letterSpacing: "0.55em",
-                textTransform: "uppercase",
-                color: `${theme.accent}CC`,
-                margin: 0,
-              }}
-            >
-              {topLabel}
-            </p>
-          )}
-
-          {/* Divider */}
-          <div
-            style={{
-              width: "90px",
-              height: "1px",
-              background: `linear-gradient(90deg, transparent, ${theme.accent}80, transparent)`,
-            }}
-          />
-
-          {/* Names */}
-          <div style={{ textAlign: "center" }}>
+            {/* Primary name */}
             <div
               style={{
                 fontFamily: "serif",
-                fontSize: "36px",
-                fontWeight: 500,
+                fontSize: "30px",
+                fontWeight: 600,
                 color:
                   featureMode === "beach"
                     ? "#3a2510"
                     : featureMode === "garden"
                       ? "#f5ead0"
                       : "#F5F0E8",
-                letterSpacing: "0.05em",
+                letterSpacing: "0.04em",
                 lineHeight: 1.1,
-                textShadow: "0 2px 20px rgba(0,0,0,0.7)",
+                textShadow: "0 2px 16px rgba(0,0,0,0.8)",
               }}
             >
               {bride}
             </div>
+
+            {/* Ampersand + second name */}
             {groom && groom.trim().length > 0 && (
               <>
                 <div
                   style={{
                     fontFamily: "serif",
-                    fontSize: "26px",
-                    color: theme.accent,
-                    margin: "6px 0",
-                    textShadow: `0 0 20px ${theme.accent}60`,
+                    fontSize: "20px",
+                    color: accentHex,
+                    textShadow: `0 0 16px ${accentHex}60`,
+                    lineHeight: 1,
                   }}
                 >
                   &
@@ -354,17 +382,17 @@ function HeroBanner({
                 <div
                   style={{
                     fontFamily: "serif",
-                    fontSize: "36px",
-                    fontWeight: 500,
+                    fontSize: "30px",
+                    fontWeight: 600,
                     color:
                       featureMode === "beach"
                         ? "#3a2510"
                         : featureMode === "garden"
                           ? "#f5ead0"
                           : "#F5F0E8",
-                    letterSpacing: "0.05em",
+                    letterSpacing: "0.04em",
                     lineHeight: 1.1,
-                    textShadow: "0 2px 20px rgba(0,0,0,0.7)",
+                    textShadow: "0 2px 16px rgba(0,0,0,0.8)",
                   }}
                 >
                   {groom}
@@ -372,8 +400,8 @@ function HeroBanner({
               </>
             )}
           </div>
-        </div>
-      </Html>
+        </Html>
+      </group>
     </group>
   );
 }

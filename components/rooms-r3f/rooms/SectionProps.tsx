@@ -11,6 +11,7 @@ import { EventConfig, getVocabulary } from "@/types/event";
 import { useFrame } from "@react-three/fiber";
 import { useRef } from "react";
 import * as THREE from "three";
+import { CountdownRoom } from "./sections/CountdownRoom";
 import { HeroRoom } from "./sections/HeroRoom";
 import { ScratchRoom } from "./sections/ScratchRoom";
 
@@ -810,7 +811,17 @@ export function SectionProps({
         />
       );
     case "countdown":
-      return <CountdownProps featureMode={featureMode} theme={theme} />;
+      return (
+        <CountdownRoom
+          featureMode={featureMode}
+          theme={theme}
+          date={config?.date}
+          location={config?.venueDetails?.find((d) => d.label === "Location")}
+          eventLabel={
+            config ? getVocabulary(config.eventType).eventLabel : undefined
+          }
+        />
+      );
     case "faq":
       return <LibraryProps featureMode={featureMode} theme={theme} />;
     case "venue":

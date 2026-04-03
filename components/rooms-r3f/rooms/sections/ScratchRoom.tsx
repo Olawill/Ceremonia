@@ -540,40 +540,16 @@ function ScratchCard({
     >
       {/* Heading */}
       <div style={{ textAlign: "center" }}>
-        {/* <p
-          style={{
-            fontFamily: "var(--font-label, sans-serif)",
-            fontSize: 12,
-            fontWeight: 900,
-            letterSpacing: "0.55em",
-            textTransform: "uppercase",
-            color: `${theme.accent}CC`,
-            margin: "0 0 8px",
-          }}
-        >
-          A Special Surprise
-        </p>
-        <h2
-          style={{
-            fontFamily: "serif",
-            fontSize: 24,
-            fontWeight: 600,
-            color: "#F5F0E8",
-            letterSpacing: "0.08em",
-            margin: 0,
-            textShadow: "0 2px 12px rgba(0,0,0,0.8)",
-          }}
-        >
-          {revealTitle ?? "Reveal Our Date"}
-        </h2> */}
         {!revealed && (
           <p
             style={{
               fontFamily: "serif",
               fontStyle: "italic",
-              fontSize: 15,
-              color: `${theme.accent}99`,
-              margin: "3px 0 0",
+              fontSize: 16,
+              fontWeight: 600,
+              color: theme.accent,
+              margin: "6px 0 0",
+              textShadow: `0 0 12px ${theme.accent}60`,
             }}
           >
             {revealHint ?? "Scratch the golden foil below"}
@@ -610,7 +586,8 @@ function ScratchCard({
           <p
             style={{
               fontFamily: "serif",
-              fontSize: 22,
+              fontSize: 26,
+              fontWeight: 700,
               letterSpacing: "0.05em",
               color: theme.accent,
               margin: 0,
@@ -622,11 +599,11 @@ function ScratchCard({
           <p
             style={{
               fontFamily: "var(--font-label, sans-serif)",
-              fontSize: 11,
-              fontWeight: 600,
+              fontSize: 13,
+              fontWeight: 900,
               letterSpacing: "0.5em",
+              color: theme.accent,
               textTransform: "uppercase",
-              color: `${theme.accent}CC`,
               margin: 0,
             }}
           >
@@ -680,7 +657,8 @@ function ScratchCard({
           style={{
             fontFamily: "serif",
             fontStyle: "italic",
-            fontSize: 13,
+            fontSize: 16,
+            fontWeight: 600,
             color: theme.accent,
             textAlign: "center",
             margin: 0,
@@ -772,7 +750,7 @@ export function ScratchRoom({
         position={[0.1, deskTopY + 0.06, deskZ - 0.05]}
         rotation={[-Math.PI / 2.4, 0, 0]}
         transform
-        distanceFactor={3.2}
+        distanceFactor={2.8}
         occlude={false}
         style={{ pointerEvents: "auto" }}
       >
@@ -813,7 +791,7 @@ export function ScratchRoom({
         position={[0, ROOM_HEIGHT * 0.28, -ROOM_LENGTH + 0.1]}
         center
         transform
-        distanceFactor={9}
+        distanceFactor={6}
         occlude={false}
         style={{ pointerEvents: "none" }}
       >
@@ -826,7 +804,7 @@ export function ScratchRoom({
           <div
             style={{
               fontFamily: "serif",
-              fontSize: "20px",
+              fontSize: "32px",
               fontWeight: 500,
               color: acc,
               letterSpacing: "0.18em",
@@ -841,7 +819,7 @@ export function ScratchRoom({
               width: "120px",
               height: "1px",
               background: `linear-gradient(90deg, transparent, ${acc}70, transparent)`,
-              margin: "6px auto 20px",
+              margin: "10px auto 14px",
             }}
           />
 
@@ -849,7 +827,7 @@ export function ScratchRoom({
             <p
               style={{
                 fontFamily: "var(--font-label, sans-serif)",
-                fontSize: "8px",
+                fontSize: "12px",
                 fontWeight: 900,
                 letterSpacing: "0.55em",
                 textTransform: "uppercase",
@@ -862,8 +840,8 @@ export function ScratchRoom({
             <h2
               style={{
                 fontFamily: "serif",
-                fontSize: "12px",
-                fontWeight: 600,
+                fontSize: "18px",
+                fontWeight: 700,
                 color: "#F5F0E8",
                 letterSpacing: "0.08em",
                 margin: 0,

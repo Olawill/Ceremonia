@@ -237,7 +237,6 @@ function CastleDecorations({ theme }: { theme: RoomTheme }) {
 }
 
 function FarmDecorations({ theme }: { theme: RoomTheme }) {
-  const accentColor = hexCol(theme.accent);
   const wallColor = hexCol(theme.wall);
 
   return (
@@ -404,58 +403,316 @@ function ArcadeDecorations({ theme }: { theme: RoomTheme }) {
   );
 }
 
+// ── Single flower component ───────────────────────────────────────────────────
+
+function Flower({
+  petalColor,
+  centreColor,
+  stemColor,
+  petalCount = 6,
+  petalSize = 0.09,
+  scale = 1,
+}: {
+  petalColor: string;
+  centreColor: string;
+  stemColor: string;
+  petalCount?: number;
+  petalSize?: number;
+  scale?: number;
+}) {
+  return (
+    <group scale={scale}>
+      {/* Stem */}
+      <mesh position={[0, -0.22, 0]}>
+        <cylinderGeometry args={[0.018, 0.022, 0.44, 6]} />
+        <meshStandardMaterial color={stemColor} roughness={0.9} />
+      </mesh>
+
+      {/* Two small leaves on the stem */}
+      {[0.3, -0.3].map((rotY, i) => (
+        <group
+          key={i}
+          position={[0, -0.1 + i * 0.08, 0]}
+          rotation={[0, rotY * Math.PI, 0]}
+        >
+          <mesh rotation={[0.4, 0, 0.5 - i * 1.0]} position={[0.06, 0, 0]}>
+            <sphereGeometry args={[0.055, 6, 4]} />
+            <meshStandardMaterial color={stemColor} roughness={0.85} />
+          </mesh>
+        </group>
+      ))}
+
+      {/* Petals — fanned around the centre */}
+      {Array.from({ length: petalCount }).map((_, i) => {
+        const angle = (i / petalCount) * Math.PI * 2;
+        return (
+          <mesh
+            key={i}
+            position={[
+              Math.cos(angle) * petalSize * 1.1,
+              0.05,
+              Math.sin(angle) * petalSize * 1.1,
+            ]}
+            rotation={[-0.35, angle, 0]}
+          >
+            <sphereGeometry args={[petalSize, 6, 5]} />
+            <meshStandardMaterial
+              color={petalColor}
+              roughness={0.7}
+              side={THREE.DoubleSide}
+            />
+          </mesh>
+        );
+      })}
+
+      {/* Centre cone — the pistil */}
+      <mesh position={[0, 0.07, 0]}>
+        <sphereGeometry args={[petalSize * 0.65, 8, 8]} />
+        <meshStandardMaterial
+          color={centreColor}
+          roughness={0.5}
+          emissive={centreColor}
+          emissiveIntensity={0.15}
+        />
+      </mesh>
+    </group>
+  );
+}
+
+// ── Ceramic vase ──────────────────────────────────────────────────────────────
+function Vase({ color }: { color: string }) {
+  return (
+    <group>
+      {/* Neck */}
+      <mesh position={[0, 0.18, 0]}>
+        <cylinderGeometry args={[0.06, 0.1, 0.12, 10]} />
+        <meshStandardMaterial color={color} roughness={0.4} metalness={0.1} />
+      </mesh>
+      {/* Body */}
+      <mesh position={[0, 0.0, 0]}>
+        <cylinderGeometry args={[0.14, 0.09, 0.28, 12]} />
+        <meshStandardMaterial color={color} roughness={0.4} metalness={0.1} />
+      </mesh>
+      {/* Base */}
+      <mesh position={[0, -0.16, 0]}>
+        <cylinderGeometry args={[0.09, 0.1, 0.06, 10]} />
+        <meshStandardMaterial color={color} roughness={0.5} />
+      </mesh>
+      {/* Gold rim band */}
+      <mesh position={[0, 0.23, 0]}>
+        <torusGeometry args={[0.065, 0.008, 6, 20]} />
+        <meshStandardMaterial color="#d4af37" roughness={0.2} metalness={0.9} />
+      </mesh>
+    </group>
+  );
+}
+
 function GardenDecorations({ theme }: { theme: RoomTheme }) {
-  const accentColor = hexCol(theme.accent);
-  const wallColor = hexCol(theme.wall);
+  const floorY = -ROOM_HEIGHT / 2;
+
+  // Three bouquet clusters along the back wall
+  const bouquets: Array<{
+    x: number;
+    z: number;
+    vaseColor: string;
+    flowers: Array<{
+      offset: [number, number];
+      petal: string;
+      centre: string;
+      count: number;
+      size: number;
+      scale: number;
+    }>;
+  }> = [
+    {
+      x: -1.6,
+      z: -ROOM_LENGTH + 0.5,
+      vaseColor: "#7a9a6a",
+      flowers: [
+        {
+          offset: [0, 0.44],
+          petal: "#ff6b6b",
+          centre: "#ffdd44",
+          count: 7,
+          size: 0.1,
+          scale: 1,
+        },
+        {
+          offset: [0.14, 0.5],
+          petal: "#ff9f43",
+          centre: "#fff176",
+          count: 6,
+          size: 0.085,
+          scale: 0.9,
+        },
+        {
+          offset: [-0.14, 0.48],
+          petal: "#ff6b9d",
+          centre: "#ffdd44",
+          count: 6,
+          size: 0.088,
+          scale: 0.9,
+        },
+        {
+          offset: [0.07, 0.6],
+          petal: "#ffd93d",
+          centre: "#ff6b6b",
+          count: 5,
+          size: 0.075,
+          scale: 0.8,
+        },
+      ],
+    },
+    {
+      x: 0,
+      z: -ROOM_LENGTH + 0.5,
+      vaseColor: "#8b7355",
+      flowers: [
+        {
+          offset: [0, 0.46],
+          petal: "#a29bfe",
+          centre: "#fdcb6e",
+          count: 8,
+          size: 0.105,
+          scale: 1.05,
+        },
+        {
+          offset: [-0.16, 0.5],
+          petal: "#fd79a8",
+          centre: "#ffeaa7",
+          count: 7,
+          size: 0.09,
+          scale: 0.95,
+        },
+        {
+          offset: [0.16, 0.5],
+          petal: "#74b9ff",
+          centre: "#ffdd44",
+          count: 6,
+          size: 0.09,
+          scale: 0.9,
+        },
+        {
+          offset: [0, 0.62],
+          petal: "#55efc4",
+          centre: "#fdcb6e",
+          count: 5,
+          size: 0.08,
+          scale: 0.85,
+        },
+        {
+          offset: [-0.08, 0.38],
+          petal: "#e17055",
+          centre: "#fff176",
+          count: 6,
+          size: 0.07,
+          scale: 0.8,
+        },
+      ],
+    },
+    {
+      x: 1.6,
+      z: -ROOM_LENGTH + 0.5,
+      vaseColor: "#6a7a8a",
+      flowers: [
+        {
+          offset: [0, 0.44],
+          petal: "#6bcb77",
+          centre: "#ffd93d",
+          count: 7,
+          size: 0.1,
+          scale: 1,
+        },
+        {
+          offset: [-0.13, 0.5],
+          petal: "#ff6b6b",
+          centre: "#fff176",
+          count: 6,
+          size: 0.085,
+          scale: 0.9,
+        },
+        {
+          offset: [0.13, 0.48],
+          petal: "#ffeaa7",
+          centre: "#e17055",
+          count: 5,
+          size: 0.08,
+          scale: 0.85,
+        },
+        {
+          offset: [0, 0.58],
+          petal: "#fd79a8",
+          centre: "#fdcb6e",
+          count: 6,
+          size: 0.075,
+          scale: 0.8,
+        },
+      ],
+    },
+  ];
 
   return (
     <group>
-      {/* Flower arrangement */}
-      {[-1.5, 0, 1.5].map((x, i) => (
-        <group key={i} position={[x, 0.5, -ROOM_LENGTH / 2 + 0.5]}>
-          {/* Vase */}
-          <mesh position={[0, -0.3, 0]}>
-            <cylinderGeometry args={[0.15, 0.1, 0.4, 8]} />
-            <meshStandardMaterial color="#8b7355" roughness={0.8} />
-          </mesh>
-          {/* Stems */}
-          {[0, 0.1, -0.1].map((ox, j) => (
-            <mesh key={j} position={[ox, 0.2, 0]} rotation={[0.1, 0, ox * 0.5]}>
-              <cylinderGeometry args={[0.02, 0.02, 0.6, 6]} />
-              <meshStandardMaterial color="#4a6741" roughness={0.9} />
-            </mesh>
-          ))}
-          {/* Flower blooms */}
-          {[
-            [0, 0.5],
-            [0.1, 0.45],
-            [-0.1, 0.55],
-          ].map(([ox, oy], j) => (
-            <mesh key={j} position={[ox, oy, 0]}>
-              <sphereGeometry args={[0.08, 8, 8]} />
-              <meshStandardMaterial
-                color={j === 0 ? "#ff6b6b" : j === 1 ? "#ffd93d" : "#6bcb77"}
-                roughness={0.8}
+      {bouquets.map((bouquet, bi) => (
+        <group key={bi} position={[bouquet.x, floorY, bouquet.z]}>
+          {/* Vase sitting on floor */}
+          <Vase color={bouquet.vaseColor} />
+
+          {/* Flowers growing out of vase */}
+          {bouquet.flowers.map((f, fi) => (
+            <group key={fi} position={[f.offset[0], f.offset[1], 0]}>
+              <Flower
+                petalColor={f.petal}
+                centreColor={f.centre}
+                stemColor="#4a6741"
+                petalCount={f.count}
+                petalSize={f.size}
+                scale={f.scale}
               />
-            </mesh>
+            </group>
           ))}
         </group>
       ))}
 
-      {/* Woven basket */}
-      <mesh
-        position={[2.5, -ROOM_HEIGHT / 2 + 0.25, -2]}
-        rotation={[0, 0.5, 0]}
-      >
-        <cylinderGeometry args={[0.4, 0.35, 0.5, 12]} />
-        <meshStandardMaterial color="#a08060" roughness={0.95} />
-      </mesh>
+      {/* Woven basket with flowers — floor level, side of room */}
+      <group position={[2.8, floorY, -2.5]}>
+        <mesh position={[0, 0.25, 0]}>
+          <cylinderGeometry args={[0.38, 0.32, 0.5, 14]} />
+          <meshStandardMaterial color="#a08060" roughness={0.95} />
+        </mesh>
+        {/* Basket rim */}
+        <mesh position={[0, 0.52, 0]}>
+          <torusGeometry args={[0.38, 0.03, 6, 20]} />
+          <meshStandardMaterial color="#8a6a40" roughness={0.9} />
+        </mesh>
+        {/* A few loose flowers in the basket */}
+        {(
+          [
+            [-0.1, 0.6, 0.05],
+            [0.1, 0.62, -0.05],
+            [0, 0.68, 0.1],
+          ] as [number, number, number][]
+        ).map((pos, fi) => (
+          <group key={fi} position={pos}>
+            <Flower
+              petalColor={
+                fi === 0 ? "#ff6b6b" : fi === 1 ? "#ffd93d" : "#a29bfe"
+              }
+              centreColor="#ffdd44"
+              stemColor="#4a6741"
+              petalCount={6}
+              petalSize={0.07}
+              scale={0.7}
+            />
+          </group>
+        ))}
+      </group>
 
-      {/* Bird house */}
+      {/* Bird house — wall mounted, unchanged */}
       <group position={[-2.5, 1.5, -ROOM_LENGTH / 2 + 0.3]}>
         <mesh>
           <boxGeometry args={[0.4, 0.5, 0.3]} />
-          <meshStandardMaterial color={wallColor} roughness={0.9} />
+          <meshStandardMaterial color={hexCol(theme.wall)} roughness={0.9} />
         </mesh>
         <mesh position={[0, 0.35, 0]}>
           <coneGeometry args={[0.35, 0.3, 4]} />
@@ -468,7 +725,7 @@ function GardenDecorations({ theme }: { theme: RoomTheme }) {
       </group>
 
       {/* Butterfly */}
-      <mesh position={[1, 2, -1]} rotation={[0, 0, 0]}>
+      <mesh position={[1, 2, -1]}>
         <boxGeometry args={[0.2, 0.15, 0.02]} />
         <meshStandardMaterial
           color="#ff9ff3"
@@ -483,9 +740,6 @@ function GardenDecorations({ theme }: { theme: RoomTheme }) {
 }
 
 function BeachDecorations({ theme }: { theme: RoomTheme }) {
-  const accentColor = hexCol(theme.accent);
-  const sandColor = hexCol(theme.floor);
-
   return (
     <group>
       {/* Seashells */}
@@ -540,7 +794,7 @@ function BeachDecorations({ theme }: { theme: RoomTheme }) {
       </group>
 
       {/* Lighthouse lamp */}
-      <group position={[-2, 0.5, -ROOM_LENGTH / 2 + 0.4]}>
+      <group position={[-2, -ROOM_HEIGHT / 2 + 0.6, -ROOM_LENGTH / 2 + 0.4]}>
         <mesh position={[0, -0.3, 0]}>
           <cylinderGeometry args={[0.2, 0.25, 0.6, 12]} />
           <meshStandardMaterial color="#ffffff" roughness={0.8} />

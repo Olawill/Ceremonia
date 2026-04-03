@@ -187,7 +187,7 @@ export function Corridor({
       {/* Theme-appropriate locked gate */}
       {isLocked && (
         <PortcullisGate
-          position={[0, 0, CORRIDOR_LENGTH / 2 - 0.2]}
+          position={[0, 0, -(CORRIDOR_LENGTH / 2 - 0.2)]}
           isLocked={isLocked}
           style={featureMode}
         />
