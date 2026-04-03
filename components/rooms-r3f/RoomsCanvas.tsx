@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Component, useRef, type ReactNode } from "react";
+import { Component, useEffect, useRef, type ReactNode } from "react";
 
 import { SpringCamera } from "@/components/rooms-r3f/camera/SpringCamera";
 import { CastleDoor } from "@/components/rooms-r3f/CastleDoor";
@@ -650,6 +650,12 @@ export function RoomsCanvas({
 
   const [boundaryKey, setBoundaryKey] = useState(0);
   const [canvasReady, setCanvasReady] = useState(false);
+
+  // Reset store state on every mount so stale phase/movement from a previous
+  // session never causes an initial flash or broken navigation state.
+  useEffect(() => {
+    useRoomsStore.getState().reset();
+  }, []);
 
   const activeSection = sections[activeRoom];
   const vibe = activeSection ? getVibe(activeSection.key) : SECTION_VIBE.hero;

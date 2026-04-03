@@ -43,7 +43,8 @@ export function SpringCamera({
   const setArrived = useRoomsStore((s) => s.setArrived);
 
   // Current logical Z position (before offset) — starts at camera's initial z
-  const currentZRef = useRef(camera.position.z - CAM_Z_INSIDE);
+  // const currentZRef = useRef(camera.position.z - CAM_Z_INSIDE);
+  const currentZRef = useRef(CAM_Z_OUTSIDE); // room 0, outside phase — correct starting target
   const fovRef = useRef(65);
   const hasArrivedRef = useRef(false);
 
@@ -72,17 +73,18 @@ export function SpringCamera({
   }, [roomPhase]);
 
   // Initialise Z from camera position on first frame
-  const initRef = useRef(false);
-  const lookAtPosRef = useRef(new THREE.Vector3(peekX, 0, 0));
+  // const initRef = useRef(false);
+  // const lookAtPosRef = useRef(new THREE.Vector3(peekX, 0, 0));
+  const lookAtPosRef = useRef(new THREE.Vector3(peekX, 0, CAM_Z_OUTSIDE - 2));
 
   useFrame((_, delta) => {
     const clampedDelta = Math.min(delta, 0.1); // cap to prevent huge jumps on tab regain
 
     // Initialise once camera is available
-    if (!initRef.current) {
-      currentZRef.current = camera.position.z - CAM_Z_INSIDE;
-      initRef.current = true;
-    }
+    // if (!initRef.current) {
+    //   currentZRef.current = camera.position.z - CAM_Z_INSIDE;
+    //   initRef.current = true;
+    // }
 
     // const targetZ = -targetIndexRef.current * TOTAL_SEGMENT;
 

@@ -37,7 +37,9 @@ export function NavigationControls({
   const canGoRight = roomPhase === "outside" || activeRoomIndex < hardMax;
 
   const goLeft = useCallback(() => {
-    const { roomPhase: phase } = useRoomsStore.getState();
+    const { roomPhase: phase, isMoving } = useRoomsStore.getState();
+    if (isMoving) return; // never interrupt mid-travel
+
     if (phase === "outside" && activeRoomIndex > 0) {
       // Go back inside the previous room
       onNavigate(activeRoomIndex - 1);
@@ -47,7 +49,13 @@ export function NavigationControls({
   }, [canGoLeft, activeRoomIndex, onNavigate]);
 
   const goRight = useCallback(() => {
-    const { roomPhase: phase, enterRoom: enter } = useRoomsStore.getState();
+    const {
+      roomPhase: phase,
+      enterRoom: enter,
+      isMoving,
+    } = useRoomsStore.getState();
+    if (isMoving) return; // never interrupt mid-travel
+
     if (phase === "outside") {
       enter();
     } else {

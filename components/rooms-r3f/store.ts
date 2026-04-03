@@ -14,6 +14,7 @@ interface RoomsState {
   setDateRevealed: (revealed: boolean) => void;
   setPeek: (target: number) => void;
   setTarget: (target: number) => void;
+  reset: () => void;
 }
 
 export const useRoomsStore = create<RoomsState>((set) => ({
@@ -41,4 +42,14 @@ export const useRoomsStore = create<RoomsState>((set) => ({
   setPeek: (target: number) => set({ peekTarget: target }),
 
   setTarget: (target: number) => set({ targetRoom: target }),
+
+  reset: () =>
+    set({
+      activeRoom: 0,
+      targetRoom: 0,
+      isMoving: false,
+      peekX: 0,
+      peekTarget: 0,
+      roomPhase: "outside",
+    }),
 }));
