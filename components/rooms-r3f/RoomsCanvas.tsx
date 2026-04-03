@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Component, useEffect, useRef, type ReactNode } from "react";
+import { Component, Suspense, useEffect, useRef, type ReactNode } from "react";
 
 import { SpringCamera } from "@/components/rooms-r3f/camera/SpringCamera";
 import { CastleDoor } from "@/components/rooms-r3f/CastleDoor";
@@ -22,6 +22,7 @@ import {
   type RoomTheme,
 } from "@/components/rooms-r3f/Room";
 import { useRoomsStore } from "@/components/rooms-r3f/store";
+import { preloadAllRoomTextures } from "@/lib/roomTextures";
 import { EventConfig } from "@/types/event";
 import { Environment, useCursor } from "@react-three/drei";
 import { useState } from "react";
@@ -33,6 +34,11 @@ const R3FCanvas = dynamic(
   () => import("@react-three/fiber").then((m) => m.Canvas),
   { ssr: false },
 );
+
+// Warm texture cache immediately when this module loads — before any Canvas mounts.
+// This means useTexture() inside room shells resolves synchronously, preventing
+// mid-render Suspense waterfalls that cause accessories to pop in after the room.
+preloadAllRoomTextures();
 
 interface Section {
   key: string;
@@ -66,6 +72,7 @@ interface SceneContentProps extends RoomsCanvasProps {
   targetRoom: number;
   isMoving: boolean;
   activeSectionKey?: string;
+  onReady?: () => void;
   vibe?: {
     fogColor: string;
     lightColor: string;
@@ -117,10 +124,7 @@ function InteractiveRoom({
     : Math.min(1, sections.length - 1);
   const canNudge = isActive && !isMoving && index < hardMax;
 
-  const roomPhase = useRoomsStore((s) => s.roomPhase);
-  const enterRoom = useRoomsStore((s) => s.enterRoom);
-  const isOutside = roomPhase === "outside" && isActive;
-  const isInside = roomPhase === "inside" && isActive;
+  const isInside = isActive && !isMoving;
 
   return (
     <group>
@@ -160,14 +164,7 @@ function InteractiveRoom({
           isOpen={activeRoomIndex > index}
           isLocked={!dateRevealed && index >= 1}
           onEnter={() => {
-            const { roomPhase, enterRoom } = useRoomsStore.getState();
-            if (roomPhase === "outside" && isActive) {
-              // Camera is outside — enter the room first, don't navigate yet
-              enterRoom();
-            } else if (canNudge) {
-              // Camera is inside — exit through back door to next room
-              onNudgeRight();
-            }
+            if (canNudge) onNudgeRight();
           }}
         />
       )}
@@ -313,6 +310,7 @@ function SceneContent({
   activeRoomIndex,
   targetRoom,
   isMoving,
+  onReady,
   isEditorPreview,
   activeSectionKey,
   config,
@@ -337,6 +335,16 @@ function SceneContent({
   };
 
   const peekTarget = useRoomsStore((s) => s.peekTarget);
+
+  // Signal ready on first mount — by this point Suspense has resolved all
+  // useTexture promises, so the full scene including accessories is loaded.
+  const onReadyRef = useRef(onReady);
+  useEffect(() => {
+    onReadyRef.current = onReady;
+  }, [onReady]);
+  useEffect(() => {
+    onReadyRef.current?.();
+  }, []); // empty deps — fires once after first render
 
   return (
     <>
@@ -583,6 +591,8 @@ function PanContainer({ children }: { children: React.ReactNode }) {
   const MAX_PEEK = 4.5; // world units — max horizontal look offset
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    // Don't intercept clicks on interactive elements (nav buttons etc.)
+    if ((e.target as HTMLElement).closest("button")) return;
     // Only left button or touch
     if (e.pointerType === "mouse" && e.button !== 0) return;
     dragStartX.current = e.clientX;
@@ -651,10 +661,18 @@ export function RoomsCanvas({
   const [boundaryKey, setBoundaryKey] = useState(0);
   const [canvasReady, setCanvasReady] = useState(false);
 
+  const canvasFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Reset store state on every mount so stale phase/movement from a previous
   // session never causes an initial flash or broken navigation state.
   useEffect(() => {
     useRoomsStore.getState().reset();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (canvasFallbackRef.current) clearTimeout(canvasFallbackRef.current);
+    };
   }, []);
 
   const activeSection = sections[activeRoom];
@@ -728,8 +746,12 @@ export function RoomsCanvas({
             frameloop="always"
             onCreated={({ gl }) => {
               gl.setClearColor(0x050505, 1);
-              // Defer ready signal — gives postprocessing time to mount without crashing
-              setTimeout(() => setCanvasReady(true), 400);
+              // Hard fallback — if Effects never signals ready (e.g. context attributes
+              // unavailable in undocked popup), clear the loading overlay after 4s.
+              canvasFallbackRef.current = setTimeout(
+                () => setCanvasReady(true),
+                4000,
+              );
 
               gl.domElement.addEventListener("webglcontextlost", (e) => {
                 console.warn("[RoomsCanvas] WebGL context lost");
@@ -746,20 +768,27 @@ export function RoomsCanvas({
               });
             }}
           >
-            <SceneContent
-              sections={sections}
-              theme={theme}
-              dateRevealed={dateRevealed}
-              onDateRevealed={onDateRevealed}
-              featureMode={featureMode}
-              isEditorPreview={isEditorPreview}
-              activeRoomIndex={activeRoom}
-              targetRoom={targetRoom}
-              isMoving={isMoving}
-              activeSectionKey={activeSection?.key}
-              vibe={vibe}
-              config={config}
-            />
+            <Suspense fallback={null}>
+              <SceneContent
+                sections={sections}
+                theme={theme}
+                dateRevealed={dateRevealed}
+                onDateRevealed={onDateRevealed}
+                featureMode={featureMode}
+                isEditorPreview={isEditorPreview}
+                activeRoomIndex={activeRoom}
+                targetRoom={targetRoom}
+                isMoving={isMoving}
+                activeSectionKey={activeSection?.key}
+                vibe={vibe}
+                config={config}
+                onReady={() => {
+                  if (canvasFallbackRef.current)
+                    clearTimeout(canvasFallbackRef.current);
+                  setCanvasReady(true);
+                }}
+              />
+            </Suspense>
           </R3FCanvas>
         </div>
       </WebGLErrorBoundary>

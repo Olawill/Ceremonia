@@ -7,9 +7,9 @@ interface RoomsState {
   dateRevealed: boolean;
   peekX: number;
   peekTarget: number;
-  roomPhase: "outside" | "inside";
+  // roomPhase: "outside" | "inside";
   navigate: (index: number) => void;
-  enterRoom: () => void;
+  // enterRoom: () => void;
   setArrived: () => void;
   setDateRevealed: (revealed: boolean) => void;
   setPeek: (target: number) => void;
@@ -24,12 +24,11 @@ export const useRoomsStore = create<RoomsState>((set) => ({
   dateRevealed: false,
   peekX: 0,
   peekTarget: 0,
-  roomPhase: "outside",
+  // roomPhase: "outside",
 
-  navigate: (index: number) =>
-    set({ targetRoom: index, isMoving: true, roomPhase: "outside" }),
+  navigate: (index: number) => set({ targetRoom: index, isMoving: true }),
 
-  enterRoom: () => set({ roomPhase: "inside", isMoving: true }),
+  // enterRoom: () => set({ roomPhase: "inside", isMoving: true }),
 
   setArrived: () =>
     set((state) => ({
@@ -50,6 +49,6 @@ export const useRoomsStore = create<RoomsState>((set) => ({
       isMoving: false,
       peekX: 0,
       peekTarget: 0,
-      roomPhase: "outside",
+      // roomPhase: "outside",
     }),
 }));

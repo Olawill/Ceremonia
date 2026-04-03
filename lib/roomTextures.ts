@@ -1,6 +1,8 @@
 "use client";
 
+import { useTexture } from "@react-three/drei";
 import * as THREE from "three";
+
 import { ROOM_LENGTH } from "@/components/rooms-r3f/constants";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -8,14 +10,20 @@ import { ROOM_LENGTH } from "@/components/rooms-r3f/constants";
 // ─────────────────────────────────────────────────────────────────────────────
 // Castle: stone walls, marble floor, fabric banners
 export const TEXTURE_CASTLE_WALL = "/textures/Rock025_1K-JPG_Color.jpg";
-export const TEXTURE_CASTLE_WALL_NORMAL = "/textures/Rock025_1K-JPG_NormalGL.jpg";
-export const TEXTURE_CASTLE_WALL_ROUGH = "/textures/Rock025_1K-JPG_Roughness.jpg";
+export const TEXTURE_CASTLE_WALL_NORMAL =
+  "/textures/Rock025_1K-JPG_NormalGL.jpg";
+export const TEXTURE_CASTLE_WALL_ROUGH =
+  "/textures/Rock025_1K-JPG_Roughness.jpg";
 export const TEXTURE_CASTLE_FLOOR = "/textures/Marble008_1K-JPG_Color.jpg";
-export const TEXTURE_CASTLE_FLOOR_NORMAL = "/textures/Marble008_1K-JPG_NormalGL.jpg";
-export const TEXTURE_CASTLE_FLOOR_ROUGH = "/textures/Marble008_1K-JPG_Roughness.jpg";
+export const TEXTURE_CASTLE_FLOOR_NORMAL =
+  "/textures/Marble008_1K-JPG_NormalGL.jpg";
+export const TEXTURE_CASTLE_FLOOR_ROUGH =
+  "/textures/Marble008_1K-JPG_Roughness.jpg";
 export const TEXTURE_CASTLE_CEILING = "/textures/Fabric036_1K-JPG_Color.jpg";
-export const TEXTURE_CASTLE_CEILING_NORMAL = "/textures/Fabric036_1K-JPG_NormalGL.jpg";
-export const TEXTURE_CASTLE_CEILING_ROUGH = "/textures/Fabric036_1K-JPG_Roughness.jpg";
+export const TEXTURE_CASTLE_CEILING_NORMAL =
+  "/textures/Fabric036_1K-JPG_NormalGL.jpg";
+export const TEXTURE_CASTLE_CEILING_ROUGH =
+  "/textures/Fabric036_1K-JPG_Roughness.jpg";
 export const TEXTURE_CASTLE_BANNER = "/textures/Fabric036_1K-JPG_Color.jpg";
 
 // Farm: wood plank walls/floor
@@ -25,30 +33,43 @@ export const TEXTURE_FARM_WOOD_ROUGH = "/textures/Wood046_1K-JPG_Roughness.jpg";
 
 // Garden: fabric lattice wall, ground grass
 export const TEXTURE_GARDEN_LATTICE = "/textures/Fabric036_1K-JPG_Color.jpg";
-export const TEXTURE_GARDEN_LATTICE_NORMAL = "/textures/Fabric036_1K-JPG_NormalGL.jpg";
-export const TEXTURE_GARDEN_LATTICE_ROUGH = "/textures/Fabric036_1K-JPG_Roughness.jpg";
+export const TEXTURE_GARDEN_LATTICE_NORMAL =
+  "/textures/Fabric036_1K-JPG_NormalGL.jpg";
+export const TEXTURE_GARDEN_LATTICE_ROUGH =
+  "/textures/Fabric036_1K-JPG_Roughness.jpg";
 export const TEXTURE_GARDEN_GROUND = "/textures/Ground014_1K-JPG_Color.jpg";
-export const TEXTURE_GARDEN_GROUND_NORMAL = "/textures/Ground014_1K-JPG_NormalGL.jpg";
-export const TEXTURE_GARDEN_GROUND_ROUGH = "/textures/Ground014_1K-JPG_Roughness.jpg";
+export const TEXTURE_GARDEN_GROUND_NORMAL =
+  "/textures/Ground014_1K-JPG_NormalGL.jpg";
+export const TEXTURE_GARDEN_GROUND_ROUGH =
+  "/textures/Ground014_1K-JPG_Roughness.jpg";
 
 // Beach: sand floor, marble drift accents
 export const TEXTURE_BEACH_SAND = "/textures/Ground014_1K-JPG_Color.jpg";
-export const TEXTURE_BEACH_SAND_NORMAL = "/textures/Ground014_1K-JPG_NormalGL.jpg";
-export const TEXTURE_BEACH_SAND_ROUGH = "/textures/Ground014_1K-JPG_Roughness.jpg";
+export const TEXTURE_BEACH_SAND_NORMAL =
+  "/textures/Ground014_1K-JPG_NormalGL.jpg";
+export const TEXTURE_BEACH_SAND_ROUGH =
+  "/textures/Ground014_1K-JPG_Roughness.jpg";
 export const TEXTURE_BEACH_DRIFT = "/textures/Marble010_1K-JPG_Color.jpg";
-export const TEXTURE_BEACH_DRIFT_NORMAL = "/textures/Marble010_1K-JPG_NormalGL.jpg";
-export const TEXTURE_BEACH_DRIFT_ROUGH = "/textures/Marble010_1K-JPG_Roughness.jpg";
+export const TEXTURE_BEACH_DRIFT_NORMAL =
+  "/textures/Marble010_1K-JPG_NormalGL.jpg";
+export const TEXTURE_BEACH_DRIFT_ROUGH =
+  "/textures/Marble010_1K-JPG_Roughness.jpg";
 
 // Arcade: facade/panel metal texture
 export const TEXTURE_ARCADE_METAL = "/textures/Facade006_1K-JPG_Color.jpg";
-export const TEXTURE_ARCADE_METAL_NORMAL = "/textures/Facade006_1K-JPG_NormalGL.jpg";
-export const TEXTURE_ARCADE_METAL_ROUGH = "/textures/Facade006_1K-JPG_Roughness.jpg";
-export const TEXTURE_ARCADE_METAL_METAL = "/textures/Facade006_1K-JPG_Metalness.jpg";
+export const TEXTURE_ARCADE_METAL_NORMAL =
+  "/textures/Facade006_1K-JPG_NormalGL.jpg";
+export const TEXTURE_ARCADE_METAL_ROUGH =
+  "/textures/Facade006_1K-JPG_Roughness.jpg";
+export const TEXTURE_ARCADE_METAL_METAL =
+  "/textures/Facade006_1K-JPG_Metalness.jpg";
 
 // Corridor stone
 export const TEXTURE_CORRIDOR_STONE = "/textures/Rock025_1K-JPG_Color.jpg";
-export const TEXTURE_CORRIDOR_STONE_NORMAL = "/textures/Rock025_1K-JPG_NormalGL.jpg";
-export const TEXTURE_CORRIDOR_STONE_ROUGH = "/textures/Rock025_1K-JPG_Roughness.jpg";
+export const TEXTURE_CORRIDOR_STONE_NORMAL =
+  "/textures/Rock025_1K-JPG_NormalGL.jpg";
+export const TEXTURE_CORRIDOR_STONE_ROUGH =
+  "/textures/Rock025_1K-JPG_Roughness.jpg";
 
 // ── Colour helpers ────────────────────────────────────────────────────────────
 export function hexCol(hex: string): THREE.Color {
@@ -65,7 +86,10 @@ export function hexAlpha(hex: string, alpha: number): string {
 }
 
 // ── Procedural floor tile texture ────────────────────────────────────────────
-export function makeFloorTexture(col1: string, col2: string): THREE.CanvasTexture {
+export function makeFloorTexture(
+  col1: string,
+  col2: string,
+): THREE.CanvasTexture {
   const size = 256;
   const c = document.createElement("canvas");
   c.width = c.height = size;
@@ -549,4 +573,51 @@ export function makeEventPlaqueTexture(
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
   return tex;
+}
+
+// ── Preload all textures at module level ──────────────────────────────────────
+// Called once when the module is first imported, warming the drei texture cache
+// so useTexture() returns synchronously inside components — no mid-render suspend.
+export function preloadAllRoomTextures() {
+  useTexture.preload([
+    // Castle
+    TEXTURE_CASTLE_WALL,
+    TEXTURE_CASTLE_WALL_NORMAL,
+    TEXTURE_CASTLE_WALL_ROUGH,
+    TEXTURE_CASTLE_FLOOR,
+    TEXTURE_CASTLE_FLOOR_NORMAL,
+    TEXTURE_CASTLE_FLOOR_ROUGH,
+    TEXTURE_CASTLE_CEILING,
+    TEXTURE_CASTLE_CEILING_NORMAL,
+    TEXTURE_CASTLE_CEILING_ROUGH,
+    TEXTURE_CASTLE_BANNER,
+    // Farm
+    TEXTURE_FARM_WOOD,
+    TEXTURE_FARM_WOOD_NORMAL,
+    TEXTURE_FARM_WOOD_ROUGH,
+    // Garden
+    TEXTURE_GARDEN_LATTICE,
+    TEXTURE_GARDEN_LATTICE_NORMAL,
+    TEXTURE_GARDEN_LATTICE_ROUGH,
+    TEXTURE_GARDEN_GROUND,
+    TEXTURE_GARDEN_GROUND_NORMAL,
+    TEXTURE_GARDEN_GROUND_ROUGH,
+    // Beach
+    TEXTURE_BEACH_SAND,
+    TEXTURE_BEACH_SAND_NORMAL,
+    TEXTURE_BEACH_SAND_ROUGH,
+    TEXTURE_BEACH_DRIFT,
+    TEXTURE_BEACH_DRIFT_NORMAL,
+    TEXTURE_BEACH_DRIFT_ROUGH,
+    // Arcade
+    TEXTURE_ARCADE_METAL,
+    TEXTURE_ARCADE_METAL_NORMAL,
+    TEXTURE_ARCADE_METAL_ROUGH,
+    TEXTURE_ARCADE_METAL_METAL,
+    "/textures/Facade006_1K-JPG_Color.jpg",
+    // Corridor stone (shared with castle wall)
+    TEXTURE_CORRIDOR_STONE,
+    TEXTURE_CORRIDOR_STONE_NORMAL,
+    TEXTURE_CORRIDOR_STONE_ROUGH,
+  ]);
 }

@@ -26,48 +26,28 @@ export function NavigationControls({
   maxAllowedIndex,
   dateRevealed,
 }: NavigationControlsProps) {
-  const canGoLeft = activeRoomIndex > 0;
   // Date reveal gate: before reveal, can only navigate within the first 2 rooms (hero + scratch)
   const hardMax = dateRevealed
     ? sections.length - 1
     : Math.min(1, sections.length - 1);
 
-  const roomPhase = useRoomsStore((s) => s.roomPhase);
-  // Right is enabled if: outside (can enter), or inside and there's a next room
-  const canGoRight = roomPhase === "outside" || activeRoomIndex < hardMax;
+  const isMoving = useRoomsStore((s) => s.isMoving);
+
+  const canGoLeft = !isMoving && activeRoomIndex > 0;
+  const canGoRight = !isMoving && activeRoomIndex < hardMax;
 
   const goLeft = useCallback(() => {
-    const { roomPhase: phase, isMoving } = useRoomsStore.getState();
-    if (isMoving) return; // never interrupt mid-travel
-
-    if (phase === "outside" && activeRoomIndex > 0) {
-      // Go back inside the previous room
-      onNavigate(activeRoomIndex - 1);
-    } else if (phase === "inside" && canGoLeft) {
-      onNavigate(activeRoomIndex - 1);
-    }
-  }, [canGoLeft, activeRoomIndex, onNavigate]);
+    if (useRoomsStore.getState().isMoving) return;
+    if (activeRoomIndex > 0) onNavigate(activeRoomIndex - 1);
+  }, [activeRoomIndex, onNavigate]);
 
   const goRight = useCallback(() => {
-    const {
-      roomPhase: phase,
-      enterRoom: enter,
-      isMoving,
-    } = useRoomsStore.getState();
-    if (isMoving) return; // never interrupt mid-travel
-
-    if (phase === "outside") {
-      enter();
-    } else {
-      // Inside — navigate to next room only if allowed
-      const { dateRevealed: revealed } = useRoomsStore.getState();
-      const max = revealed
-        ? sections.length - 1
-        : Math.min(1, sections.length - 1);
-      if (activeRoomIndex < max) {
-        onNavigate(activeRoomIndex + 1);
-      }
-    }
+    if (useRoomsStore.getState().isMoving) return;
+    const { dateRevealed: revealed } = useRoomsStore.getState();
+    const max = revealed
+      ? sections.length - 1
+      : Math.min(1, sections.length - 1);
+    if (activeRoomIndex < max) onNavigate(activeRoomIndex + 1);
   }, [activeRoomIndex, onNavigate, sections.length]);
 
   useEffect(() => {

@@ -26,7 +26,7 @@ export const DUST_COUNT_PREVIEW = 80;
 export const CAM_Z_OUTSIDE = 3.5; // positive = in front of room front face
 
 // Camera inside a room — standing inside, looking toward back wall
-export const CAM_Z_INSIDE = -3.0; // negative = past the front face, inside
+export const CAM_Z_INSIDE = -2.5; // negative = past the front face, inside
 
 // ── Travel ease (for legacy imperative engine) ───────────────────────────────
 export const TRAVEL_EASE = 0.072;
