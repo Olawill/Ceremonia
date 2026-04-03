@@ -362,8 +362,8 @@ function SceneContent({
         attach="fog"
         args={[
           vibe?.fogColor ?? theme.bg,
-          vibe?.fogNear ?? 5,
-          vibe?.fogFar ?? 35,
+          vibe?.fogNear ?? 8,
+          vibe?.fogFar ?? 15,
         ]}
       />
 
@@ -371,20 +371,19 @@ function SceneContent({
       <color attach="background" args={[vibe?.fogColor ?? theme.bg]} />
 
       {/* Per-room point lights */}
-      {sections.map((_, i) => (
-        <pointLight
-          key={i}
-          position={[0, 3, -i * TOTAL_SEGMENT]}
-          intensity={i === activeRoomIndex ? 2 : 0.5}
-          color={
-            i === activeRoomIndex
-              ? (vibe?.lightColor ?? theme.gold)
-              : theme.gold
-          }
-          distance={12}
-          decay={2}
-        />
-      ))}
+      {sections.map((_, i) => {
+        if (i !== activeRoomIndex) return null;
+        return (
+          <pointLight
+            key={i}
+            position={[0, 3, -i * TOTAL_SEGMENT]}
+            intensity={i === activeRoomIndex ? 2 : 0.5}
+            color={vibe?.lightColor ?? theme.gold}
+            distance={12}
+            decay={2}
+          />
+        );
+      })}
 
       {/* Dust particles */}
       <DustParticles isEditorPreview={isEditorPreview} />
@@ -418,10 +417,9 @@ function SceneContent({
 
       {/* Rooms and corridors */}
       {sections.map((section, index) => {
-        // Only render the active room and its immediate neighbours.
-        // Rooms further away are hidden by fog anyway, and culling them
-        // prevents geometry bleed-through and saves draw calls.
-        if (Math.abs(index - activeRoomIndex) > 1) return null;
+        // Only render the active room and the target room (during travel).
+        // Tight fog hides everything beyond the current room's back wall.
+        if (index !== activeRoomIndex && index !== targetRoom) return null;
 
         return (
           <InteractiveRoom
@@ -460,120 +458,120 @@ const SECTION_VIBE: Record<
   hero: {
     fogColor: "#0a0508",
     lightColor: "#ffe8b0",
-    fogNear: 12,
-    fogFar: 45,
+    fogNear: 8,
+    fogFar: 15,
     accentHex: "#d4af37",
   },
   scratch: {
     fogColor: "#0a0510",
     lightColor: "#e8d0ff",
-    fogNear: 12,
-    fogFar: 40,
+    fogNear: 8,
+    fogFar: 15,
     accentHex: "#b08aff",
   },
   countdown: {
     fogColor: "#080a10",
     lightColor: "#c0e8ff",
-    fogNear: 12,
-    fogFar: 46,
+    fogNear: 8,
+    fogFar: 15,
     accentHex: "#60c0ff",
   },
   timeline: {
     fogColor: "#0a0805",
     lightColor: "#e8f0c0",
-    fogNear: 12,
-    fogFar: 46,
+    fogNear: 8,
+    fogFar: 15,
     accentHex: "#c0e080",
   },
   gallery: {
     fogColor: "#0a0508",
     lightColor: "#ffd0e8",
-    fogNear: 12,
-    fogFar: 46,
+    fogNear: 8,
+    fogFar: 15,
     accentHex: "#ff80c0",
   },
   venue: {
     fogColor: "#050a08",
     lightColor: "#c0ffe8",
-    fogNear: 12,
-    fogFar: 46,
+    fogNear: 8,
+    fogFar: 15,
     accentHex: "#40e0a0",
   },
   dresscode: {
     fogColor: "#0a0508",
     lightColor: "#ffc0e0",
-    fogNear: 12,
-    fogFar: 46,
+    fogNear: 8,
+    fogFar: 15,
     accentHex: "#ff60b0",
   },
   accommodation: {
     fogColor: "#050808",
     lightColor: "#c0f0e8",
-    fogNear: 12,
-    fogFar: 46,
+    fogNear: 8,
+    fogFar: 15,
     accentHex: "#40c0b0",
   },
   eventParty: {
     fogColor: "#0a0805",
     lightColor: "#ffe080",
-    fogNear: 12,
-    fogFar: 46,
+    fogNear: 8,
+    fogFar: 15,
     accentHex: "#ffd040",
   },
   faq: {
     fogColor: "#080810",
     lightColor: "#d0e8ff",
-    fogNear: 12,
-    fogFar: 46,
+    fogNear: 8,
+    fogFar: 15,
     accentHex: "#6090ff",
   },
   livestream: {
     fogColor: "#080810",
     lightColor: "#e0c0ff",
-    fogNear: 12,
-    fogFar: 46,
+    fogNear: 8,
+    fogFar: 15,
     accentHex: "#a060ff",
   },
   travel: {
     fogColor: "#050a08",
     lightColor: "#c0ffc0",
-    fogNear: 12,
-    fogFar: 46,
+    fogNear: 8,
+    fogFar: 15,
     accentHex: "#40ff80",
   },
   menu: {
     fogColor: "#100a05",
     lightColor: "#ffe0a0",
-    fogNear: 12,
-    fogFar: 46,
+    fogNear: 8,
+    fogFar: 15,
     accentHex: "#ffb040",
   },
   rsvp: {
     fogColor: "#050510",
     lightColor: "#e0d0ff",
-    fogNear: 12,
-    fogFar: 46,
+    fogNear: 8,
+    fogFar: 15,
     accentHex: "#9080ff",
   },
   registry: {
     fogColor: "#0a0510",
     lightColor: "#ffd0e0",
-    fogNear: 12,
-    fogFar: 46,
+    fogNear: 8,
+    fogFar: 15,
     accentHex: "#ff80a0",
   },
   guestbook: {
     fogColor: "#080510",
     lightColor: "#f0e0ff",
-    fogNear: 12,
-    fogFar: 46,
+    fogNear: 8,
+    fogFar: 15,
     accentHex: "#c080ff",
   },
   finale: {
     fogColor: "#0a0505",
     lightColor: "#ffe0d0",
-    fogNear: 12,
-    fogFar: 46,
+    fogNear: 8,
+    fogFar: 15,
     accentHex: "#ff8060",
   },
 };
