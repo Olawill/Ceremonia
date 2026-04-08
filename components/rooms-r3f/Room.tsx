@@ -87,7 +87,13 @@ export const FEATURE_THEMES: Record<FeatureMode, RoomTheme> = {
   },
 };
 
-function CastleDecorations({ theme }: { theme: RoomTheme }) {
+function CastleDecorations({
+  theme,
+  sectionKey,
+}: {
+  theme: RoomTheme;
+  sectionKey?: string;
+}) {
   const goldColor = hexCol(theme.accent);
   const darkColor = hexCol(theme.wallDark);
 
@@ -156,50 +162,57 @@ function CastleDecorations({ theme }: { theme: RoomTheme }) {
       </group>
 
       {/* Shield on wall - Right */}
-      <group position={[3.2, 0.5, -ROOM_LENGTH / 2 + 0.15]}>
-        <mesh>
-          <boxGeometry args={[0.8, 1.0, 0.1]} />
-          <meshStandardMaterial
-            color={goldColor}
-            roughness={0.4}
-            metalness={0.5}
-          />
-        </mesh>
-        {/* Shield cross */}
-        <mesh position={[0, 0, 0.06]}>
-          <boxGeometry args={[0.6, 0.08, 0.02]} />
-          <meshStandardMaterial color={darkColor} />
-        </mesh>
-        <mesh position={[0, 0, 0.06]}>
-          <boxGeometry args={[0.08, 0.8, 0.02]} />
-          <meshStandardMaterial color={darkColor} />
-        </mesh>
-      </group>
+      {sectionKey &&
+        !["hero", "countdown", "timeline"].includes(sectionKey) && (
+          <group position={[3.2, 0.5, -ROOM_LENGTH / 2 + 0.15]}>
+            <mesh>
+              <boxGeometry args={[0.8, 1.0, 0.1]} />
+              <meshStandardMaterial
+                color={goldColor}
+                roughness={0.4}
+                metalness={0.5}
+              />
+            </mesh>
+            {/* Shield cross */}
+            <mesh position={[0, 0, 0.06]}>
+              <boxGeometry args={[0.6, 0.08, 0.02]} />
+              <meshStandardMaterial color={darkColor} />
+            </mesh>
+            <mesh position={[0, 0, 0.06]}>
+              <boxGeometry args={[0.08, 0.8, 0.02]} />
+              <meshStandardMaterial color={darkColor} />
+            </mesh>
+          </group>
+        )}
 
       {/* Banner/Hanging tapestry */}
-      <mesh
-        position={[-2, 1.5, -ROOM_LENGTH / 2 + 0.2]}
-        rotation={[0, 0, 0.05]}
-      >
-        <planeGeometry args={[0.8, 1.8]} />
-        <meshStandardMaterial
-          color={darkColor}
-          roughness={0.9}
-          side={THREE.DoubleSide}
-        />
-      </mesh>
-      {/* Banner rod */}
-      <mesh
-        position={[-2, 2.45, -ROOM_LENGTH / 2 + 0.15]}
-        rotation={[0, 0, Math.PI / 2]}
-      >
-        <cylinderGeometry args={[0.03, 0.03, 1.0, 8]} />
-        <meshStandardMaterial
-          color={goldColor}
-          roughness={0.2}
-          metalness={0.8}
-        />
-      </mesh>
+      {sectionKey && !["timeline"].includes(sectionKey) && (
+        <>
+          <mesh
+            position={[-2, 1.5, -ROOM_LENGTH / 2 + 0.2]}
+            rotation={[0, 0, 0.05]}
+          >
+            <planeGeometry args={[0.8, 1.8]} />
+            <meshStandardMaterial
+              color={darkColor}
+              roughness={0.9}
+              side={THREE.DoubleSide}
+            />
+          </mesh>
+          {/* Banner rod */}
+          <mesh
+            position={[-2, 2.45, -ROOM_LENGTH / 2 + 0.15]}
+            rotation={[0, 0, Math.PI / 2]}
+          >
+            <cylinderGeometry args={[0.03, 0.03, 1.0, 8]} />
+            <meshStandardMaterial
+              color={goldColor}
+              roughness={0.2}
+              metalness={0.8}
+            />
+          </mesh>
+        </>
+      )}
 
       {/* Candelabra on side table */}
       <group position={[2.5, 0.5, -2]}>
@@ -853,7 +866,11 @@ export function Room({
         <>
           {/* Theme-appropriate room shell */}
           {featureMode === "castle" && (
-            <CastleShell position={[0, 0, 0]} theme={theme} />
+            <CastleShell
+              position={[0, 0, 0]}
+              theme={theme}
+              sectionKey={sectionKey}
+            />
           )}
           {featureMode === "farm" && (
             <FarmShell position={[0, 0, 0]} theme={theme} />
@@ -869,9 +886,11 @@ export function Room({
           )}
 
           {/* Feature-specific decorations (themed objects / furnishings) */}
-          {featureMode === "castle" && <CastleDecorations theme={theme} />}
+          {featureMode === "castle" && (
+            <CastleDecorations theme={theme} sectionKey={sectionKey} />
+          )}
           {featureMode === "farm" && <FarmDecorations theme={theme} />}
-          {featureMode === "arcade" && <ArcadeDecorations theme={theme} />}
+          {/* {featureMode === "arcade" && <ArcadeDecorations theme={theme} />} */}
           {featureMode === "garden" && <GardenDecorations theme={theme} />}
           {featureMode === "beach" && <BeachDecorations theme={theme} />}
 

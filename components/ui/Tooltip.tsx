@@ -142,9 +142,9 @@ export function Tooltip<T extends React.ElementType = "button">({
   }, [showWhen]);
 
   const arrowClasses: Record<TooltipPosition, string> = {
-    top: "bottom-[-4px] left-1/2 -translate-x-1/2 border-l border-t border-dash-gold/60",
+    top: "bottom-[-4px] left-1/2 -translate-x-1/2 border-r border-b border-dash-gold/60",
     bottom:
-      "top-[-4px] left-1/2 -translate-x-1/2 border-r border-b border-dash-gold/60",
+      "top-[-4px] left-1/2 -translate-x-1/2 border-l border-t border-dash-gold/60",
     left: "right-[-4px] top-1/2 -translate-y-1/2 border-r border-t border-dash-gold/60",
     right:
       "left-[-4px] top-1/2 -translate-y-1/2 border-l border-b border-dash-gold/60",

@@ -1,19 +1,38 @@
 "use client";
 
+import { useFrame } from "@react-three/fiber";
+import { useRef } from "react";
+import * as THREE from "three";
+
 import {
   ROOM_HEIGHT,
   ROOM_LENGTH,
   ROOM_WIDTH,
 } from "@/components/rooms-r3f/constants";
 import type { FeatureMode, RoomTheme } from "@/components/rooms-r3f/Room";
+
 import { getHost1Name, getHost2Name } from "@/lib/eventHelpers";
 import { EventConfig, getVocabulary } from "@/types/event";
-import { useFrame } from "@react-three/fiber";
-import { useRef } from "react";
-import * as THREE from "three";
-import { CountdownRoom } from "./sections/CountdownRoom";
-import { HeroRoom } from "./sections/HeroRoom";
-import { ScratchRoom } from "./sections/ScratchRoom";
+
+import { AccommodationRoom } from "@/components/rooms-r3f/rooms/sections/AccommodationRoom";
+import { CountdownRoom } from "@/components/rooms-r3f/rooms/sections/CountdownRoom";
+import { DressCodeRoom } from "@/components/rooms-r3f/rooms/sections/DressCodeRoom";
+import { EventPartyRoom } from "@/components/rooms-r3f/rooms/sections/EventPartyRoom";
+import { FAQRoom } from "@/components/rooms-r3f/rooms/sections/FAQRoom";
+import { GalleryPhotoRoom } from "@/components/rooms-r3f/rooms/sections/GalleryPhotoRoom";
+import { HeroRoom } from "@/components/rooms-r3f/rooms/sections/HeroRoom";
+import {
+  FinaleRoom,
+  GuestbookRoom,
+  LivestreamRoom,
+  MenuRoom,
+  RegistryRoom,
+  RSVPRoom,
+  TravelRoom,
+} from "@/components/rooms-r3f/rooms/sections/Remainingrooms";
+import { ScratchRoom } from "@/components/rooms-r3f/rooms/sections/ScratchRoom";
+import { TimelineRoom } from "@/components/rooms-r3f/rooms/sections/TimelineRoom";
+import { VenueRoom } from "@/components/rooms-r3f/rooms/sections/VenueRoom";
 
 interface SectionPropsProps {
   sectionKey: string;
@@ -822,13 +841,149 @@ export function SectionProps({
           }
         />
       );
-    case "faq":
-      return <LibraryProps featureMode={featureMode} theme={theme} />;
+    case "timeline":
+      return (
+        <TimelineRoom
+          featureMode={featureMode}
+          theme={theme}
+          events={config?.timeline}
+          sectionLabel={
+            config ? getVocabulary(config.eventType).timelineLabel : undefined
+          }
+        />
+      );
     case "venue":
-      return <MapRoomProps featureMode={featureMode} theme={theme} />;
+      return (
+        <VenueRoom
+          featureMode={featureMode}
+          theme={theme}
+          details={config?.venueDetails}
+          sectionLabel={
+            config ? getVocabulary(config.eventType).venueLabel : undefined
+          }
+        />
+      );
+    case "gallery":
+      return (
+        <GalleryPhotoRoom
+          featureMode={featureMode}
+          theme={theme}
+          photos={config?.galleryPhotos}
+          sectionLabel={
+            config ? getVocabulary(config.eventType).galleryLabel : undefined
+          }
+        />
+      );
+    case "dresscode":
+      return config?.dressCode ? (
+        <DressCodeRoom
+          featureMode={featureMode}
+          theme={theme}
+          dressCode={config.dressCode}
+        />
+      ) : (
+        <DefaultProps featureMode={featureMode} theme={theme} />
+      );
+    case "accommodation":
+      return (
+        <AccommodationRoom
+          featureMode={featureMode}
+          theme={theme}
+          accommodation={config?.accommodation}
+          sectionLabel={
+            config
+              ? getVocabulary(config.eventType).accommodationCardLabel
+              : undefined
+          }
+        />
+      );
+
+    case "eventParty":
+      return (
+        <EventPartyRoom
+          featureMode={featureMode}
+          theme={theme}
+          members={config?.eventParty}
+          bride={config?.bride}
+          groom={config?.groom}
+        />
+      );
+
+    case "faq":
+      return (
+        <FAQRoom
+          featureMode={featureMode}
+          theme={theme}
+          items={config?.faq}
+          sectionLabel={
+            config ? getVocabulary(config.eventType).faqLabel : undefined
+          }
+        />
+      );
+
+    case "rsvp":
+      return (
+        <RSVPRoom
+          featureMode={featureMode}
+          theme={theme}
+          rsvpDeadline={config?.rsvpDeadline}
+          eventLabel={
+            config ? getVocabulary(config.eventType).eventLabel : undefined
+          }
+        />
+      );
+
+    case "guestbook":
+      return <GuestbookRoom featureMode={featureMode} theme={theme} />;
+
+    case "travel":
+      return (
+        <TravelRoom
+          featureMode={featureMode}
+          theme={theme}
+          items={config?.travelItems}
+          city={config?.venueDetails?.find((d) => d.label === "Location")?.sub}
+        />
+      );
+
     case "menu":
-      return <BanquetProps featureMode={featureMode} theme={theme} />;
-    default:
-      return <DefaultProps featureMode={featureMode} theme={theme} />;
+      return (
+        <MenuRoom
+          featureMode={featureMode}
+          theme={theme}
+          courses={config?.menuCourses}
+          bride={config?.bride}
+          groom={config?.groom}
+          date={config?.date}
+        />
+      );
+
+    case "livestream":
+      return (
+        <LivestreamRoom
+          featureMode={featureMode}
+          theme={theme}
+          url={config?.livestreamUrl}
+          title={config?.livestreamTitle}
+          date={config?.date}
+          livestreamTime={config?.livestreamTime}
+        />
+      );
+
+    case "registry":
+      return (
+        <RegistryRoom featureMode={featureMode} theme={theme} itemCount={0} />
+      );
+
+    case "finale":
+      return (
+        <FinaleRoom
+          featureMode={featureMode}
+          theme={theme}
+          bride={config?.bride}
+          groom={config?.groom}
+          date={config?.date}
+        />
+      );
   }
 }

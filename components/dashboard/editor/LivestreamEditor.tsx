@@ -42,6 +42,18 @@ export function LivestreamEditor({ config, onChange }: Props) {
             />
           </Field>
 
+          <Field
+            label="Stream Start Time"
+            hint="Stream unlocks 30 min before this time"
+          >
+            <Input
+              type="time"
+              value={config.livestreamTime ?? "12:30:00"}
+              onChange={(e) => onChange({ livestreamTime: e.target.value })}
+              className="dash-input w-full mt-1"
+            />
+          </Field>
+
           {/* Platform detection preview */}
           {config.livestreamUrl &&
             (() => {

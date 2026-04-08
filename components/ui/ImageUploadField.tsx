@@ -1,6 +1,5 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
 import clsx from "clsx";
 import {
   LinkIcon,
@@ -27,20 +26,19 @@ type Tab = "upload" | "url" | "stock";
 
 interface Props {
   value: string | undefined;
-  onChange: (url: string | undefined) => void;
+  onChange: (url: string | File | undefined) => void;
   hint?: string;
 }
 
 export function ImageUploadField({ value, onChange, hint }: Props) {
   const { api } = useApi();
-  const { getToken } = useAuth();
   const { toast } = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<Tab>("upload");
-  const [uploading, setUploading] = useState(false);
   const [urlInput, setUrlInput] = useState("");
+
   // Stock search state
   const [stockQuery, setStockQuery] = useState("wedding");
   const [stockResults, setStockResults] = useState<StockPhoto[]>([]);
@@ -68,85 +66,32 @@ export function ImageUploadField({ value, onChange, hint }: Props) {
     }
   }, [photoCategory]);
 
-  const handleFile = async (file: File) => {
-    setUploading(true);
-    try {
-      const { data, error } = await api.upload.post({ file, type: "photo" });
-      if (error) {
-        toast.error("Upload failed");
-        return;
-      }
-      if (!data?.url) throw new Error("No URL returned");
-      onChange(data.url);
-      setOpen(false);
-    } catch (e: any) {
-      toast.error(e.message ?? "Upload failed");
-    } finally {
-      setUploading(false);
-    }
+  const handleFile = (file: File) => {
+    onChange(file); // updateConfig intercepts File, creates blob URL, queues it
+    setOpen(false);
   };
 
-  const handleUrl = async () => {
+  const handleUrl = () => {
     const url = urlInput.trim();
     if (!url) return;
-
-    // Check url is valid
     try {
       new URL(url);
     } catch {
       toast.error("Please enter a valid URL including https://");
       return;
     }
-
     if (!url.startsWith("https://") && !url.startsWith("http://")) {
       toast.error("URL must start with http:// or https://");
       return;
     }
-
-    setUploading(true);
-    try {
-      const token = await getToken();
-      const res = await fetch("/api/upload/from-url", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ url, type: "photo" }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message ?? "Failed");
-      onChange(data.url);
-      setUrlInput("");
-      setOpen(false);
-    } catch (e: any) {
-      toast.error(e.message ?? "Could not fetch URL");
-    } finally {
-      setUploading(false);
-    }
+    onChange(url); // updateConfig detects external URL, queues for proxy on save
+    setUrlInput("");
+    setOpen(false);
   };
 
-  const handleStock = async (fullUrl: string) => {
-    setUploading(true);
-    try {
-      const token = await getToken();
-      const res = await fetch("/api/upload/from-url", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ url: fullUrl, type: "photo" }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message ?? "Failed");
-      onChange(data.url);
-      setOpen(false);
-    } catch (e: any) {
-      toast.error(e.message ?? "Could not use stock image");
-    } finally {
-      setUploading(false);
-    }
+  const handleStock = (fullUrl: string) => {
+    onChange(fullUrl);
+    setOpen(false);
   };
 
   const searchStock = async (q: string, page = 1) => {
@@ -283,13 +228,9 @@ export function ImageUploadField({ value, onChange, hint }: Props) {
                 onClick={() => inputRef.current?.click()}
                 className="flex flex-col items-center gap-2 rounded-lg border-2 border-dashed border-[#D4AF3760] py-5! cursor-pointer hover:border-[#D4AF3780] hover:bg-[#D4AF3705] transition-colors"
               >
-                {uploading ? (
-                  <Loader2Icon className="size-4 text-[#D4AF37] animate-spin" />
-                ) : (
-                  <UploadIcon className="size-4 text-[#D4AF3780]" />
-                )}
+                <UploadIcon className="size-4 text-[#D4AF3780]" />
                 <span className="font-label text-[8px] tracking-[0.3em] uppercase text-[#D4AF3780]">
-                  {uploading ? "Uploading…" : "Click or drag to upload"}
+                  Click or drag to upload
                 </span>
                 <input
                   ref={inputRef}
@@ -335,16 +276,10 @@ export function ImageUploadField({ value, onChange, hint }: Props) {
                 </div>
                 <button
                   onClick={handleUrl}
-                  disabled={!urlInput.trim() || uploading}
+                  disabled={!urlInput.trim()}
                   className="w-full py-2! rounded-lg font-label text-[8px] tracking-[0.3em] uppercase dash-btn-primary disabled:opacity-40 flex items-center justify-center gap-1.5"
                 >
-                  {uploading ? (
-                    <>
-                      <Loader2Icon className="size-3 animate-spin" /> Saving…
-                    </>
-                  ) : (
-                    "Use this URL"
-                  )}
+                  Use this URL
                 </button>
               </div>
             )}
@@ -430,65 +365,51 @@ export function ImageUploadField({ value, onChange, hint }: Props) {
                     </p>
                   )}
 
-                {/* Saving overlay */}
-                {uploading ? (
-                  <div className="flex items-center justify-center gap-2 py-4! text-[#D4AF37]">
-                    <Loader2Icon className="size-3.5 animate-spin" />
-                    <span className="font-label text-[8px] tracking-widest uppercase">
-                      Saving…
-                    </span>
+                <div className="overflow-y-auto max-h-52 space-y-2!">
+                  <div className="grid grid-cols-4 gap-1">
+                    {stockResults.map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => handleStock(p.full)}
+                        title={p.label}
+                        className="relative group rounded overflow-hidden aspect-square cursor-pointer"
+                      >
+                        <img
+                          src={p.thumb}
+                          alt={p.label}
+                          className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all" />
+                      </button>
+                    ))}
                   </div>
-                ) : (
-                  <>
-                    <div className="overflow-y-auto max-h-52 space-y-2!">
-                      <div className="grid grid-cols-4 gap-1">
-                        {stockResults.map((p) => (
-                          <button
-                            key={p.id}
-                            onClick={() => handleStock(p.full)}
-                            title={p.label}
-                            className="relative group rounded overflow-hidden aspect-square cursor-pointer"
-                          >
-                            <img
-                              src={p.thumb}
-                              alt={p.label}
-                              className="w-full h-full object-cover transition-transform group-hover:scale-110"
-                            />
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all" />
-                          </button>
-                        ))}
-                      </div>
 
-                      {stockResults.length > 0 &&
-                        !stockIsFromFallback &&
-                        stockHasMore && (
-                          <button
-                            onClick={() =>
-                              searchStock(stockQuery, stockPage + 1)
-                            }
-                            disabled={stockLoading}
-                            className="w-full py-1.5! rounded-lg font-label text-[8px] tracking-[0.3em] uppercase text-[#D4AF3790] hover:text-[#D4AF37] border border-[#D4AF3740] hover:border-[#D4AF3760] transition-all disabled:opacity-40 flex items-center justify-center gap-1.5 cursor-pointer"
-                          >
-                            {stockLoading ? (
-                              <>
-                                <Loader2Icon className="size-3 animate-spin" />{" "}
-                                Loading…
-                              </>
-                            ) : (
-                              "Load more"
-                            )}
-                          </button>
+                  {stockResults.length > 0 &&
+                    !stockIsFromFallback &&
+                    stockHasMore && (
+                      <button
+                        onClick={() => searchStock(stockQuery, stockPage + 1)}
+                        disabled={stockLoading}
+                        className="w-full py-1.5! rounded-lg font-label text-[8px] tracking-[0.3em] uppercase text-[#D4AF3790] hover:text-[#D4AF37] border border-[#D4AF3740] hover:border-[#D4AF3760] transition-all disabled:opacity-40 flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        {stockLoading ? (
+                          <>
+                            <Loader2Icon className="size-3 animate-spin" />{" "}
+                            Loading…
+                          </>
+                        ) : (
+                          "Load more"
                         )}
-                    </div>
-
-                    {stockResults.some(
-                      (p) => p.source === "unsplash" || p.source === "pixabay",
-                    ) && (
-                      <p className="font-label text-[7px] tracking-widest uppercase text-[#F5F0E820] text-center">
-                        Photos from Unsplash & Pixabay
-                      </p>
+                      </button>
                     )}
-                  </>
+                </div>
+
+                {stockResults.some(
+                  (p) => p.source === "unsplash" || p.source === "pixabay",
+                ) && (
+                  <p className="font-label text-[7px] tracking-widest uppercase text-[#F5F0E820] text-center">
+                    Photos from Unsplash & Pixabay
+                  </p>
                 )}
               </div>
             )}

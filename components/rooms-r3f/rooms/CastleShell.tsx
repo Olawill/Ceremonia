@@ -34,6 +34,7 @@ interface CastleShellProps {
     curtain: string;
     curtainDark: string;
   };
+  sectionKey?: string;
 }
 
 function PBRMesh({
@@ -80,7 +81,7 @@ function PBRMesh({
   );
 }
 
-export function CastleShell({ position, theme }: CastleShellProps) {
+export function CastleShell({ position, theme, sectionKey }: CastleShellProps) {
   const wallTextures = useTexture([
     TEXTURE_CASTLE_WALL,
     TEXTURE_CASTLE_WALL_NORMAL,
@@ -219,37 +220,47 @@ export function CastleShell({ position, theme }: CastleShellProps) {
         <meshStandardMaterial color={accent} roughness={0.3} metalness={0.6} />
       </mesh>
 
-      {/* Heraldic banners on left wall */}
-      {[-3, -1, 1, 3].map((x, i) => (
-        <mesh
-          key={i}
-          position={[x, 1.0, -ROOM_LENGTH / 2 + 0.2]}
-          rotation={[0, 0, 0.03]}
-        >
-          <planeGeometry args={[0.7, 1.6]} />
-          <meshStandardMaterial
-            map={bannerTexture}
-            roughness={0.9}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
-      ))}
+      {sectionKey !== "countdown" && (
+        <>
+          {/* Heraldic banners on left wall */}
+          {(
+            [
+              [-ROOM_WIDTH / 2 + 0.08, 1.0, -ROOM_LENGTH * 0.3, Math.PI / 2],
+              [-ROOM_WIDTH / 2 + 0.08, 1.0, -ROOM_LENGTH * 0.7, Math.PI / 2],
+              [ROOM_WIDTH / 2 - 0.08, 1.0, -ROOM_LENGTH * 0.3, -Math.PI / 2],
+              [ROOM_WIDTH / 2 - 0.08, 1.0, -ROOM_LENGTH * 0.7, -Math.PI / 2],
+            ] as [number, number, number, number][]
+          ).map(([x, y, z, ry], i) => (
+            <mesh key={i} position={[x, y, z]} rotation={[0, ry, 0.03]}>
+              <planeGeometry args={[0.7, 1.6]} />
+              <meshStandardMaterial
+                map={bannerTexture}
+                roughness={0.9}
+                side={THREE.DoubleSide}
+              />
+            </mesh>
+          ))}
 
-      {/* Banner rods */}
-      {[-3, -1, 1, 3].map((x, i) => (
-        <mesh
-          key={i}
-          position={[x, 1.9, -ROOM_LENGTH / 2 + 0.15]}
-          rotation={[0, 0, Math.PI / 2]}
-        >
-          <cylinderGeometry args={[0.025, 0.025, 0.9, 8]} />
-          <meshStandardMaterial
-            color={accent}
-            roughness={0.2}
-            metalness={0.8}
-          />
-        </mesh>
-      ))}
+          {/* Banner rods */}
+          {(
+            [
+              [-ROOM_WIDTH / 2 + 0.08, 1.9, -ROOM_LENGTH * 0.3, Math.PI / 2],
+              [-ROOM_WIDTH / 2 + 0.08, 1.9, -ROOM_LENGTH * 0.7, Math.PI / 2],
+              [ROOM_WIDTH / 2 - 0.08, 1.9, -ROOM_LENGTH * 0.3, -Math.PI / 2],
+              [ROOM_WIDTH / 2 - 0.08, 1.9, -ROOM_LENGTH * 0.7, -Math.PI / 2],
+            ] as [number, number, number, number][]
+          ).map(([x, y, z, ry], i) => (
+            <mesh key={i} position={[x, y, z]} rotation={[0, ry, Math.PI / 2]}>
+              <cylinderGeometry args={[0.025, 0.025, 0.9, 8]} />
+              <meshStandardMaterial
+                color={accent}
+                roughness={0.2}
+                metalness={0.8}
+              />
+            </mesh>
+          ))}
+        </>
+      )}
     </group>
   );
 }

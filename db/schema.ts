@@ -77,6 +77,7 @@ export const events = pgTable("events", {
   livestreamUrl: text("livestream_url"), // YouTube/Vimeo embed URL
   livestreamTitle: text("livestream_title"), // e.g. "Watch Live"
   livestreamNote: text("livestream_note"), // e.g. "Stream starts 30 mins before ceremony"
+  livestreamTime: text("livestream_time"), // e.g. "Stream starts at"
 
   // Photo Gallery
   photoGalleryEnabled: boolean("photo_gallery_enabled").default(false),

@@ -110,6 +110,7 @@ export default async function EditorPage({ params }: Props) {
     livestreamUrl: event.livestreamUrl ?? undefined,
     livestreamTitle: event.livestreamTitle ?? undefined,
     livestreamNote: event.livestreamNote ?? undefined,
+    livestreamTime: event.livestreamTime ?? undefined,
     photoGalleryEnabled: event.photoGalleryEnabled ?? false,
     galleryPhotos: (event.galleryPhotos as string[]) ?? [],
     travelGuideEnabled: event.travelGuideEnabled ?? false,

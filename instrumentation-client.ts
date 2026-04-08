@@ -31,4 +31,9 @@ posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
   defaults: "2026-01-30",
   capture_exceptions: true,
   debug: process.env.NODE_ENV === "development",
+  // Disable PostHog session recording (rrweb) on the dashboard/editor —
+  // rrweb's DOM mutation observer conflicts with React concurrent mode
+  // when the iframe is unmounted during navigation, causing
+  // "childNodes is null" crashes in rrweb-record.js.
+  disable_session_recording: true,
 });

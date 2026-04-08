@@ -113,8 +113,20 @@ export function PreviewClient({ initialConfig }: Props) {
     initialConfig ?? DEMO_EVENT_CONFIG,
   );
 
+  const [resetKey, setResetKey] = useState(0);
+
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === "RESET_PREVIEW") {
+        setResetKey((k) => k + 1);
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, []);
+
   return (
-    <ThemeProvider initialThemeKey={config.themeKey}>
+    <ThemeProvider key={resetKey} initialThemeKey={config.themeKey}>
       <PreviewInner config={config} onConfigChange={setConfig} />
     </ThemeProvider>
   );

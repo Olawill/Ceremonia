@@ -1,6 +1,5 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
 import clsx from "clsx";
 import {
   LinkIcon,
@@ -44,7 +43,7 @@ interface UploadFieldProps {
   accept: string;
   type: "photo" | "audio";
   value: string | undefined;
-  onUpload: (url: string) => void;
+  onUpload: (value: File | string) => void;
   onClear: () => void;
 }
 
@@ -60,11 +59,9 @@ function UploadField({
   onClear,
 }: UploadFieldProps) {
   const { api } = useApi();
-  const { getToken } = useAuth();
   const { toast } = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
   const [tab, setTab] = useState<Tab>("upload");
-  const [uploading, setUploading] = useState(false);
   const [urlInput, setUrlInput] = useState("");
   const [previewAudio, setPreviewAudio] = useState<string | null>(null);
 
@@ -114,113 +111,21 @@ function UploadField({
   }, [tab]);
 
   // ── file upload ────────────────────────────────────────────────────────────
-  const handleFile = async (file: File) => {
-    setUploading(true);
-    try {
-      const { data, error } = await api.upload.post({ file, type });
-      if (error) {
-        const msg =
-          typeof error.value === "object" &&
-          error.value !== null &&
-          "message" in error.value
-            ? (error.value as { message: string }).message
-            : "Upload failed";
-        if (error.status === 403) {
-          toast.warning(msg, {
-            description: "Upgrade your plan to unlock this feature.",
-            action: {
-              label: "Upgrade",
-              onClick: () => (window.location.href = "/app/billing"),
-            },
-          });
-        } else {
-          toast.error(msg);
-        }
-        return;
-      }
-      if (!data?.url) throw new Error("Upload failed");
-      onUpload(data.url);
-    } catch (e: any) {
-      toast.error(e.message ?? "Upload failed");
-    } finally {
-      setUploading(false);
-    }
+  const handleFile = (file: File) => {
+    onUpload(file); // flows up to updateConfig which handles blob URL + queuing
   };
 
   // ── url fetch → blob ───────────────────────────────────────────────────────
-  const handleUrlSubmit = async () => {
+  const handleUrlSubmit = () => {
     const url = urlInput.trim();
     if (!url) return;
-
-    // Check url is valid
-    try {
-      new URL(url);
-    } catch {
-      toast.error("Please enter a valid URL including https://");
-      return;
-    }
-
-    if (!url.startsWith("https://") && !url.startsWith("http://")) {
-      toast.error("URL must start with http:// or https://");
-      return;
-    }
-
-    setUploading(true);
-    try {
-      const token = await getToken();
-      const res = await fetch("/api/upload/from-url", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ url, type }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        if (res.status === 403) {
-          toast.warning(data.message ?? "Upgrade required", {
-            description: "Upgrade your plan to unlock this feature.",
-            action: {
-              label: "Upgrade",
-              onClick: () => (window.location.href = "/app/billing"),
-            },
-          });
-        } else {
-          toast.error(data.message ?? "Could not fetch URL");
-        }
-        return;
-      }
-      onUpload(data.url);
-      setUrlInput("");
-    } catch {
-      toast.error("Could not fetch URL");
-    } finally {
-      setUploading(false);
-    }
+    onUpload(url);
+    setUrlInput("");
   };
 
   // ── stock pick → blob ──────────────────────────────────────────────────────
-  const handleStockPick = async (fullUrl: string) => {
-    setUploading(true);
-    try {
-      const token = await getToken();
-      const res = await fetch("/api/upload/from-url", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ url: fullUrl, type }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message ?? "Failed");
-      onUpload(data.url);
-    } catch (e: any) {
-      toast.error(e.message ?? "Could not use stock asset");
-    } finally {
-      setUploading(false);
-    }
+  const handleStockPick = (fullUrl: string) => {
+    onUpload(fullUrl);
   };
 
   const searchStock = async (q: string, page = 1) => {
@@ -383,13 +288,9 @@ function UploadField({
               onClick={() => inputRef.current?.click()}
               className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-[#D4AF3730] bg-[#D4AF3705] py-7! cursor-pointer hover:border-[#D4AF3760] hover:bg-[#D4AF370A] transition-colors"
             >
-              {uploading ? (
-                <Loader2Icon className="size-5 text-[#D4AF37] animate-spin" />
-              ) : (
-                <UploadIcon className="size-5 text-[#D4AF3760]" />
-              )}
+              <UploadIcon className="size-5 text-[#D4AF3760]" />
               <span className="font-label text-[9px] tracking-[0.3em] uppercase text-[#D4AF3760]">
-                {uploading ? "Uploading…" : "Click or drag to upload"}
+                Click or drag to upload
               </span>
               <input
                 ref={inputRef}
@@ -439,16 +340,10 @@ function UploadField({
               </div>
               <button
                 onClick={handleUrlSubmit}
-                disabled={!urlInput.trim() || uploading}
+                disabled={!urlInput.trim()}
                 className="w-full py-2.5! rounded-lg font-label text-[9px] tracking-[0.3em] uppercase transition-all dash-btn-primary disabled:opacity-40 flex items-center justify-center gap-2"
               >
-                {uploading ? (
-                  <>
-                    <Loader2Icon className="size-3 animate-spin" /> Fetching…
-                  </>
-                ) : (
-                  "Use this URL"
-                )}
+                Use this URL
               </button>
               <p className="font-display italic text-[11px] text-[#F5F0E840] text-center">
                 The file will be saved to your media library
@@ -459,16 +354,7 @@ function UploadField({
           {/* ── Stock tab ── */}
           {tab === "stock" && (
             <div>
-              {uploading && (
-                <div className="flex items-center justify-center gap-2 py-4! text-[#D4AF37]">
-                  <Loader2Icon className="size-4 animate-spin" />
-                  <span className="font-label text-[9px] tracking-widest uppercase">
-                    Saving to library…
-                  </span>
-                </div>
-              )}
-
-              {!uploading && type === "photo" && (
+              {type === "photo" && (
                 <div className="space-y-2!">
                   <>
                     <div className="flex gap-1.5!">
@@ -589,7 +475,7 @@ function UploadField({
                 </div>
               )}
 
-              {!uploading && type === "audio" && (
+              {type === "audio" && (
                 <div className="space-y-2!">
                   {/* Category filter */}
                   <div className="flex gap-1 flex-wrap">
@@ -717,7 +603,7 @@ export function MediaUploader({ config, onChange }: Props) {
         accept="image/*"
         type="photo"
         value={config.heroPhotoUrl}
-        onUpload={(url) => onChange({ heroPhotoUrl: url })}
+        onUpload={(url) => onChange({ heroPhotoUrl: url as string })}
         onClear={() => onChange({ heroPhotoUrl: undefined })}
       />
 
@@ -730,7 +616,7 @@ export function MediaUploader({ config, onChange }: Props) {
           accept="audio/*"
           type="audio"
           value={config.audioUrl}
-          onUpload={(url) => onChange({ audioUrl: url })}
+          onUpload={(url) => onChange({ audioUrl: url as string })}
           onClear={() => onChange({ audioUrl: undefined })}
         />
       </PlanGate>

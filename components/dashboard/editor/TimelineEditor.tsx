@@ -241,6 +241,7 @@ export function TimelineEditor({ config, onChange }: Props) {
                 desc: "",
               })
             }
+            disabled={fields.length >= 8}
             className="w-full py-3! rounded-xl font-label text-[12px] forn-semibold tracking-[0.4em] uppercase transition-all border"
             style={{
               borderColor: "#D4AF3760",
@@ -249,8 +250,14 @@ export function TimelineEditor({ config, onChange }: Props) {
             }}
           >
             <span className="flex items-center justify-center gap-1.5">
-              <PlusIcon className="size-3" />
-              Add Milestone
+              {fields.length >= 8 ? (
+                "Maximum of 8 timeline events reached"
+              ) : (
+                <>
+                  <PlusIcon className="size-3" />
+                  Add Milestone
+                </>
+              )}
             </span>
           </button>
         </>

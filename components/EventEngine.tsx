@@ -2,6 +2,7 @@
 
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 
 import { CascadeCurtain } from "@/components/curtain/CascadeCurtain";
@@ -15,7 +16,6 @@ import { EnvelopeCurtain } from "@/components/entry/EnvelopeCurtain";
 
 import { DrapeFrame } from "@/components/effects/DrapeFrame";
 import { DustParticles } from "@/components/effects/DustParticles";
-import { RoomsEngineR3F } from "@/components/rooms-r3f/R3FAdapter";
 import { AudioPlayer } from "@/components/ui/AudioPlayer";
 
 import { useTheme } from "@/lib/ThemeContext";
@@ -23,6 +23,14 @@ import { buildSections } from "@/lib/eventSections";
 
 import { getHost1Name, getHost2Name } from "@/lib/eventHelpers";
 import { DEMO_EVENT_CONFIG, EventConfig } from "@/types/event";
+
+const RoomsEngineR3F = dynamic(
+  () =>
+    import("@/components/rooms-r3f/R3FAdapter").then((m) => ({
+      default: m.RoomsEngineR3F,
+    })),
+  { ssr: false },
+);
 
 interface EventEngineProps {
   config?: EventConfig;

@@ -14,6 +14,7 @@ import type { FeatureMode, RoomTheme } from "@/components/rooms-r3f/Room";
 import { fireConfetti } from "@/lib/confetti";
 import { formattedDate } from "@/lib/helper";
 import type { EventType } from "@/types/event";
+import { useRoomsStore } from "../../store";
 
 interface ScratchRoomProps {
   featureMode: FeatureMode;
@@ -394,9 +395,12 @@ function ScratchCard({
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const lastSampleRef = useRef(0);
-  const [revealed, setRevealed] = useState(false);
+  const [revealed, setRevealed] = useState(
+    () => useRoomsStore.getState().dateRevealed,
+  );
   const [progress, setProgress] = useState(0);
 
+  const hasZoomedRef = useRef(false);
   const onRevealedRef = useRef(onRevealed);
   useEffect(() => {
     onRevealedRef.current = onRevealed;
@@ -404,6 +408,7 @@ function ScratchCard({
 
   const handleReveal = useCallback(() => {
     setRevealed(true);
+    useRoomsStore.getState().setDateRevealed(true);
     onRevealedRef.current();
     fireConfetti({
       count: 130,
@@ -411,15 +416,30 @@ function ScratchCard({
       colors: [theme.accent, "#F0D060", "#ffffff", theme.curtain],
       origin: { x: "50%", y: "45%" },
     });
+    // Reset zoom when revealed — camera will navigate away anyway
+    useRoomsStore.getState().setZoomOffset(0);
+
+    // Auto-navigate to next room after a short celebration delay
+    setTimeout(() => {
+      const store = useRoomsStore.getState();
+      store.navigate(store.activeRoom + 1);
+    }, 2200);
   }, [theme]);
+
+  useEffect(() => {
+    return () => {
+      // Always restore zoom when card unmounts
+      useRoomsStore.getState().setZoomOffset(0);
+    };
+  }, []);
 
   useEffect(() => {
     if (revealed) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const W = (canvas.width = 320);
-    const H = (canvas.height = 110);
+    const W = (canvas.width = 480);
+    const H = (canvas.height = 160);
     const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
 
     // Gold foil
@@ -439,7 +459,7 @@ function ScratchCard({
 
     // "SCRATCH TO REVEAL" hint
     ctx.fillStyle = "rgba(0,0,0,0.28)";
-    ctx.font = "bold 13px serif";
+    ctx.font = "bold 18px serif";
     ctx.textAlign = "center";
     ctx.fillText("✦  SCRATCH TO REVEAL  ✦", W / 2, H / 2 + 5);
 
@@ -466,12 +486,12 @@ function ScratchCard({
       if (!isFinite(x) || !isFinite(y) || isNaN(x) || isNaN(y)) return;
 
       ctx.globalCompositeOperation = "destination-out";
-      const radial = ctx.createRadialGradient(x, y, 0, x, y, 22);
+      const radial = ctx.createRadialGradient(x, y, 0, x, y, 45);
       radial.addColorStop(0, "rgba(0,0,0,1)");
       radial.addColorStop(1, "rgba(0,0,0,0)");
       ctx.fillStyle = radial;
       ctx.beginPath();
-      ctx.arc(x, y, 22, 0, Math.PI * 2);
+      ctx.arc(x, y, 45, 0, Math.PI * 2);
       ctx.fill();
       ctx.globalCompositeOperation = "source-over";
 
@@ -486,11 +506,15 @@ function ScratchCard({
       }
       const pct = (transparent / (W * H)) * 100;
       setProgress(Math.min(pct, 100));
-      if (pct > 92) handleReveal();
+      if (pct > 60) handleReveal();
     };
 
     canvas.addEventListener("mousedown", (e) => {
       drawing = true;
+      if (!hasZoomedRef.current) {
+        hasZoomedRef.current = true;
+        useRoomsStore.getState().setZoomOffset(2.0); // move forward 3.8 units toward desk
+      }
       scratch(e);
     });
     canvas.addEventListener("mousemove", scratch);
@@ -504,6 +528,10 @@ function ScratchCard({
       "touchstart",
       (e) => {
         drawing = true;
+        if (!hasZoomedRef.current) {
+          hasZoomedRef.current = true;
+          useRoomsStore.getState().setZoomOffset(2.0);
+        }
         scratch(e);
       },
       { passive: false },
@@ -561,12 +589,12 @@ function ScratchCard({
       <div
         style={{
           position: "relative",
-          width: 300,
-          height: 110,
+          width: 340,
+          height: 150,
           borderRadius: 10,
           overflow: "hidden",
           border: `1.5px solid ${theme.accent}60`,
-          boxShadow: `0 6px 28px rgba(0,0,0,0.6), 0 0 16px ${theme.accent}25`,
+          boxShadow: `0 6px 28px rgba(0,0,0,0.6), 0 0 40px ${theme.accent}50`,
           cursor: revealed ? "default" : "crosshair",
         }}
       >
@@ -586,12 +614,12 @@ function ScratchCard({
           <p
             style={{
               fontFamily: "serif",
-              fontSize: 26,
-              fontWeight: 700,
-              letterSpacing: "0.05em",
+              fontSize: 32,
+              fontWeight: 800,
+              letterSpacing: "0.08em",
               color: theme.accent,
               margin: 0,
-              textShadow: `0 0 18px ${theme.accent}80`,
+              textShadow: `0 0 30px ${theme.accent}, 0 0 60px ${theme.accent}60`,
             }}
           >
             {formattedDate(date, true)}
@@ -599,7 +627,7 @@ function ScratchCard({
           <p
             style={{
               fontFamily: "var(--font-label, sans-serif)",
-              fontSize: 13,
+              fontSize: 14,
               fontWeight: 900,
               letterSpacing: "0.5em",
               color: theme.accent,
@@ -615,6 +643,7 @@ function ScratchCard({
         {!revealed && (
           <canvas
             ref={canvasRef}
+            data-scratch="true"
             style={{
               position: "absolute",
               inset: 0,

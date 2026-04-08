@@ -33,120 +33,155 @@ function getTimeLeft(eventDate: Date) {
   };
 }
 
+function drawHand(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  angle: number,
+  length: number,
+  width: number,
+  color: string,
+) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(angle);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(0, length * 0.15);
+  ctx.lineTo(0, -length);
+  ctx.stroke();
+  ctx.restore();
+}
+
 // ── Draw clock face onto a CanvasTexture ──────────────────────────────────────
 function drawClockFace(
   ctx: CanvasRenderingContext2D,
   value: number,
-  label: string,
   accent: string,
-  dark: string,
   size: number,
+  type: "hours" | "minutes" | "seconds",
 ) {
   ctx.clearRect(0, 0, size, size);
+  const cx = size / 2;
+  const cy = size / 2;
+  const r = size / 2 - 4;
 
-  // Background — deep stone
-  const bg = ctx.createRadialGradient(
-    size / 2,
-    size / 2,
-    size * 0.1,
-    size / 2,
-    size / 2,
-    size * 0.5,
-  );
-  bg.addColorStop(0, "#1a1208");
+  const bg = ctx.createRadialGradient(cx, cy, r * 0.1, cx, cy, r);
+  bg.addColorStop(0, "#1e1608");
   bg.addColorStop(1, "#0a0805");
   ctx.fillStyle = bg;
   ctx.beginPath();
-  ctx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2);
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
   ctx.fill();
 
-  // Outer ring — gold
   ctx.strokeStyle = accent;
-  ctx.lineWidth = size * 0.025;
+  ctx.lineWidth = size * 0.03;
   ctx.beginPath();
-  ctx.arc(size / 2, size / 2, size / 2 - size * 0.02, 0, Math.PI * 2);
+  ctx.arc(cx, cy, r - size * 0.015, 0, Math.PI * 2);
   ctx.stroke();
 
-  // Inner ring — darker
-  ctx.strokeStyle = accent + "55";
-  ctx.lineWidth = size * 0.012;
+  ctx.strokeStyle = accent + "40";
+  ctx.lineWidth = size * 0.01;
   ctx.beginPath();
-  ctx.arc(size / 2, size / 2, size / 2 - size * 0.07, 0, Math.PI * 2);
+  ctx.arc(cx, cy, r - size * 0.07, 0, Math.PI * 2);
   ctx.stroke();
 
-  // Roman numeral tick marks at 12 positions
-  const romanNumerals = [
-    "XII",
-    "I",
-    "II",
-    "III",
-    "IV",
-    "V",
-    "VI",
-    "VII",
-    "VIII",
-    "IX",
-    "X",
-    "XI",
-  ];
-  const tickR = size / 2 - size * 0.13;
-  ctx.fillStyle = accent + "99";
-  ctx.font = `bold ${size * 0.07}px serif`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
   for (let i = 0; i < 12; i++) {
     const angle = (i / 12) * Math.PI * 2 - Math.PI / 2;
-    const tx = size / 2 + Math.cos(angle) * tickR;
-    const ty = size / 2 + Math.sin(angle) * tickR;
-    ctx.fillText(romanNumerals[i], tx, ty);
-  }
-
-  // Minute tick marks
-  for (let i = 0; i < 60; i++) {
-    if (i % 5 === 0) continue;
-    const angle = (i / 60) * Math.PI * 2 - Math.PI / 2;
-    const r1 = size / 2 - size * 0.065;
-    const r2 = size / 2 - size * 0.08;
-    ctx.strokeStyle = accent + "44";
-    ctx.lineWidth = size * 0.006;
+    const outer = r - size * 0.075;
+    const inner = r - size * 0.135;
+    ctx.strokeStyle = accent + "CC";
+    ctx.lineWidth = size * 0.018;
+    ctx.lineCap = "round";
     ctx.beginPath();
-    ctx.moveTo(
-      size / 2 + Math.cos(angle) * r1,
-      size / 2 + Math.sin(angle) * r1,
-    );
-    ctx.lineTo(
-      size / 2 + Math.cos(angle) * r2,
-      size / 2 + Math.sin(angle) * r2,
-    );
+    ctx.moveTo(cx + Math.cos(angle) * outer, cy + Math.sin(angle) * outer);
+    ctx.lineTo(cx + Math.cos(angle) * inner, cy + Math.sin(angle) * inner);
     ctx.stroke();
   }
 
-  // Centre number — large
-  ctx.fillStyle = accent;
-  ctx.font = `bold ${size * 0.28}px serif`;
+  for (let i = 0; i < 60; i++) {
+    if (i % 5 === 0) continue;
+    const angle = (i / 60) * Math.PI * 2 - Math.PI / 2;
+    const outer = r - size * 0.075;
+    const inner = r - size * 0.105;
+    ctx.strokeStyle = accent + "50";
+    ctx.lineWidth = size * 0.008;
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(angle) * outer, cy + Math.sin(angle) * outer);
+    ctx.lineTo(cx + Math.cos(angle) * inner, cy + Math.sin(angle) * inner);
+    ctx.stroke();
+  }
+
+  const cardinals = [
+    { num: "XII", pos: 0 },
+    { num: "III", pos: 3 },
+    { num: "VI", pos: 6 },
+    { num: "IX", pos: 9 },
+  ];
+  ctx.fillStyle = accent + "DD";
+  ctx.font = "bold " + size * 0.09 + "px serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.shadowColor = accent;
-  ctx.shadowBlur = size * 0.06;
-  ctx.fillText(
-    String(value).padStart(2, "0"),
-    size / 2,
-    size / 2 - size * 0.04,
-  );
-  ctx.shadowBlur = 0;
+  cardinals.forEach(({ num, pos }) => {
+    const angle = (pos / 12) * Math.PI * 2 - Math.PI / 2;
+    const tr = r - size * 0.21;
+    ctx.fillText(num, cx + Math.cos(angle) * tr, cy + Math.sin(angle) * tr);
+  });
 
-  // Label below number
-  ctx.fillStyle = accent + "CC";
-  ctx.font = `bold ${size * 0.1}px sans-serif`;
-  ctx.letterSpacing = "0.3em";
-  ctx.fillText(label.toUpperCase(), size / 2, size / 2 + size * 0.22);
-  ctx.letterSpacing = "0";
+  const handR = r - size * 0.14;
+  const now = new Date();
 
-  // Centre dot
+  if (type === "hours") {
+    // const h12 = value % 12;
+    // const hourAngle =
+    //   ((h12 + now.getMinutes() / 60) / 12) * Math.PI * 2 - Math.PI / 2;
+    // drawHand(ctx, cx, cy, hourAngle, handR * 0.55, size * 0.032, accent);
+    // const minAngle = (now.getMinutes() / 60) * Math.PI * 2 - Math.PI / 2;
+    // drawHand(ctx, cx, cy, minAngle, handR * 0.78, size * 0.02, accent + "BB");
+
+    // Countdown hours hand — points at value on 12-hour face, no real-clock mixing
+    const h12 = value % 12;
+    const hourAngle = (h12 / 12) * Math.PI * 2 - Math.PI / 2;
+    drawHand(ctx, cx, cy, hourAngle, handR * 0.55, size * 0.032, accent);
+  } else if (type === "minutes") {
+    // const minAngle = (value / 60) * Math.PI * 2 - Math.PI / 2;
+    // drawHand(ctx, cx, cy, minAngle, handR * 0.78, size * 0.024, accent);
+    // const secAngle = (now.getSeconds() / 60) * Math.PI * 2 - Math.PI / 2;
+    // drawHand(ctx, cx, cy, secAngle, handR * 0.85, size * 0.011, "#ff4444");
+
+    // Countdown minutes — value is 0-59, hand sweeps proportionally
+    const minAngle = (value / 60) * Math.PI * 2 - Math.PI / 2;
+    drawHand(ctx, cx, cy, minAngle, handR * 0.78, size * 0.024, accent);
+  } else {
+    // const sec = now.getSeconds() + now.getMilliseconds() / 1000;
+    // const secAngle = (sec / 60) * Math.PI * 2 - Math.PI / 2;
+    // drawHand(ctx, cx, cy, secAngle, handR * 0.86, size * 0.013, "#ff4444");
+    // drawHand(ctx, cx, cy, secAngle, handR * 0.22, size * 0.026, accent);
+
+    // Seconds — use real elapsed time for smooth sweep
+    const now = new Date();
+    const sec = now.getSeconds() + now.getMilliseconds() / 1000;
+    const secAngle = (sec / 60) * Math.PI * 2 - Math.PI / 2;
+    drawHand(ctx, cx, cy, secAngle, handR * 0.86, size * 0.013, "#ff4444");
+    drawHand(ctx, cx, cy, secAngle, handR * 0.22, size * 0.026, accent);
+  }
+
   ctx.fillStyle = accent;
   ctx.beginPath();
-  ctx.arc(size / 2, size / 2, size * 0.025, 0, Math.PI * 2);
+  ctx.arc(cx, cy, size * 0.032, 0, Math.PI * 2);
   ctx.fill();
+  ctx.fillStyle = "#0a0805";
+  ctx.beginPath();
+  ctx.arc(cx, cy, size * 0.016, 0, Math.PI * 2);
+  ctx.fill();
+
+  // ctx.fillStyle = accent + "BB";
+  // ctx.font = "bold " + size * 0.09 + "px sans-serif";
+  // ctx.textAlign = "center";
+  // ctx.textBaseline = "middle";
+  // ctx.fillText(label.toUpperCase(), cx, cy + r * 0.64);
 }
 
 // ── Draw calendar face (for DAYS) ─────────────────────────────────────────────
@@ -155,75 +190,137 @@ function drawCalendarFace(
   days: number,
   accent: string,
   size: number,
+  label: string = "Days",
 ) {
   ctx.clearRect(0, 0, size, size);
-
   const W = size;
   const H = size;
-  const R = 12;
+  const R = 16;
 
-  // Background
   ctx.fillStyle = "#0e0b06";
   roundRect(ctx, 0, 0, W, H, R);
   ctx.fill();
 
-  // Header band — deep red like a real calendar
-  ctx.fillStyle = "#6b1a1a";
-  roundRect(ctx, 0, 0, W, H * 0.28, R);
+  ctx.fillStyle = "#7a1a1a";
+  roundRect(ctx, 0, 0, W, H * 0.3, R);
   ctx.fill();
-  // Flatten bottom corners of header
-  ctx.fillRect(0, H * 0.18, W, H * 0.1);
+  ctx.fillRect(0, H * 0.2, W, H * 0.1);
 
-  // Header label
-  ctx.fillStyle = "#F5F0E8";
-  ctx.font = `bold ${H * 0.11}px sans-serif`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.letterSpacing = "0.25em";
-  ctx.fillText("DAYS TO GO", W / 2, H * 0.14);
-  ctx.letterSpacing = "0";
-
-  // Ring holes at top
-  [-0.28, 0.28].forEach((offset) => {
+  [-0.25, 0.25].forEach((o) => {
     ctx.fillStyle = "#0e0b06";
     ctx.beginPath();
-    ctx.arc(W / 2 + offset * W, -2, H * 0.04, 0, Math.PI * 2);
+    ctx.arc(W / 2 + o * W, 4, H * 0.045, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = accent + "80";
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.5;
     ctx.stroke();
   });
 
-  // Date number — very large
+  ctx.fillStyle = "#F5F0E8";
+  ctx.font = "bold " + H * 0.11 + "px sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(`${label.toUpperCase()} TO GO`, W / 2, H * 0.15);
+
+  ctx.strokeStyle = accent + "25";
+  ctx.lineWidth = 1;
+  [0.45, 0.72].forEach((y) => {
+    ctx.beginPath();
+    ctx.moveTo(W * 0.08, H * y);
+    ctx.lineTo(W * 0.92, H * y);
+    ctx.stroke();
+  });
+
   ctx.fillStyle = accent;
-  ctx.font = `bold ${H * 0.44}px serif`;
+  ctx.font = "bold " + H * 0.46 + "px serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.shadowColor = accent;
-  ctx.shadowBlur = H * 0.05;
-  ctx.fillText(String(days), W / 2, H * 0.6);
+  ctx.shadowBlur = H * 0.06;
+  ctx.fillText(String(days), W / 2, H * 0.57);
   ctx.shadowBlur = 0;
 
-  // Bottom rule
-  ctx.strokeStyle = accent + "40";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(W * 0.1, H * 0.82);
-  ctx.lineTo(W * 0.9, H * 0.82);
-  ctx.stroke();
-
-  // "DAYS" sub-label
   ctx.fillStyle = accent + "CC";
-  ctx.font = `bold ${H * 0.1}px sans-serif`;
-  ctx.letterSpacing = "0.4em";
-  ctx.fillText("DAYS", W / 2, H * 0.91);
-  ctx.letterSpacing = "0";
+  ctx.font = "bold " + H * 0.1 + "px sans-serif";
+  ctx.fillText(label.toUpperCase(), W / 2, H * 0.88);
 
-  // Outer border
-  ctx.strokeStyle = accent + "60";
-  ctx.lineWidth = 2;
-  roundRect(ctx, 1, 1, W - 2, H - 2, R);
+  ctx.strokeStyle = accent + "70";
+  ctx.lineWidth = 3;
+  roundRect(ctx, 2, 2, W - 4, H - 4, R);
   ctx.stroke();
+}
+
+function drawCountdownFace(
+  ctx: CanvasRenderingContext2D,
+  value: number,
+  label: string,
+  accent: string,
+  size: number,
+) {
+  ctx.clearRect(0, 0, size, size);
+  const W = size;
+  const H = size;
+
+  // Dark background
+  ctx.fillStyle = "#0a0805";
+  ctx.fillRect(0, 0, W, H);
+
+  // Subtle gradient overlay
+  const bg = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, W * 0.7);
+  bg.addColorStop(0, "#1e1608");
+  bg.addColorStop(1, "#0a0805");
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Gold outer border
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = size * 0.025;
+  ctx.strokeRect(size * 0.03, size * 0.03, size * 0.94, size * 0.94);
+
+  // Inner border
+  ctx.strokeStyle = accent + "40";
+  ctx.lineWidth = size * 0.01;
+  ctx.strokeRect(size * 0.07, size * 0.07, size * 0.86, size * 0.86);
+
+  // Horizontal divider line through centre (flip-clock look)
+  ctx.strokeStyle = accent + "30";
+  ctx.lineWidth = size * 0.008;
+  ctx.beginPath();
+  ctx.moveTo(size * 0.1, size * 0.5);
+  ctx.lineTo(size * 0.9, size * 0.5);
+  ctx.stroke();
+
+  // Large number
+  ctx.fillStyle = accent;
+  ctx.font = `bold ${size * 0.42}px serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.shadowColor = accent;
+  ctx.shadowBlur = size * 0.05;
+  ctx.fillText(String(value).padStart(2, "0"), W / 2, H * 0.45);
+  ctx.shadowBlur = 0;
+
+  // Label at bottom
+  ctx.fillStyle = accent + "CC";
+  ctx.font = `bold ${size * 0.1}px sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(label.toUpperCase(), W / 2, H * 0.8);
+
+  // Corner ornaments
+  const cornersSize = size * 0.06;
+  [
+    [0.08, 0.08],
+    [0.92, 0.08],
+    [0.08, 0.92],
+    [0.92, 0.92],
+  ].forEach(([cx, cy]) => {
+    ctx.strokeStyle = accent + "80";
+    ctx.lineWidth = size * 0.01;
+    ctx.beginPath();
+    ctx.arc(cx * W, cy * H, cornersSize, 0, Math.PI * 2);
+    ctx.stroke();
+  });
 }
 
 function roundRect(
@@ -248,7 +345,7 @@ function roundRect(
 }
 
 // ── Live clock mesh ────────────────────────────────────────────────────────────
-function LiveClock({
+function LiveClockMesh({
   position,
   rotation,
   getValue,
@@ -257,7 +354,7 @@ function LiveClock({
   frameH,
   accent,
   frameColor,
-  drawFn,
+  clockType,
 }: {
   position: [number, number, number];
   rotation: [number, number, number];
@@ -267,19 +364,31 @@ function LiveClock({
   frameH: number;
   accent: string;
   frameColor: string;
-  drawFn: (
-    ctx: CanvasRenderingContext2D,
-    value: number,
-    label: string,
-    accent: string,
-    dark: string,
-    size: number,
-  ) => void;
+  clockType: "days" | "hours" | "minutes" | "seconds";
 }) {
   const texRef = useRef<THREE.CanvasTexture | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const meshRef = useRef<THREE.Mesh>(null);
-  const lastValueRef = useRef<number>(-1);
+  const lastDrawnRef = useRef<number>(-999);
+
+  const labelTexRef = useRef<THREE.CanvasTexture | null>(null);
+  const labelMeshRef = useRef<THREE.Mesh>(null);
+  const valueTexRef = useRef<THREE.CanvasTexture | null>(null);
+  const valueMeshRef = useRef<THREE.Mesh>(null);
+
+  const redraw = (canvas: HTMLCanvasElement, tex: THREE.CanvasTexture) => {
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const val = getValue();
+    if (clockType === "days") {
+      drawCalendarFace(ctx, val, accent, 512, label);
+    } else if (clockType === "hours" || clockType === "minutes") {
+      drawCountdownFace(ctx, val, label, accent, 512);
+    } else {
+      drawClockFace(ctx, val, accent, 512, clockType);
+    }
+    tex.needsUpdate = true;
+  };
 
   useEffect(() => {
     const canvas = document.createElement("canvas");
@@ -293,42 +402,144 @@ function LiveClock({
       (meshRef.current.material as THREE.MeshStandardMaterial).needsUpdate =
         true;
     }
+    redraw(canvas, tex);
     return () => tex.dispose();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useFrame(() => {
-    if (!texRef.current || !canvasRef.current) return;
-    const value = getValue();
-    if (value === lastValueRef.current) return;
-    lastValueRef.current = value;
-    const ctx = canvasRef.current.getContext("2d");
-    if (!ctx) return;
-    drawFn(ctx, value, label, accent, frameColor, 512);
-    texRef.current.needsUpdate = true;
+    if (clockType === "days") return;
+
+    const canvas = canvasRef.current;
+    const tex = texRef.current;
+    if (!canvas || !tex) return;
+    if (
+      meshRef.current &&
+      !(meshRef.current.material as THREE.MeshStandardMaterial).map
+    ) {
+      (meshRef.current.material as THREE.MeshStandardMaterial).map = tex;
+      (meshRef.current.material as THREE.MeshStandardMaterial).needsUpdate =
+        true;
+      redraw(canvas, tex);
+    }
+
+    // Apply label texture when mesh mounts
+    if (
+      labelMeshRef.current &&
+      labelTexRef.current &&
+      !(labelMeshRef.current.material as THREE.MeshBasicMaterial).map
+    ) {
+      (labelMeshRef.current.material as THREE.MeshBasicMaterial).map =
+        labelTexRef.current;
+      (labelMeshRef.current.material as THREE.MeshBasicMaterial).needsUpdate =
+        true;
+    }
+    // Apply value texture when mesh mounts
+    if (
+      valueMeshRef.current &&
+      valueTexRef.current &&
+      !(valueMeshRef.current.material as THREE.MeshBasicMaterial).map
+    ) {
+      (valueMeshRef.current.material as THREE.MeshBasicMaterial).map =
+        valueTexRef.current;
+      (valueMeshRef.current.material as THREE.MeshBasicMaterial).needsUpdate =
+        true;
+    }
+
+    if (clockType === "seconds") {
+      redraw(canvas, tex);
+    } else {
+      const val = getValue();
+      if (val !== lastDrawnRef.current) {
+        lastDrawnRef.current = val;
+        redraw(canvas, tex);
+      }
+    }
   });
+
+  useEffect(() => {
+    if (clockType === "days") return;
+
+    // ── Label plate (bottom) ──
+    const lc = document.createElement("canvas");
+    lc.width = 512;
+    lc.height = 128;
+    const lctx = lc.getContext("2d")!;
+    // lctx.fillStyle = frameColor;
+    lctx.fillStyle = "#F5F0E8";
+    lctx.fillRect(0, 0, 512, 128);
+    // lctx.fillStyle = accent + "EE";
+    lctx.fillStyle = "#1a0e04";
+    lctx.font = "bold 72px sans-serif";
+    lctx.textAlign = "center";
+    lctx.textBaseline = "middle";
+    lctx.fillText(label.toUpperCase(), 256, 64);
+    const ltex = new THREE.CanvasTexture(lc);
+    labelTexRef.current = ltex;
+    if (labelMeshRef.current) {
+      (labelMeshRef.current.material as THREE.MeshStandardMaterial).map = ltex;
+      (
+        labelMeshRef.current.material as THREE.MeshStandardMaterial
+      ).needsUpdate = true;
+    }
+
+    // ── Value plate (top) — redrawn each second ──
+    const vc = document.createElement("canvas");
+    vc.width = 512;
+    vc.height = 128;
+    const vctx = vc.getContext("2d")!;
+    const drawValue = () => {
+      vctx.fillStyle = "#F5F0E8";
+      vctx.fillRect(0, 0, 512, 128);
+      vctx.fillStyle = "#1a0e04";
+      vctx.font = "bold 88px serif";
+      vctx.textAlign = "center";
+      vctx.textBaseline = "middle";
+      // vctx.shadowColor = "#ffffff";
+      // vctx.shadowBlur = 8;
+      vctx.fillText(String(getValue()), 256, 64);
+      // vctx.shadowBlur = 0;
+      if (valueTexRef.current) valueTexRef.current.needsUpdate = true;
+    };
+    const vtex = new THREE.CanvasTexture(vc);
+    valueTexRef.current = vtex;
+    if (valueMeshRef.current) {
+      (valueMeshRef.current.material as THREE.MeshStandardMaterial).map = vtex;
+      (
+        valueMeshRef.current.material as THREE.MeshStandardMaterial
+      ).needsUpdate = true;
+    }
+    drawValue();
+
+    // Update value plate every second
+    const id = setInterval(drawValue, 1000);
+
+    return () => {
+      clearInterval(id);
+      ltex.dispose();
+      vtex.dispose();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <group position={position} rotation={rotation}>
-      {/* Ornate frame — outer */}
-      <mesh position={[0, 0, -0.04]}>
-        <boxGeometry args={[frameW + 0.18, frameH + 0.18, 0.08]} />
+      <mesh position={[0, 0, -0.046]}>
+        <boxGeometry args={[frameW + 0.22, frameH + 0.22, 0.09]} />
         <meshStandardMaterial
           color={frameColor}
-          roughness={0.3}
-          metalness={0.85}
+          roughness={0.28}
+          metalness={0.88}
         />
       </mesh>
-      {/* Frame inner bevel */}
       <mesh position={[0, 0, -0.01]}>
-        <boxGeometry args={[frameW + 0.06, frameH + 0.06, 0.06]} />
-        <meshStandardMaterial color="#2a1e0e" roughness={0.7} />
+        <boxGeometry args={[frameW + 0.08, frameH + 0.08, 0.06]} />
+        <meshStandardMaterial color="#1a1008" roughness={0.8} />
       </mesh>
-      {/* Clock face plane */}
-      <mesh ref={meshRef} position={[0, 0, 0.02]}>
+      <mesh ref={meshRef} position={[0, 0, 0.022]}>
         <planeGeometry args={[frameW, frameH]} />
-        <meshStandardMaterial roughness={0.8} metalness={0.0} />
+        <meshStandardMaterial roughness={0.55} metalness={0.0} />
       </mesh>
-      {/* Frame corner rosettes */}
       {(
         [
           [-1, 1],
@@ -339,16 +550,52 @@ function LiveClock({
       ).map(([sx, sy], i) => (
         <mesh
           key={i}
-          position={[sx * (frameW / 2 + 0.05), sy * (frameH / 2 + 0.05), -0.0]}
+          position={[
+            sx * (frameW / 2 + 0.065),
+            sy * (frameH / 2 + 0.065),
+            -0.01,
+          ]}
         >
-          <cylinderGeometry args={[0.045, 0.045, 0.1, 8]} />
+          <cylinderGeometry args={[0.05, 0.05, 0.1, 8]} />
           <meshStandardMaterial
             color={accent}
-            roughness={0.15}
-            metalness={0.95}
+            roughness={0.14}
+            metalness={0.96}
           />
         </mesh>
       ))}
+
+      {clockType === "seconds" && (
+        <>
+          {/* Label plate — bottom of frame */}
+          <mesh position={[0, -(frameH / 2 + 0.14), -0.01]}>
+            <boxGeometry args={[frameW + 0.1, 0.3, 0.05]} />
+            <meshStandardMaterial
+              color={frameColor}
+              roughness={0.3}
+              metalness={0.85}
+            />
+          </mesh>
+          <mesh ref={labelMeshRef} position={[0, -(frameH / 2 + 0.165), 0.028]}>
+            <planeGeometry args={[frameW + 0.05, 0.26]} />
+            <meshStandardMaterial roughness={0.5} />
+          </mesh>
+
+          {/* Value plate — top of frame */}
+          <mesh position={[0, frameH / 2 + 0.14, -0.01]}>
+            <boxGeometry args={[frameW + 0.1, 0.3, 0.05]} />
+            <meshStandardMaterial
+              color={frameColor}
+              roughness={0.3}
+              metalness={0.85}
+            />
+          </mesh>
+          <mesh ref={valueMeshRef} position={[0, frameH / 2 + 0.165, 0.028]}>
+            <planeGeometry args={[frameW + 0.05, 0.26]} />
+            <meshStandardMaterial roughness={0.5} />
+          </mesh>
+        </>
+      )}
     </group>
   );
 }
@@ -362,38 +609,32 @@ function Pendulum({
   accent: string;
 }) {
   const pivotRef = useRef<THREE.Group>(null);
-
   useFrame(({ clock }) => {
     if (!pivotRef.current) return;
     pivotRef.current.rotation.z =
-      Math.sin(clock.getElapsedTime() * Math.PI) * 0.18;
+      Math.sin(clock.getElapsedTime() * Math.PI) * 0.2;
   });
-
   return (
     <group position={position}>
-      {/* Pivot bracket */}
       <mesh>
-        <boxGeometry args={[0.12, 0.06, 0.06]} />
+        <boxGeometry args={[0.14, 0.06, 0.06]} />
         <meshStandardMaterial color={accent} roughness={0.2} metalness={0.9} />
       </mesh>
-      {/* Swinging arm */}
       <group ref={pivotRef}>
-        {/* Rod */}
-        <mesh position={[0, -0.4, 0]}>
-          <cylinderGeometry args={[0.012, 0.012, 0.8, 8]} />
+        <mesh position={[0, -0.42, 0]}>
+          <cylinderGeometry args={[0.013, 0.013, 0.84, 8]} />
           <meshStandardMaterial
             color={accent}
             roughness={0.3}
             metalness={0.8}
           />
         </mesh>
-        {/* Bob */}
-        <mesh position={[0, -0.85, 0]}>
-          <cylinderGeometry args={[0.1, 0.08, 0.06, 16]} />
+        <mesh position={[0, -0.88, 0]}>
+          <cylinderGeometry args={[0.1, 0.085, 0.065, 16]} />
           <meshStandardMaterial
             color={accent}
             roughness={0.1}
-            metalness={0.95}
+            metalness={0.96}
           />
         </mesh>
       </group>
@@ -411,12 +652,10 @@ function LancetWindow({
 }) {
   return (
     <group position={position} rotation={rotation ?? [0, 0, 0]}>
-      {/* Dark sky */}
       <mesh>
         <planeGeometry args={[0.7, 1.4]} />
         <meshStandardMaterial color="#050510" roughness={1} />
       </mesh>
-      {/* Crescent moon */}
       <mesh position={[0.1, 0.35, 0.01]}>
         <circleGeometry args={[0.12, 16]} />
         <meshStandardMaterial
@@ -429,13 +668,12 @@ function LancetWindow({
         <circleGeometry args={[0.1, 16]} />
         <meshStandardMaterial color="#050510" roughness={1} />
       </mesh>
-      {/* Star dots */}
       {[
         [-0.15, 0.4],
         [0.2, 0.1],
-        [-0.1, -0.1],
-        [0.1, 0.55],
-        [-0.25, 0.2],
+        [-0.1, -0.12],
+        [0.09, 0.55],
+        [-0.24, 0.22],
       ].map(([sx, sy], i) => (
         <mesh key={i} position={[sx, sy, 0.01]}>
           <circleGeometry args={[0.015, 6]} />
@@ -446,7 +684,6 @@ function LancetWindow({
           />
         </mesh>
       ))}
-      {/* Stone arch frame */}
       <mesh position={[0, 0, 0.01]}>
         <ringGeometry args={[0.35, 0.46, 16, 1, 0, Math.PI]} />
         <meshStandardMaterial
@@ -455,12 +692,10 @@ function LancetWindow({
           side={THREE.DoubleSide}
         />
       </mesh>
-      {/* Stone pillar left */}
       <mesh position={[-0.35, -0.35, 0.01]}>
         <boxGeometry args={[0.1, 0.7, 0.08]} />
         <meshStandardMaterial color="#3a2e22" roughness={0.9} />
       </mesh>
-      {/* Stone pillar right */}
       <mesh position={[0.35, -0.35, 0.01]}>
         <boxGeometry args={[0.1, 0.7, 0.08]} />
         <meshStandardMaterial color="#3a2e22" roughness={0.9} />
@@ -479,7 +714,6 @@ function CompassRose({
   date: string;
   location: string;
 }) {
-  const texRef = useRef<THREE.CanvasTexture | null>(null);
   const meshRef = useRef<THREE.Mesh>(null);
 
   useEffect(() => {
@@ -491,25 +725,22 @@ function CompassRose({
       cy = 256,
       r = 240;
 
-    // Base circle
     ctx.fillStyle = "#0a0805";
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.fill();
 
-    // Outer ring
     ctx.strokeStyle = accent + "80";
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.arc(cx, cy, r - 4, 0, Math.PI * 2);
     ctx.stroke();
 
-    // Text around circumference
-    const fullText = `${date}  ✦  ${location}  ✦  `;
+    const fullText = date + "  ✦  " + location + "  ✦  ";
     const chars = fullText.repeat(2).split("");
     const textR = r - 22;
     ctx.fillStyle = accent + "AA";
-    ctx.font = "bold 16px sans-serif";
+    ctx.font = "bold 15px sans-serif";
     chars.forEach((ch, i) => {
       const angle = (i / chars.length) * Math.PI * 2 - Math.PI / 2;
       ctx.save();
@@ -519,31 +750,27 @@ function CompassRose({
       ctx.restore();
     });
 
-    // Compass points
-    const points = [
-      { label: "N", angle: -Math.PI / 2 },
-      { label: "E", angle: 0 },
-      { label: "S", angle: Math.PI / 2 },
-      { label: "W", angle: Math.PI },
-    ];
-    points.forEach(({ label, angle }) => {
-      const pr = r - 55;
+    [
+      { l: "N", a: -Math.PI / 2 },
+      { l: "E", a: 0 },
+      { l: "S", a: Math.PI / 2 },
+      { l: "W", a: Math.PI },
+    ].forEach(({ l, a }) => {
       ctx.fillStyle = accent;
       ctx.font = "bold 22px serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(label, cx + Math.cos(angle) * pr, cy + Math.sin(angle) * pr);
+      ctx.fillText(l, cx + Math.cos(a) * (r - 55), cy + Math.sin(a) * (r - 55));
     });
 
-    // Eight-pointed star
     ctx.save();
     ctx.translate(cx, cy);
-    ctx.fillStyle = accent + "30";
     for (let i = 0; i < 8; i++) {
       ctx.save();
       ctx.rotate((i / 8) * Math.PI * 2);
+      ctx.fillStyle = accent + "28";
       ctx.beginPath();
-      ctx.moveTo(0, -180);
+      ctx.moveTo(0, -178);
       ctx.lineTo(18, -30);
       ctx.lineTo(0, 0);
       ctx.lineTo(-18, -30);
@@ -551,30 +778,27 @@ function CompassRose({
       ctx.fill();
       ctx.restore();
     }
-    // Centre star fill
-    ctx.fillStyle = accent + "60";
     for (let i = 0; i < 4; i++) {
       ctx.save();
       ctx.rotate((i / 4) * Math.PI * 2);
+      ctx.fillStyle = accent + "55";
       ctx.beginPath();
-      ctx.moveTo(0, -120);
-      ctx.lineTo(14, -20);
+      ctx.moveTo(0, -118);
+      ctx.lineTo(13, -20);
       ctx.lineTo(0, 0);
-      ctx.lineTo(-14, -20);
+      ctx.lineTo(-13, -20);
       ctx.closePath();
       ctx.fill();
       ctx.restore();
     }
     ctx.restore();
 
-    // Centre circle
     ctx.fillStyle = accent;
     ctx.beginPath();
     ctx.arc(cx, cy, 12, 0, Math.PI * 2);
     ctx.fill();
 
     const tex = new THREE.CanvasTexture(canvas);
-    texRef.current = tex;
     if (meshRef.current) {
       (meshRef.current.material as THREE.MeshStandardMaterial).map = tex;
       (meshRef.current.material as THREE.MeshStandardMaterial).needsUpdate =
@@ -608,20 +832,20 @@ function WallSconce({ position }: { position: [number, number, number] }) {
   return (
     <group position={position}>
       <mesh>
-        <boxGeometry args={[0.06, 0.2, 0.06]} />
+        <boxGeometry args={[0.06, 0.22, 0.06]} />
         <meshStandardMaterial color="#3a3530" metalness={0.8} roughness={0.4} />
       </mesh>
-      <mesh position={[0, 0.18, 0.05]}>
+      <mesh position={[0, 0.18, 0.06]}>
         <cylinderGeometry args={[0.06, 0.04, 0.1, 8]} />
         <meshStandardMaterial color="#3a3530" metalness={0.7} roughness={0.5} />
       </mesh>
-      <mesh position={[0, 0.28, 0.05]}>
-        <coneGeometry args={[0.05, 0.14, 8]} />
+      <mesh position={[0, 0.3, 0.06]}>
+        <coneGeometry args={[0.055, 0.15, 8]} />
         <meshBasicMaterial color="#ffaa33" transparent opacity={0.9} />
       </mesh>
       <pointLight
         ref={lightRef}
-        position={[0, 0.28, 0.08]}
+        position={[0, 0.3, 0.09]}
         color="#ff9933"
         intensity={1.8}
         distance={4}
@@ -644,11 +868,11 @@ export function CountdownRoom({
 
   const timeRef = useRef(getTimeLeft(eventDate));
   const accent = theme.accent;
-  const frameColor = new THREE.Color(accent).multiplyScalar(0.6).getStyle();
-  const wallZ = -ROOM_LENGTH + 0.12;
+  const frameColor = new THREE.Color(accent).multiplyScalar(0.55).getStyle();
+  const wallZ = -ROOM_LENGTH + 0.14;
   const floorY = -ROOM_HEIGHT / 2;
+  const midZ = -ROOM_LENGTH * 0.55;
 
-  // Tick every second via setInterval so values stay fresh for canvas redraws
   useEffect(() => {
     const id = setInterval(() => {
       timeRef.current = getTimeLeft(eventDate);
@@ -662,188 +886,136 @@ export function CountdownRoom({
 
   return (
     <group>
-      {/* ── NORTH WALL: Calendar (Days) — back wall, largest ── */}
-      <LiveClock
-        position={[0, 0.4, wallZ]}
+      <LiveClockMesh
+        position={[-2.1, 0.3, wallZ]}
         rotation={[0, 0, 0]}
         getValue={() => timeRef.current.days}
         label="Days"
-        frameW={2.0}
-        frameH={2.0}
+        frameW={2.1}
+        frameH={2.1}
         accent={accent}
         frameColor={frameColor}
-        drawFn={(ctx, val, lbl, acc, dk, sz) =>
-          drawCalendarFace(ctx, val, acc, sz)
-        }
+        clockType="days"
       />
 
-      {/* Stone tablet below days — date & location */}
-      <group position={[0, floorY + 0.55, wallZ + 0.02]}>
-        {/* Stone slab */}
-        <mesh>
-          <boxGeometry args={[2.8, 0.55, 0.08]} />
-          <meshStandardMaterial color="#2a1e14" roughness={0.92} />
-        </mesh>
-        {/* Gold border */}
-        <mesh position={[0, 0, 0.045]}>
-          <boxGeometry args={[2.75, 0.5, 0.01]} />
-          <meshStandardMaterial
-            color={accent}
-            roughness={0.2}
-            metalness={0.85}
-            transparent
-            opacity={0.3}
-          />
-        </mesh>
-        {/* Engraved divider */}
-        <mesh position={[0, 0.02, 0.05]}>
-          <boxGeometry args={[2.4, 0.012, 0.01]} />
-          <meshStandardMaterial
-            color={accent}
-            roughness={0.2}
-            metalness={0.8}
-          />
-        </mesh>
-        {/* Text via Html-free approach — use a canvas plane */}
-        <mesh position={[0, 0, 0.046]}>
-          <planeGeometry args={[2.6, 0.44]} />
-          <meshStandardMaterial color="#1a120a" roughness={0.9} />
-        </mesh>
-      </group>
-
-      {/* ── EAST WALL (right): Hours clock ── */}
-      <LiveClock
-        position={[ROOM_WIDTH / 2 - 0.12, 0.2, -ROOM_LENGTH * 0.58]}
-        rotation={[0, -Math.PI / 2, 0]}
-        getValue={() => timeRef.current.hours}
-        label="Hours"
-        frameW={1.5}
-        frameH={1.5}
-        accent={accent}
-        frameColor={frameColor}
-        drawFn={drawClockFace}
-      />
-
-      {/* ── WEST WALL (left): Minutes clock ── */}
-      <LiveClock
-        position={[-ROOM_WIDTH / 2 + 0.12, 0.2, -ROOM_LENGTH * 0.58]}
-        rotation={[0, Math.PI / 2, 0]}
-        getValue={() => timeRef.current.minutes}
-        label="Minutes"
-        frameW={1.5}
-        frameH={1.5}
-        accent={accent}
-        frameColor={frameColor}
-        drawFn={drawClockFace}
-      />
-
-      {/* ── Seconds clock — on back wall beside Days, smaller ── */}
-      <LiveClock
-        position={[2.6, -0.6, wallZ]}
+      <LiveClockMesh
+        position={[2.1, 0.2, wallZ]}
         rotation={[0, 0, 0]}
         getValue={() => timeRef.current.seconds}
         label="Seconds"
-        frameW={1.1}
-        frameH={1.1}
+        frameW={1.3}
+        frameH={1.3}
         accent={accent}
         frameColor={frameColor}
-        drawFn={drawClockFace}
+        clockType="seconds"
+      />
+      <Pendulum position={[2.1, -0.65, wallZ + 0.06]} accent={accent} />
+
+      <LiveClockMesh
+        position={[ROOM_WIDTH / 2 - 0.12, 0.3, midZ - 0.6]}
+        rotation={[0, -Math.PI / 2, 0]}
+        getValue={() => timeRef.current.minutes}
+        label="Minutes"
+        frameW={1.6}
+        frameH={1.6}
+        accent={accent}
+        frameColor={frameColor}
+        clockType="minutes"
       />
 
-      {/* Seconds pendulum */}
-      <Pendulum position={[2.6, -1.35, wallZ + 0.06]} accent={accent} />
+      <LiveClockMesh
+        position={[-ROOM_WIDTH / 2 + 0.12, 0.3, midZ - 0.6]}
+        rotation={[0, Math.PI / 2, 0]}
+        getValue={() => timeRef.current.hours}
+        label="Hours"
+        frameW={1.6}
+        frameH={1.6}
+        accent={accent}
+        frameColor={frameColor}
+        clockType="hours"
+      />
 
-      {/* ── Lancet windows — side walls ── */}
       <LancetWindow
-        position={[-ROOM_WIDTH / 2 + 0.06, 0.8, -ROOM_LENGTH * 0.35]}
+        position={[-ROOM_WIDTH / 2 + 0.06, 0.8, -ROOM_LENGTH * 0.3]}
         rotation={[0, Math.PI / 2, 0]}
       />
       <LancetWindow
-        position={[ROOM_WIDTH / 2 - 0.06, 0.8, -ROOM_LENGTH * 0.35]}
+        position={[ROOM_WIDTH / 2 - 0.06, 0.8, -ROOM_LENGTH * 0.3]}
         rotation={[0, -Math.PI / 2, 0]}
       />
       <LancetWindow
-        position={[-ROOM_WIDTH / 2 + 0.06, 0.8, -ROOM_LENGTH * 0.7]}
+        position={[-ROOM_WIDTH / 2 + 0.06, 0.8, -ROOM_LENGTH * 0.72]}
         rotation={[0, Math.PI / 2, 0]}
       />
       <LancetWindow
-        position={[ROOM_WIDTH / 2 - 0.06, 0.8, -ROOM_LENGTH * 0.7]}
+        position={[ROOM_WIDTH / 2 - 0.06, 0.8, -ROOM_LENGTH * 0.72]}
         rotation={[0, -Math.PI / 2, 0]}
       />
 
-      {/* ── Floor compass rose ── */}
       <CompassRose accent={accent} date={dateStr} location={locationStr} />
-
-      {/* ── Gold inlay border on compass rose ── */}
       <mesh
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, floorY + 0.008, -ROOM_LENGTH * 0.5]}
       >
-        <ringGeometry args={[1.6, 1.65, 64]} />
+        <ringGeometry args={[1.6, 1.66, 64]} />
         <meshStandardMaterial color={accent} roughness={0.2} metalness={0.9} />
       </mesh>
 
-      {/* ── Wall torches — atmospheric lighting ── */}
+      <WallSconce position={[-ROOM_WIDTH / 2 + 0.1, 0.6, -ROOM_LENGTH * 0.2]} />
+      <WallSconce position={[ROOM_WIDTH / 2 - 0.1, 0.6, -ROOM_LENGTH * 0.2]} />
       <WallSconce
-        position={[-ROOM_WIDTH / 2 + 0.1, 0.6, -ROOM_LENGTH * 0.25]}
+        position={[-ROOM_WIDTH / 2 + 0.1, 0.6, -ROOM_LENGTH * 0.82]}
       />
-      <WallSconce position={[ROOM_WIDTH / 2 - 0.1, 0.6, -ROOM_LENGTH * 0.25]} />
-      <WallSconce position={[-ROOM_WIDTH / 2 + 0.1, 0.6, -ROOM_LENGTH * 0.8]} />
-      <WallSconce position={[ROOM_WIDTH / 2 - 0.1, 0.6, -ROOM_LENGTH * 0.8]} />
+      <WallSconce position={[ROOM_WIDTH / 2 - 0.1, 0.6, -ROOM_LENGTH * 0.82]} />
 
-      {/* ── Ceiling boss — ornate centre ── */}
       <mesh position={[0, ROOM_HEIGHT / 2 - 0.05, -ROOM_LENGTH * 0.5]}>
-        <cylinderGeometry args={[0.4, 0.4, 0.06, 16]} />
+        <cylinderGeometry args={[0.42, 0.42, 0.065, 16]} />
         <meshStandardMaterial
           color={frameColor}
-          roughness={0.25}
+          roughness={0.22}
           metalness={0.9}
         />
       </mesh>
-      {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => {
+      {Array.from({ length: 8 }).map((_, i) => {
         const a = (i / 8) * Math.PI * 2;
         return (
           <mesh
             key={i}
             position={[
-              Math.cos(a) * 0.55,
+              Math.cos(a) * 0.58,
               ROOM_HEIGHT / 2 - 0.05,
-              -ROOM_LENGTH * 0.5 + Math.sin(a) * 0.55,
+              -ROOM_LENGTH * 0.5 + Math.sin(a) * 0.58,
             ]}
           >
-            <sphereGeometry args={[0.06, 8, 8]} />
+            <sphereGeometry args={[0.065, 8, 8]} />
             <meshStandardMaterial
               color={accent}
-              roughness={0.15}
-              metalness={0.95}
+              roughness={0.14}
+              metalness={0.96}
             />
           </mesh>
         );
       })}
 
-      {/* ── Clock tower pillar columns — corners ── */}
       {(
         [
-          [-ROOM_WIDTH / 2 + 0.3, -ROOM_LENGTH * 0.3],
-          [ROOM_WIDTH / 2 - 0.3, -ROOM_LENGTH * 0.3],
-          [-ROOM_WIDTH / 2 + 0.3, -ROOM_LENGTH * 0.75],
-          [ROOM_WIDTH / 2 - 0.3, -ROOM_LENGTH * 0.75],
+          [-ROOM_WIDTH / 2 + 0.28, -ROOM_LENGTH * 0.28],
+          [ROOM_WIDTH / 2 - 0.28, -ROOM_LENGTH * 0.28],
+          [-ROOM_WIDTH / 2 + 0.28, -ROOM_LENGTH * 0.78],
+          [ROOM_WIDTH / 2 - 0.28, -ROOM_LENGTH * 0.78],
         ] as [number, number][]
       ).map(([x, z], i) => (
         <group key={i} position={[x, 0, z]}>
-          {/* Column shaft */}
           <mesh>
-            <cylinderGeometry args={[0.12, 0.14, ROOM_HEIGHT, 10]} />
+            <cylinderGeometry args={[0.13, 0.15, ROOM_HEIGHT, 10]} />
             <meshStandardMaterial color="#2a1e14" roughness={0.85} />
           </mesh>
-          {/* Capital */}
           <mesh position={[0, ROOM_HEIGHT / 2 - 0.1, 0]}>
-            <cylinderGeometry args={[0.2, 0.13, 0.2, 10]} />
+            <cylinderGeometry args={[0.22, 0.14, 0.22, 10]} />
             <meshStandardMaterial color="#3a2e22" roughness={0.8} />
           </mesh>
-          {/* Base */}
-          <mesh position={[0, -ROOM_HEIGHT / 2 + 0.08, 0]}>
-            <cylinderGeometry args={[0.2, 0.22, 0.16, 10]} />
+          <mesh position={[0, -ROOM_HEIGHT / 2 + 0.09, 0]}>
+            <cylinderGeometry args={[0.22, 0.24, 0.18, 10]} />
             <meshStandardMaterial color="#3a2e22" roughness={0.8} />
           </mesh>
         </group>

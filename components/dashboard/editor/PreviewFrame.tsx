@@ -6,6 +6,7 @@ import { EventEngine } from "@/components/EventEngine";
 import { buildSections } from "@/lib/eventSections";
 import { ThemeProvider, useTheme } from "@/lib/ThemeContext";
 import type { EventConfig } from "@/types/event";
+import clsx from "clsx";
 import { RefreshCwIcon } from "lucide-react";
 
 interface Props {
@@ -57,6 +58,9 @@ export function PreviewFrame({
   const jumpRef = useRef<HTMLDivElement>(null);
 
   const isRoomsMode = (config.navMode ?? "scroll") === "rooms";
+
+  const hasBeenRoomsModeRef = useRef(false);
+  if (isRoomsMode) hasBeenRoomsModeRef.current = true;
 
   useEffect(() => {
     if (!config.registryEnabled || !config.slug) return;
@@ -132,7 +136,17 @@ export function PreviewFrame({
     initialUrl.current = buildUrl(config);
 
     setIsLoading(true);
-    iframe.src = initialUrl.current;
+    // iframe.src = initialUrl.current;
+
+    // Temporarily move the iframe out of the observed DOM tree
+    // so rrweb doesn't crash when contentDocument is replaced.
+    // We do this by cloning the parent and swapping — but simplest
+    // is to just defer the src change past rrweb's synchronous mutation handler.
+    setTimeout(() => {
+      if (iframeRef.current) {
+        iframeRef.current.src = initialUrl.current;
+      }
+    }, 0);
   }, [config.entryStyle, config.navMode]);
 
   useEffect(() => {
@@ -181,97 +195,116 @@ export function PreviewFrame({
   return (
     <div className="flex flex-col h-full">
       {/* Section jump bar */}
-      {curtainOpen && (
-        <div className="shrink-0 px-3! py-1.5! border-b border-[#D4AF3762] flex items-center gap-2">
-          <span className="font-label text-[9px] tracking-[0.3em] uppercase text-[#D4AF3780] shrink-0">
-            Jump to
-          </span>
-          <div ref={jumpRef} className="relative">
-            <button
-              onClick={() => setJumpOpen((o) => !o)}
-              className="font-label text-[8px] tracking-[0.2em] uppercase rounded-full border border-[#D4AF3760] text-[#D4AF37] bg-[#D4AF3710] px-2.5! py-0.5! cursor-pointer flex items-center justify-between gap-1.5 transition-colors hover:border-[#D4AF37] min-w-[180px] overflow-hidden"
-            >
-              <span className="truncate">
-                {buildSections(
-                  config,
-                  dateRevealed,
-                  () => {},
-                  registryItemCount,
-                  config.navMode,
-                )[activeSectionIndex]?.label ?? "Select"}
-              </span>
-              <span className="opacity-60 shrink-0">▾</span>
-            </button>
+      <div
+        className={clsx(
+          "shrink-0 px-3! py-1.5! border-b border-[#D4AF3762] flex items-center gap-2 transition-opacity duration-200",
+          curtainOpen
+            ? "opacity-100"
+            : "opacity-0 pointer-events-none h-0 overflow-hidden border-0",
+        )}
+      >
+        <span className="font-label text-[9px] tracking-[0.3em] uppercase text-[#D4AF3780] shrink-0">
+          Jump to
+        </span>
+        <div ref={jumpRef} className="relative">
+          <button
+            onClick={() => setJumpOpen((o) => !o)}
+            className="font-label text-[8px] tracking-[0.2em] uppercase rounded-full border border-[#D4AF3760] text-[#D4AF37] bg-[#D4AF3710] px-2.5! py-0.5! cursor-pointer flex items-center justify-between gap-1.5 transition-colors hover:border-[#D4AF37] min-w-[180px] overflow-hidden"
+          >
+            <span className="truncate">
+              {buildSections(
+                config,
+                dateRevealed,
+                () => {},
+                registryItemCount,
+                config.navMode,
+              )[activeSectionIndex]?.label ?? "Select"}
+            </span>
+            <span className="opacity-60 shrink-0">▾</span>
+          </button>
 
-            {jumpOpen && (
-              <div
-                className="absolute top-full left-0 mt-1! z-50 rounded-lg border border-[#D4AF3740] overflow-hidden"
-                style={{ background: "#0A0A0A", minWidth: "220px" }}
-              >
-                {buildSections(
-                  config,
-                  dateRevealed,
-                  () => {},
-                  registryItemCount,
-                  config.navMode,
-                ).map((s, i) => {
-                  const isActive = i === activeSectionIndex;
-                  return (
-                    <button
-                      key={s.key}
-                      onClick={() => {
-                        setActiveSectionIndex(i);
-                        setJumpOpen(false);
-                        if (isRoomsMode) {
-                          window.postMessage(
-                            { type: "SCROLL_TO", index: i },
-                            "*",
-                          );
-                        } else {
-                          iframeRef.current?.contentWindow?.postMessage(
-                            { type: "SCROLL_TO", index: i },
-                            "*",
-                          );
-                        }
-                      }}
-                      className="w-full flex items-center justify-between px-3! py-1.5! font-label text-[8px] tracking-[0.2em] uppercase transition-colors cursor-pointer space-x-4!"
-                      style={{
-                        color: isActive ? "#D4AF37" : "#F5F0E880",
-                        background: isActive ? "#D4AF3715" : "transparent",
-                      }}
-                    >
-                      <span className="truncate">{s.label}</span>
-                      {isActive && <span style={{ color: "#D4AF37" }}>✓</span>}
-                    </button>
-                  );
-                })}
-              </div>
+          {/* Sections */}
+          <div
+            className={clsx(
+              "absolute top-full left-0 mt-1! z-50 rounded-lg border border-[#D4AF3740] overflow-hidden transition-opacity duration-150",
+              jumpOpen
+                ? "opacity-100 pointer-events-auto"
+                : "opacity-0 pointer-events-none invisible",
             )}
+            style={{ background: "#0A0A0A", minWidth: "220px" }}
+          >
+            {buildSections(
+              config,
+              dateRevealed,
+              () => {},
+              registryItemCount,
+              config.navMode,
+            ).map((s, i) => {
+              const isActive = i === activeSectionIndex;
+              return (
+                <button
+                  key={s.key}
+                  onClick={() => {
+                    setActiveSectionIndex(i);
+                    setJumpOpen(false);
+                    if (isRoomsMode) {
+                      window.postMessage({ type: "SCROLL_TO", index: i }, "*");
+                    } else {
+                      iframeRef.current?.contentWindow?.postMessage(
+                        { type: "SCROLL_TO", index: i },
+                        "*",
+                      );
+                    }
+                  }}
+                  className="w-full flex items-center justify-between px-3! py-1.5! font-label text-[8px] tracking-[0.2em] uppercase transition-colors cursor-pointer space-x-4!"
+                  style={{
+                    color: isActive ? "#D4AF37" : "#F5F0E880",
+                    background: isActive ? "#D4AF3715" : "transparent",
+                  }}
+                >
+                  <span className="truncate">{s.label}</span>
+                  {isActive && <span style={{ color: "#D4AF37" }}>✓</span>}
+                </button>
+              );
+            })}
           </div>
         </div>
-      )}
+      </div>
 
       <div
-        key={isRoomsMode ? "rooms" : "scroll"}
+        // key={isRoomsMode ? "rooms" : "scroll"}
         className="flex-1 overflow-hidden relative"
       >
-        {isRoomsMode ? (
-          /* ── Inline renderer for rooms mode — avoids iframe GPU contention ── */
-          <div
-            className="w-full h-full relative overflow-hidden"
-            style={{
-              // transform creates a new containing block for position:fixed children
-              // so Three.js canvas stays inside this box instead of covering the dashboard
-              transform: "translateZ(0)",
-              isolation: "isolate",
-              containerType: "inline-size",
-              containerName: "rooms-preview",
-              zIndex: 10,
-            }}
-          >
-            {previewLocked ? (
+        <div
+          style={{
+            display: isRoomsMode ? "block" : "none",
+            width: "100%",
+            height: "100%",
+          }}
+          data-rr-block
+        >
+          {/* ── Inline renderer for rooms mode — avoids iframe GPU contention ── */}
+          {hasBeenRoomsModeRef.current && (
+            <div
+              className="w-full h-full relative overflow-hidden"
+              style={{
+                // transform creates a new containing block for position:fixed children
+                // so Three.js canvas stays inside this box instead of covering the dashboard
+                transform: "translateZ(0)",
+                isolation: "isolate",
+                containerType: "inline-size",
+                containerName: "rooms-preview",
+                zIndex: 10,
+              }}
+            >
+              {/* Preview Lock */}
               <div
-                className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 backdrop-blur-[2px]"
+                className={clsx(
+                  "absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 backdrop-blur-[2px] transition-opacity duration-150",
+                  previewLocked
+                    ? "opacity-100 pointer-events-auto"
+                    : "opacity-0 pointer-events-none invisible",
+                )}
                 style={{ background: "rgba(5,5,5,0.75)" }}
               >
                 <div
@@ -302,7 +335,7 @@ export function PreviewFrame({
                   </p>
                 </div>
               </div>
-            ) : (
+
               <ThemeProvider
                 key={`rooms-base-${roomsResetKey}`}
                 initialThemeKey={config.themeKey ?? "royal"}
@@ -314,88 +347,108 @@ export function PreviewFrame({
                   isEditorPreview={true}
                 />
               </ThemeProvider>
+            </div>
+          )}
+        </div>
+        <div
+          style={{
+            display: isRoomsMode ? "none" : "block",
+            width: "100%",
+            height: "100%",
+          }}
+        >
+          {/* ── Iframe renderer for scroll mode — unchanged ── */}
+
+          <iframe
+            ref={iframeRef}
+            src={initialUrl.current}
+            className="w-full h-full border-0"
+            title="Event Preview"
+            onLoad={handleLoad}
+          />
+
+          {/* Preview Lock */}
+          <div
+            className={clsx(
+              "absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 backdrop-blur-[2px] transition-opacity duration-150",
+              previewLocked
+                ? "opacity-100 pointer-events-auto"
+                : "opacity-0 pointer-events-none invisible",
             )}
+            style={{ background: "rgba(5,5,5,0.75)" }}
+          >
+            <div
+              className="rounded-2xl px-8! py-6! flex flex-col items-center gap-3 text-center"
+              style={{
+                background: "#0A0A0A",
+                border: "1px solid #D4AF3730",
+                maxWidth: 280,
+              }}
+            >
+              <div
+                className="text-2xl mb-1"
+                style={{ filter: "drop-shadow(0 0 8px #D4AF3760)" }}
+              >
+                ✦
+              </div>
+              <p
+                className="font-display italic font-bold text-lg leading-snug"
+                style={{ color: "#F5F0E8" }}
+              >
+                Save first to preview
+              </p>
+              <p
+                className="font-label text-[12px] font-semibold tracking-[0.3em] uppercase leading-relaxed"
+                style={{ color: "#D4AF3780" }}
+              >
+                You can interact with the {config.entryStyle ?? "curtain"} in
+                the preview once your event details are saved
+              </p>
+            </div>
           </div>
-        ) : (
-          /* ── Iframe renderer for scroll mode — unchanged ── */
-          <>
-            <iframe
-              ref={iframeRef}
-              src={initialUrl.current}
-              className="w-full h-full border-0"
-              title="Event Preview"
-              onLoad={handleLoad}
+
+          {/* Resetting */}
+          <div
+            className={clsx(
+              "absolute inset-0 z-10 flex items-center justify-center bg-dash-bg/80 backdrop-blur-sm transition-opacity duration-150",
+              isResetting
+                ? "opacity-100 pointer-events-auto"
+                : "opacity-0 pointer-events-none invisible",
+            )}
+          >
+            <div className="flex flex-col items-center gap-3">
+              <RefreshCwIcon className="size-5 text-[#D4AF37] animate-spin" />
+              <p className="font-label text-[10px] tracking-[0.4em] uppercase text-[#D4AF3780]">
+                Resetting…
+              </p>
+            </div>
+          </div>
+
+          {/* Loading */}
+          <div
+            className={clsx(
+              "absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 transition-opacity duration-150",
+              isLoading
+                ? "opacity-100 pointer-events-auto"
+                : "opacity-0 pointer-events-none invisible",
+            )}
+            style={{ background: "#080808" }}
+          >
+            <div
+              className="w-6 h-6 rounded-full border-2 animate-spin"
+              style={{
+                borderColor: "#D4AF3740",
+                borderTopColor: "#D4AF37",
+              }}
             />
-
-            {previewLocked && (
-              <div
-                className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 backdrop-blur-[2px]"
-                style={{ background: "rgba(5,5,5,0.75)" }}
-              >
-                <div
-                  className="rounded-2xl px-8! py-6! flex flex-col items-center gap-3 text-center"
-                  style={{
-                    background: "#0A0A0A",
-                    border: "1px solid #D4AF3730",
-                    maxWidth: 280,
-                  }}
-                >
-                  <div
-                    className="text-2xl mb-1"
-                    style={{ filter: "drop-shadow(0 0 8px #D4AF3760)" }}
-                  >
-                    ✦
-                  </div>
-                  <p
-                    className="font-display italic font-bold text-lg leading-snug"
-                    style={{ color: "#F5F0E8" }}
-                  >
-                    Save first to preview
-                  </p>
-                  <p
-                    className="font-label text-[12px] font-semibold tracking-[0.3em] uppercase leading-relaxed"
-                    style={{ color: "#D4AF3780" }}
-                  >
-                    You can interact with the {config.entryStyle ?? "curtain"}{" "}
-                    in the preview once your event details are saved
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {isResetting && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center bg-dash-bg/80 backdrop-blur-sm">
-                <div className="flex flex-col items-center gap-3">
-                  <RefreshCwIcon className="size-5 text-[#D4AF37] animate-spin" />
-                  <p className="font-label text-[10px] tracking-[0.4em] uppercase text-[#D4AF3780]">
-                    Resetting…
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {isLoading && (
-              <div
-                className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3"
-                style={{ background: "#080808" }}
-              >
-                <div
-                  className="w-6 h-6 rounded-full border-2 animate-spin"
-                  style={{
-                    borderColor: "#D4AF3740",
-                    borderTopColor: "#D4AF37",
-                  }}
-                />
-                <p
-                  className="font-label text-[10px] tracking-[0.4em] uppercase"
-                  style={{ color: "#D4AF3770" }}
-                >
-                  Loading preview
-                </p>
-              </div>
-            )}
-          </>
-        )}
+            <p
+              className="font-label text-[10px] tracking-[0.4em] uppercase"
+              style={{ color: "#D4AF3770" }}
+            >
+              Loading preview
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

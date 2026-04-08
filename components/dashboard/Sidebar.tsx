@@ -17,9 +17,11 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { Tooltip } from "../ui/Tooltip";
+import { usePathname, useRouter } from "next/navigation";
+import { useCallback, useEffect, useState, useTransition } from "react";
+
+import { Tooltip } from "@/components/ui/Tooltip";
+import { useNavigationBlocker } from "@/contexts/NavigationGuardContext";
 
 interface NavItem {
   href: string;
@@ -36,14 +38,44 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/app/settings", label: "Settings", Icon: SettingsIcon },
 ];
 
+interface NavLinksProps {
+  collapsed: boolean;
+  isPending: boolean;
+  startTransition: (fn: () => void) => void;
+  isBlocked: boolean;
+  confirmExit: () => Promise<boolean>;
+  setIsBlocked: (blocked: boolean) => void;
+  onNavigate?: () => void;
+}
+
 const NavLinks = ({
   collapsed,
+  isPending,
+  startTransition,
+  isBlocked,
+  confirmExit,
+  setIsBlocked,
   onNavigate,
-}: {
-  collapsed: boolean;
-  onNavigate?: () => void;
-}) => {
+}: NavLinksProps) => {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleNav = useCallback(
+    async (href: string) => {
+      if (isBlocked) {
+        const confirmed = await confirmExit();
+        if (confirmed) {
+          setIsBlocked(false);
+          onNavigate?.();
+          startTransition(() => router.push(href));
+        }
+      } else {
+        onNavigate?.();
+        startTransition(() => router.push(href));
+      }
+    },
+    [isBlocked, confirmExit, setIsBlocked, onNavigate, startTransition, router],
+  );
 
   return (
     <>
@@ -54,12 +86,16 @@ const NavLinks = ({
           <Link
             key={href}
             href={href}
-            onClick={onNavigate}
+            onClick={(e) => {
+              e.preventDefault();
+              handleNav(href);
+            }}
             className={clsx(
               "group relative flex items-center gap-3 h-9 rounded-lg px-3! py-2.5! font-label text-[12px] tracking-[0.3em] uppercase transition-all duration-150 font-semibold",
               active
                 ? "bg-dash-gold/10 text-dash-gold"
                 : "text-dash-text/40 hover:bg-dash-gold/5 hover:text-dash-gold/80",
+              (isPending || active) && "pointer-events-none",
               collapsed && "justify-center",
             )}
           >
@@ -101,10 +137,14 @@ export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const { isBlocked, setIsBlocked, confirmExit } = useNavigationBlocker();
+
   useEffect(() => setMounted(true), []);
 
   // Close sheet on route change
   const pathname = usePathname();
+  const router = useRouter();
   useEffect(() => setSheetOpen(false), [pathname]);
 
   // Prevent body scroll when sheet is open
@@ -114,6 +154,23 @@ export function Sidebar() {
       document.body.style.overflow = "";
     };
   }, [sheetOpen]);
+
+  const handleLogoNav = useCallback(
+    async (href: string, onSuccess?: () => void) => {
+      if (isBlocked) {
+        const confirmed = await confirmExit();
+        if (confirmed) {
+          setIsBlocked(false);
+          onSuccess?.();
+          startTransition(() => router.push(href));
+        }
+      } else {
+        onSuccess?.();
+        startTransition(() => router.push(href));
+      }
+    },
+    [isBlocked, confirmExit, setIsBlocked, startTransition, router],
+  );
 
   return (
     <>
@@ -152,7 +209,10 @@ export function Sidebar() {
           <Link
             href="/app/dashboard"
             className="flex items-center gap-2.5"
-            onClick={() => setSheetOpen(false)}
+            onClick={(e) => {
+              e.preventDefault();
+              handleLogoNav("/app/dashboard", () => setSheetOpen(false));
+            }}
           >
             <SparklesIcon className="size-4 text-dash-gold shrink-0" />
             <span className="font-label font-bold text-[14px] tracking-[0.35em] uppercase text-dash-gold">
@@ -169,21 +229,25 @@ export function Sidebar() {
 
         {/* Sheet nav */}
         <nav className="flex-1 overflow-y-auto py-4 px-3 flex flex-col gap-2">
-          <NavLinks collapsed={false} onNavigate={() => setSheetOpen(false)} />
+          <NavLinks
+            collapsed={false}
+            isPending={isPending}
+            startTransition={startTransition}
+            isBlocked={isBlocked}
+            confirmExit={confirmExit}
+            setIsBlocked={setIsBlocked}
+            onNavigate={() => setSheetOpen(false)}
+          />
         </nav>
 
         {/* Sheet bottom */}
         <div className="shrink-0 border-t border-dash-border p-3!">
           <div className="flex items-center gap-3 rounded-lg p-2! hover:bg-dash-gold/5 transition-all">
-            {mounted && (
+            <div className={clsx(!mounted && "invisible")}>
               <UserButton
-                appearance={{
-                  elements: {
-                    avatarBox: "size-7 shrink-0",
-                  },
-                }}
+                appearance={{ elements: { avatarBox: "size-7 shrink-0" } }}
               />
-            )}
+            </div>
             <span className="font-display font-semibold italic text-dash-text/80 truncate">
               Account
             </span>
@@ -207,13 +271,23 @@ export function Sidebar() {
           )}
         >
           {collapsed ? (
-            <Link href="/app/dashboard">
+            <Link
+              href="/app/dashboard"
+              onClick={(e) => {
+                e.preventDefault();
+                handleLogoNav("/app/dashboard");
+              }}
+            >
               <SparklesIcon className="size-5 text-dash-gold" />
             </Link>
           ) : (
             <Link
               href="/app/dashboard"
               className="flex items-center gap-2.5 min-w-0"
+              onClick={(e) => {
+                e.preventDefault();
+                handleLogoNav("/app/dashboard");
+              }}
             >
               <SparklesIcon className="size-4 text-dash-gold shrink-0" />
               <span className="font-label text-[14px] tracking-[0.35em] uppercase text-dash-gold truncate">
@@ -225,7 +299,14 @@ export function Sidebar() {
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto overflow-x-hidden py-4 px-3 flex flex-col gap-2">
-          <NavLinks collapsed={collapsed} />
+          <NavLinks
+            collapsed={collapsed}
+            isPending={isPending}
+            startTransition={startTransition}
+            isBlocked={isBlocked}
+            confirmExit={confirmExit}
+            setIsBlocked={setIsBlocked}
+          />
         </nav>
 
         {/* Bottom */}
@@ -237,13 +318,11 @@ export function Sidebar() {
               collapsed && "justify-center",
             )}
           >
-            {mounted && (
+            <div className={clsx(!mounted && "invisible")}>
               <UserButton
-                appearance={{
-                  elements: { avatarBox: "size-7 shrink-0" },
-                }}
+                appearance={{ elements: { avatarBox: "size-7 shrink-0" } }}
               />
-            )}
+            </div>
             {!collapsed && (
               <span className="font-display font-semibold italic text-dash-text/80 truncate">
                 Account

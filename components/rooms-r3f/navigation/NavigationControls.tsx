@@ -1,8 +1,9 @@
 "use client";
 
+import { useRoomsStore } from "@/components/rooms-r3f/store";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useCallback, useEffect } from "react";
-import { useRoomsStore } from "../store";
 
 interface Section {
   key: string;
@@ -14,7 +15,6 @@ interface NavigationControlsProps {
   activeRoomIndex: number;
   onNavigate: (index: number) => void;
   theme: { gold: string; text: string; bg: string };
-  maxAllowedIndex: number;
   dateRevealed: boolean;
 }
 
@@ -23,15 +23,16 @@ export function NavigationControls({
   activeRoomIndex,
   onNavigate,
   theme,
-  maxAllowedIndex,
   dateRevealed,
 }: NavigationControlsProps) {
   // Date reveal gate: before reveal, can only navigate within the first 2 rooms (hero + scratch)
-  const hardMax = dateRevealed
+  const isMoving = useRoomsStore((s) => s.isMoving);
+  const storeRevealed = useRoomsStore((s) => s.dateRevealed);
+
+  const effectiveRevealed = dateRevealed || storeRevealed;
+  const hardMax = effectiveRevealed
     ? sections.length - 1
     : Math.min(1, sections.length - 1);
-
-  const isMoving = useRoomsStore((s) => s.isMoving);
 
   const canGoLeft = !isMoving && activeRoomIndex > 0;
   const canGoRight = !isMoving && activeRoomIndex < hardMax;
@@ -65,54 +66,6 @@ export function NavigationControls({
 
   return (
     <>
-      {/* Room name banner */}
-      <div
-        style={{
-          position: "absolute",
-          top: 20,
-          left: "50%",
-          transform: "translateX(-50%)",
-          zIndex: 20,
-          pointerEvents: "none",
-          textAlign: "center",
-        }}
-      >
-        <div
-          style={{
-            background: "rgba(0,0,0,0.7)",
-            border: `1.5px solid ${theme.gold}`,
-            borderRadius: 14,
-            padding: "10px 28px",
-            backdropFilter: "blur(12px)",
-            boxShadow: `0 0 24px ${theme.gold}30`,
-          }}
-        >
-          <span
-            style={{
-              color: theme.gold,
-              fontSize: "clamp(14px, 3vw, 22px)",
-              fontWeight: 700,
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-              textShadow: `0 0 16px ${theme.gold}`,
-              display: "block",
-            }}
-          >
-            {sections[activeRoomIndex]?.label ?? ""}
-          </span>
-          <div
-            style={{
-              color: "rgba(255,255,255,0.45)",
-              fontSize: "clamp(10px, 2vw, 12px)",
-              marginTop: 4,
-              letterSpacing: "0.15em",
-            }}
-          >
-            {activeRoomIndex + 1} / {sections.length}
-          </div>
-        </div>
-      </div>
-
       {/* Navigation arrows */}
       <div
         style={{
@@ -130,50 +83,57 @@ export function NavigationControls({
         }}
       >
         {/* Left arrow */}
-        <button
-          onClick={goLeft}
-          disabled={!canGoLeft}
-          aria-label="Previous room"
-          style={{
-            background: canGoLeft
-              ? `linear-gradient(135deg, rgba(0,0,0,0.85), rgba(0,0,0,0.7))`
-              : "rgba(0,0,0,0.3)",
-            border: `2.5px solid ${canGoLeft ? theme.gold : "rgba(255,255,255,0.15)"}`,
-            borderRadius: 20,
-            color: canGoLeft ? theme.gold : "rgba(255,255,255,0.25)",
-            cursor: canGoLeft ? "pointer" : "not-allowed",
-            padding: "clamp(14px, 2vw, 20px) clamp(16px, 2.5vw, 24px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            pointerEvents: "auto",
-            transition: "all 0.2s ease",
-            boxShadow: canGoLeft
-              ? `0 0 24px rgba(0,0,0,0.6), 0 0 16px ${theme.gold}50, inset 0 1px 0 rgba(255,255,255,0.1)`
-              : "none",
-            minWidth: 64,
-            minHeight: 64,
-            userSelect: "none",
-          }}
-          onMouseEnter={(e) => {
-            if (!canGoLeft) return;
-            const btn = e.currentTarget as HTMLButtonElement;
-            btn.style.transform = "scale(1.08)";
-            btn.style.boxShadow = `0 0 32px rgba(0,0,0,0.7), 0 0 24px ${theme.gold}70, inset 0 1px 0 rgba(255,255,255,0.15)`;
-          }}
-          onMouseLeave={(e) => {
-            const btn = e.currentTarget as HTMLButtonElement;
-            btn.style.transform = "scale(1)";
-            btn.style.boxShadow = canGoLeft
-              ? `0 0 24px rgba(0,0,0,0.6), 0 0 16px ${theme.gold}50, inset 0 1px 0 rgba(255,255,255,0.1)`
-              : "none";
-          }}
+        <Tooltip
+          content={`Proceed to ${sections[activeRoomIndex - 1]?.label ?? ""} room`}
+          position="top"
+          delay={200}
+          showWhen={canGoLeft}
         >
-          <ChevronLeftIcon
-            size={Math.max(28, Math.min(40, 28))}
-            strokeWidth={2.5}
-          />
-        </button>
+          <button
+            onClick={goLeft}
+            disabled={!canGoLeft}
+            aria-label="Previous room"
+            style={{
+              background: canGoLeft
+                ? `linear-gradient(135deg, rgba(0,0,0,0.85), rgba(0,0,0,0.7))`
+                : "rgba(0,0,0,0.3)",
+              border: `2.5px solid ${canGoLeft ? theme.gold : "rgba(255,255,255,0.15)"}`,
+              borderRadius: 20,
+              color: canGoLeft ? theme.gold : "rgba(255,255,255,0.25)",
+              cursor: canGoLeft ? "pointer" : "not-allowed",
+              padding: "clamp(14px, 2vw, 20px) clamp(16px, 2.5vw, 24px)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              pointerEvents: "auto",
+              transition: "all 0.2s ease",
+              boxShadow: canGoLeft
+                ? `0 0 24px rgba(0,0,0,0.6), 0 0 16px ${theme.gold}50, inset 0 1px 0 rgba(255,255,255,0.1)`
+                : "none",
+              minWidth: 64,
+              minHeight: 64,
+              userSelect: "none",
+            }}
+            onMouseEnter={(e) => {
+              if (!canGoLeft) return;
+              const btn = e.currentTarget as HTMLButtonElement;
+              btn.style.transform = "scale(1.08)";
+              btn.style.boxShadow = `0 0 32px rgba(0,0,0,0.7), 0 0 24px ${theme.gold}70, inset 0 1px 0 rgba(255,255,255,0.15)`;
+            }}
+            onMouseLeave={(e) => {
+              const btn = e.currentTarget as HTMLButtonElement;
+              btn.style.transform = "scale(1)";
+              btn.style.boxShadow = canGoLeft
+                ? `0 0 24px rgba(0,0,0,0.6), 0 0 16px ${theme.gold}50, inset 0 1px 0 rgba(255,255,255,0.1)`
+                : "none";
+            }}
+          >
+            <ChevronLeftIcon
+              size={Math.max(28, Math.min(40, 28))}
+              strokeWidth={2.5}
+            />
+          </button>
+        </Tooltip>
 
         {/* Progress pips */}
         <div
@@ -208,50 +168,57 @@ export function NavigationControls({
         </div>
 
         {/* Right arrow */}
-        <button
-          onClick={goRight}
-          disabled={!canGoRight}
-          aria-label="Next room"
-          style={{
-            background: canGoRight
-              ? `linear-gradient(135deg, rgba(0,0,0,0.85), rgba(0,0,0,0.7))`
-              : "rgba(0,0,0,0.3)",
-            border: `2.5px solid ${canGoRight ? theme.gold : "rgba(255,255,255,0.15)"}`,
-            borderRadius: 20,
-            color: canGoRight ? theme.gold : "rgba(255,255,255,0.25)",
-            cursor: canGoRight ? "pointer" : "not-allowed",
-            padding: "clamp(14px, 2vw, 20px) clamp(16px, 2.5vw, 24px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            pointerEvents: "auto",
-            transition: "all 0.2s ease",
-            boxShadow: canGoRight
-              ? `0 0 24px rgba(0,0,0,0.6), 0 0 16px ${theme.gold}50, inset 0 1px 0 rgba(255,255,255,0.1)`
-              : "none",
-            minWidth: 64,
-            minHeight: 64,
-            userSelect: "none",
-          }}
-          onMouseEnter={(e) => {
-            if (!canGoRight) return;
-            const btn = e.currentTarget as HTMLButtonElement;
-            btn.style.transform = "scale(1.08)";
-            btn.style.boxShadow = `0 0 32px rgba(0,0,0,0.7), 0 0 24px ${theme.gold}70, inset 0 1px 0 rgba(255,255,255,0.15)`;
-          }}
-          onMouseLeave={(e) => {
-            const btn = e.currentTarget as HTMLButtonElement;
-            btn.style.transform = "scale(1)";
-            btn.style.boxShadow = canGoRight
-              ? `0 0 24px rgba(0,0,0,0.6), 0 0 16px ${theme.gold}50, inset 0 1px 0 rgba(255,255,255,0.1)`
-              : "none";
-          }}
+        <Tooltip
+          content={`Proceed to ${sections[activeRoomIndex + 1]?.label ?? ""} room`}
+          position="top"
+          delay={200}
+          showWhen={canGoRight}
         >
-          <ChevronRightIcon
-            size={Math.max(28, Math.min(40, 28))}
-            strokeWidth={2.5}
-          />
-        </button>
+          <button
+            onClick={goRight}
+            disabled={!canGoRight}
+            aria-label="Next room"
+            style={{
+              background: canGoRight
+                ? `linear-gradient(135deg, rgba(0,0,0,0.85), rgba(0,0,0,0.7))`
+                : "rgba(0,0,0,0.3)",
+              border: `2.5px solid ${canGoRight ? theme.gold : "rgba(255,255,255,0.15)"}`,
+              borderRadius: 20,
+              color: canGoRight ? theme.gold : "rgba(255,255,255,0.25)",
+              cursor: canGoRight ? "pointer" : "not-allowed",
+              padding: "clamp(14px, 2vw, 20px) clamp(16px, 2.5vw, 24px)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              pointerEvents: "auto",
+              transition: "all 0.2s ease",
+              boxShadow: canGoRight
+                ? `0 0 24px rgba(0,0,0,0.6), 0 0 16px ${theme.gold}50, inset 0 1px 0 rgba(255,255,255,0.1)`
+                : "none",
+              minWidth: 64,
+              minHeight: 64,
+              userSelect: "none",
+            }}
+            onMouseEnter={(e) => {
+              if (!canGoRight) return;
+              const btn = e.currentTarget as HTMLButtonElement;
+              btn.style.transform = "scale(1.08)";
+              btn.style.boxShadow = `0 0 32px rgba(0,0,0,0.7), 0 0 24px ${theme.gold}70, inset 0 1px 0 rgba(255,255,255,0.15)`;
+            }}
+            onMouseLeave={(e) => {
+              const btn = e.currentTarget as HTMLButtonElement;
+              btn.style.transform = "scale(1)";
+              btn.style.boxShadow = canGoRight
+                ? `0 0 24px rgba(0,0,0,0.6), 0 0 16px ${theme.gold}50, inset 0 1px 0 rgba(255,255,255,0.1)`
+                : "none";
+            }}
+          >
+            <ChevronRightIcon
+              size={Math.max(28, Math.min(40, 28))}
+              strokeWidth={2.5}
+            />
+          </button>
+        </Tooltip>
       </div>
 
       {/* Keyboard hint */}

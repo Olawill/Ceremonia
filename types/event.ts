@@ -118,6 +118,7 @@ export interface EventConfig {
   livestreamUrl?: string;
   livestreamTitle?: string;
   livestreamNote?: string;
+  livestreamTime?: string; // "HH:MM" 24h format — when stream starts
 }
 
 export function getFeatureMode(eventType: EventType): FeatureMode {
@@ -261,6 +262,18 @@ export const DEMO_EVENT_CONFIG: EventConfig = {
       icon: "❧",
       title: "The Proposal",
       desc: "On a moonlit evening in Venice, Alexander asked the question that sealed their fate forever.",
+    },
+    {
+      year: "2022",
+      icon: "◆",
+      title: "First Trip Together",
+      desc: "Three weeks in Japan — cherry blossoms, temples at dawn, and the moment we knew this was forever.",
+    },
+    {
+      year: "2023",
+      icon: "♡",
+      title: "Moving In",
+      desc: "Two apartments became one home. A shared bookshelf, a shared bed, a shared life beginning.",
     },
     {
       year: "2026",

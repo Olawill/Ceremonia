@@ -16,6 +16,8 @@ import {
   EventType,
   getVocabulary,
 } from "@/types/event";
+import { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 
 const schema = z.object({
   eventType: z.enum(EVENT_TYPES), // import EVENT_TYPES from "@/types/event"
@@ -31,10 +33,11 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 interface Props {
+  open: boolean;
   onConfirm: (values: FormValues) => void;
 }
 
-export function NewEventDialog({ onConfirm }: Props) {
+export function NewEventDialog({ open, onConfirm }: Props) {
   const router = useRouter();
   const {
     register,
@@ -53,9 +56,32 @@ export function NewEventDialog({ onConfirm }: Props) {
   const selectedType = watch("eventType") ?? "wedding";
   const vocab = getVocabulary(selectedType);
 
-  return (
+  const portalRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!portalRef.current) {
+      const div = document.createElement("div");
+      document.body.appendChild(div);
+      portalRef.current = div;
+    }
+    return () => {
+      if (portalRef.current) {
+        document.body.removeChild(portalRef.current);
+        portalRef.current = null;
+      }
+    };
+  }, []);
+
+  if (!portalRef.current) return null;
+
+  return createPortal(
     // Full-screen overlay
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2! bg-dash-bg/95 backdrop-blur-md">
+    <div
+      className={clsx(
+        "fixed inset-0 z-50 flex items-center justify-center p-2! bg-dash-bg/95 backdrop-blur-md",
+        !open && "invisible pointer-events-auto",
+      )}
+    >
       <div className="w-full max-w-lg mx-auto rounded-2xl p-4! space-y-8! bg-dash-surface border border-dash-border">
         {/* Back to dashboard */}
         <button
@@ -136,18 +162,19 @@ export function NewEventDialog({ onConfirm }: Props) {
                 autoFocus
               />
             </Field>
-            {vocab.dualHost && (
-              <Field
-                label={vocab.host2Label + "'s Name"}
-                error={errors.host2Name?.message}
-              >
-                <Input
-                  {...register("host2Name")}
-                  placeholder="Alexander"
-                  hasError={!!errors.host2Name}
-                />
-              </Field>
-            )}
+            <Field
+              label={vocab.host2Label + "'s Name"}
+              error={errors.host2Name?.message}
+              className={clsx(
+                !vocab.dualHost && "invisible pointer-events-none",
+              )}
+            >
+              <Input
+                {...register("host2Name")}
+                placeholder="Alexander"
+                hasError={!!errors.host2Name}
+              />
+            </Field>
           </div>
 
           <Field
@@ -193,6 +220,7 @@ export function NewEventDialog({ onConfirm }: Props) {
           </button>
         </form>
       </div>
-    </div>
+    </div>,
+    portalRef.current,
   );
 }
