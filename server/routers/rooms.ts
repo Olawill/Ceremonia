@@ -5,6 +5,7 @@ import { ROOMS_CREDITS_RESET_DAYS } from "@/lib/plans";
 import { getRoomCreditBalance } from "@/lib/rooms-credits";
 import { polar } from "@/lib/polar";
 import bearer from "@elysiajs/bearer";
+import { addDays } from "date-fns";
 import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
 import { getAuthUserId } from "../auth";
@@ -26,12 +27,7 @@ export const roomsRouter = new Elysia({ prefix: "/rooms" })
     if (!user) return status(404, { message: "User not found" });
 
     const balance = await getRoomCreditBalance(userId, user.plan ?? "free");
-
-    const periodStart = balance.free.total > 0
-      ? new Date()
-      : new Date(0);
-    const periodEnds = new Date(periodStart);
-    periodEnds.setDate(periodEnds.getDate() + ROOMS_CREDITS_RESET_DAYS);
+    const periodEnds = addDays(balance.periodStart, ROOMS_CREDITS_RESET_DAYS);
 
     return {
       // Legacy fields kept for DesignPanel compatibility

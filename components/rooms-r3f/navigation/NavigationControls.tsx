@@ -221,7 +221,7 @@ export function NavigationControls({
         </Tooltip>
       </div>
 
-      {/* Keyboard hint */}
+      {/* Input hint — keyboard on desktop, swipe on touch devices */}
       <div
         style={{
           position: "absolute",
@@ -236,8 +236,16 @@ export function NavigationControls({
           textTransform: "uppercase",
         }}
       >
-        ← → or A / D
+        <span className="rooms-nav-hint-keys">← → or A / D</span>
+        <span className="rooms-nav-hint-touch">Swipe to walk</span>
       </div>
+      <style>{`
+        .rooms-nav-hint-touch { display: none; }
+        @media (hover: none) and (pointer: coarse) {
+          .rooms-nav-hint-keys { display: none; }
+          .rooms-nav-hint-touch { display: inline; }
+        }
+      `}</style>
     </>
   );
 }

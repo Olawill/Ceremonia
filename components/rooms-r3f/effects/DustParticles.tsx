@@ -10,7 +10,12 @@ interface DustParticlesProps {
 }
 
 export default function DustParticles({ isEditorPreview = false }: DustParticlesProps) {
-  const count = isEditorPreview ? DUST_COUNT_PREVIEW : DUST_COUNT_FULL;
+  // Lighter particle count on small/mobile viewports, matching editor-preview
+  // perf mode, to keep frame times smooth on lower-powered phones.
+  const isSmallViewport =
+    typeof window !== "undefined" && window.innerWidth < 768;
+  const count =
+    isEditorPreview || isSmallViewport ? DUST_COUNT_PREVIEW : DUST_COUNT_FULL;
   const pointsRef = useRef<THREE.Points>(null);
 
   const positions = useMemo(() => {

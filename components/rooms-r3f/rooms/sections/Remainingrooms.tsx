@@ -1,5 +1,6 @@
 "use client";
 
+import { Html } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
@@ -13,6 +14,97 @@ import type { FeatureMode, RoomTheme } from "@/components/rooms-r3f/Room";
 import { detectStream, PLATFORM_META } from "@/components/sections/Livestream";
 import { Course, TravelItem } from "@/types/event";
 import { useRoomsStore } from "../../store";
+
+// ── Shared "tap to interact" floating prompt ─────────────────────────────────
+// Used by rooms whose interaction reuses an existing HTML panel (RSVP form,
+// guestbook, registry) rather than a bespoke 3D widget.
+function InteractPrompt({
+  position,
+  label,
+  accent,
+  visible,
+}: {
+  position: [number, number, number];
+  label: string;
+  accent: string;
+  visible: boolean;
+}) {
+  return (
+    <Html
+      position={position}
+      center
+      transform
+      distanceFactor={3.2}
+      occlude={false}
+      style={{
+        pointerEvents: "none",
+        opacity: visible ? 1 : 0,
+        transition: "opacity 0.2s ease",
+      }}
+    >
+      <div
+        style={{
+          fontFamily: "var(--font-label, sans-serif)",
+          fontSize: 11,
+          letterSpacing: "0.25em",
+          textTransform: "uppercase",
+          color: accent,
+          background: "rgba(0,0,0,0.7)",
+          padding: "4px 10px",
+          borderRadius: 6,
+          border: `1px solid ${accent}80`,
+          whiteSpace: "nowrap",
+          userSelect: "none",
+        }}
+      >
+        {label}
+      </div>
+    </Html>
+  );
+}
+
+function InteractiveProp({
+  position,
+  panelKey,
+  hintLabel,
+  accent,
+  children,
+}: {
+  position: [number, number, number];
+  panelKey: string;
+  hintLabel: string;
+  accent: string;
+  children: React.ReactNode;
+}) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <group
+      position={position}
+      scale={hovered ? 1.05 : 1}
+      onClick={(e) => {
+        e.stopPropagation();
+        useRoomsStore.getState().setOpenPanelKey(panelKey);
+      }}
+      onPointerOver={(e) => {
+        e.stopPropagation();
+        document.body.style.cursor = "pointer";
+        setHovered(true);
+      }}
+      onPointerOut={() => {
+        document.body.style.cursor = "auto";
+        setHovered(false);
+      }}
+    >
+      {children}
+      <InteractPrompt
+        position={[0, 0.45, 0]}
+        label={hintLabel}
+        accent={accent}
+        visible={hovered}
+      />
+    </group>
+  );
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // RSVP ROOM — Registry Office
@@ -205,11 +297,15 @@ export function RSVPRoom({ theme, rsvpDeadline }: RSVPRoomProps) {
         </mesh>
       </group>
 
-      {/* RSVP register on desk */}
-      <RSVPRegister
+      {/* RSVP register on desk — click to open the RSVP form */}
+      <InteractiveProp
         position={[0.2, floorY + 0.75, -ROOM_LENGTH * 0.55]}
+        panelKey="rsvp"
+        hintLabel="Tap to RSVP"
         accent={accent}
-      />
+      >
+        <RSVPRegister position={[0, 0, 0]} accent={accent} />
+      </InteractiveProp>
 
       {/* Rubber stamps */}
       <RubberStamp
@@ -482,11 +578,15 @@ export function GuestbookRoom({ theme }: GuestbookRoomProps) {
         </mesh>
       </group>
 
-      {/* Open guestbook on table */}
-      <OpenBook
+      {/* Open guestbook on table — click to sign */}
+      <InteractiveProp
         position={[0, floorY + 0.58, -ROOM_LENGTH * 0.52]}
+        panelKey="guestbook"
+        hintLabel="Tap to Sign"
         accent={accent}
-      />
+      >
+        <OpenBook position={[0, 0, 0]} accent={accent} />
+      </InteractiveProp>
 
       {/* Candle in brass holder */}
       <group position={[0.7, floorY + 0.58, -ROOM_LENGTH * 0.48]}>
@@ -3320,8 +3420,13 @@ export function RegistryRoom({ theme, itemCount = 6 }: RegistryRoomProps) {
         </mesh>
       </group>
 
-      {/* Central table with gifts */}
-      <group position={[0, floorY, -ROOM_LENGTH * 0.6]}>
+      {/* Central table with gifts — click to open the registry */}
+      <InteractiveProp
+        position={[0, floorY, -ROOM_LENGTH * 0.6]}
+        panelKey="registry"
+        hintLabel="Tap to View Registry"
+        accent={accent}
+      >
         <mesh position={[0, 0.42, 0]}>
           <boxGeometry args={[1.8, 0.06, 1.1]} />
           <meshStandardMaterial color="#2a1408" roughness={0.35} />
@@ -3359,7 +3464,7 @@ export function RegistryRoom({ theme, itemCount = 6 }: RegistryRoomProps) {
             <meshStandardMaterial color="#2a1408" roughness={0.5} />
           </mesh>
         ))}
-      </group>
+      </InteractiveProp>
 
       {/* Fairy lights strung between shelf units */}
       {Array.from({ length: 18 }).map((_, i) => (

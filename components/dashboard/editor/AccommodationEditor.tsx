@@ -196,7 +196,7 @@ function OptionEditor({
           <Field label="Hotel Photo">
             <ImageUploadField
               value={option.imageUrl}
-              onChange={(url) => onUpdate({ imageUrl: url })}
+              onChange={(url) => onUpdate({ imageUrl: url as string })}
               hint="Upload or pick a hotel photo"
             />
           </Field>

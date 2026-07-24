@@ -585,16 +585,32 @@ function getVibe(key: string) {
   return SECTION_VIBE[key] ?? SECTION_VIBE.hero;
 }
 
-function PanContainer({ children }: { children: React.ReactNode }) {
+interface PanContainerProps {
+  children: React.ReactNode;
+  // Room-navigation gating — mirrors NavigationControls so a touch swipe
+  // can walk between rooms the same way the arrow buttons do.
+  activeRoomIndex: number;
+  sectionsLength: number;
+  dateRevealed: boolean;
+}
+
+function PanContainer({
+  children,
+  activeRoomIndex,
+  sectionsLength,
+  dateRevealed,
+}: PanContainerProps) {
   const setPeek = useRoomsStore((s) => s.setPeek);
   const isMoving = useRoomsStore((s) => s.isMoving);
   const dragStartX = useRef<number | null>(null);
   const dragStartPeek = useRef(0);
   const currentPeek = useRef(0);
+  const dragStartTime = useRef(0);
+  const isTouch = useRef(false);
 
   const MAX_PEEK = 4.5; // world units — max horizontal look offset
-
-  const dragThreshold = useRef(false);
+  const SWIPE_MIN_DISTANCE = 60; // px — minimum horizontal travel to count as a swipe
+  const SWIPE_MAX_DURATION = 600; // ms — must be a decisive flick, not a slow drag
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (e.pointerType === "mouse" && e.button !== 0) return;
@@ -608,9 +624,10 @@ function PanContainer({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    isTouch.current = e.pointerType === "touch";
     dragStartX.current = e.clientX;
     dragStartPeek.current = currentPeek.current;
-    dragThreshold.current = false;
+    dragStartTime.current = performance.now();
   };
 
   const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -626,12 +643,34 @@ function PanContainer({ children }: { children: React.ReactNode }) {
     setPeek(peek);
   };
 
-  const onPointerUp = () => {
+  const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
     if (dragStartX.current === null) return;
+
+    const dx = e.clientX - dragStartX.current;
+    const elapsed = performance.now() - dragStartTime.current;
     dragStartX.current = null;
+
     // Spring back to centre
     currentPeek.current = 0;
     setPeek(0);
+
+    // On touch, a quick decisive horizontal flick walks to the next/previous
+    // room — the mobile equivalent of the arrow buttons / A-D keys.
+    if (
+      isTouch.current &&
+      !isMoving &&
+      elapsed < SWIPE_MAX_DURATION &&
+      Math.abs(dx) > SWIPE_MIN_DISTANCE
+    ) {
+      const hardMax = dateRevealed
+        ? sectionsLength - 1
+        : Math.min(1, sectionsLength - 1);
+      if (dx < 0 && activeRoomIndex < hardMax) {
+        useRoomsStore.getState().navigate(activeRoomIndex + 1);
+      } else if (dx > 0 && activeRoomIndex > 0) {
+        useRoomsStore.getState().navigate(activeRoomIndex - 1);
+      }
+    }
   };
 
   return (
@@ -642,6 +681,7 @@ function PanContainer({ children }: { children: React.ReactNode }) {
         height: "100%",
         overflow: "hidden",
         cursor: "grab",
+        touchAction: "pan-y",
       }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
@@ -670,6 +710,8 @@ export function RoomsCanvas({
   const activeRoom = useRoomsStore((s) => s.activeRoom);
   const targetRoom = useRoomsStore((s) => s.targetRoom);
   const isMoving = useRoomsStore((s) => s.isMoving);
+  const storeDateRevealed = useRoomsStore((s) => s.dateRevealed);
+  const effectiveDateRevealed = dateRevealed || storeDateRevealed;
 
   const [boundaryKey, setBoundaryKey] = useState(0);
   const [canvasReady, setCanvasReady] = useState(false);
@@ -712,6 +754,9 @@ export function RoomsCanvas({
   const setOpenTravelFrame = useRoomsStore((s) => s.setOpenTravelFrame);
   const openMenuScroll = useRoomsStore((s) => s.openMenuScroll);
   const setOpenMenuScroll = useRoomsStore((s) => s.setOpenMenuScroll);
+  const openPanelKey = useRoomsStore((s) => s.openPanelKey);
+  const setOpenPanelKey = useRoomsStore((s) => s.setOpenPanelKey);
+  const openPanel = panelContents?.find((p) => p.key === openPanelKey);
 
   useEffect(() => {
     if (activeSection?.key !== "accommodation") {
@@ -733,6 +778,8 @@ export function RoomsCanvas({
     if (activeSection?.key !== "menu") {
       useRoomsStore.getState().setOpenMenuScroll(null);
     }
+
+    useRoomsStore.getState().setOpenPanelKey(null);
   }, [activeSection?.key]);
 
   if (process.env.NODE_ENV === "development") {
@@ -749,7 +796,11 @@ export function RoomsCanvas({
   }
 
   return (
-    <PanContainer>
+    <PanContainer
+      activeRoomIndex={activeRoom}
+      sectionsLength={sections.length}
+      dateRevealed={effectiveDateRevealed}
+    >
       {/* Canvas is wrapped in an error boundary so WebGL failures don't crash the app */}
       <WebGLErrorBoundary
         key={boundaryKey}
@@ -792,6 +843,7 @@ export function RoomsCanvas({
           <R3FCanvas
             style={{ display: "block", width: "100%", height: "100%" }}
             camera={{ fov: 70, near: 0.1, far: 100 }}
+            dpr={[1, 2]}
             gl={{
               antialias: true,
               alpha: false,
@@ -2499,6 +2551,62 @@ export function RoomsCanvas({
             </div>
           );
         })()}
+
+      {/* Generic panel overlay — RSVP form, guestbook, registry, etc. Reuses
+      the existing HTML panel component for that section rather than a
+      bespoke 3D widget. */}
+      {openPanel && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(0,0,0,0.55)",
+            backdropFilter: "blur(4px)",
+            padding: 16,
+          }}
+          onClick={() => setOpenPanelKey(null)}
+        >
+          <div
+            style={{
+              position: "relative",
+              width: "min(420px, 92vw)",
+              height: "min(640px, 86vh)",
+              borderRadius: 16,
+              overflow: "hidden",
+              background: theme.bgMid || theme.bg,
+              boxShadow: `0 28px 90px rgba(0,0,0,0.95), 0 0 0 2px ${accent}50`,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setOpenPanelKey(null)}
+              aria-label="Close"
+              style={{
+                position: "absolute",
+                top: 12,
+                right: 14,
+                zIndex: 10,
+                background: "rgba(0,0,0,0.5)",
+                border: `1px solid ${accent}50`,
+                borderRadius: "50%",
+                width: 30,
+                height: 30,
+                cursor: "pointer",
+                fontSize: 18,
+                color: accent,
+                lineHeight: 1,
+              }}
+            >
+              ×
+            </button>
+            {openPanel.node}
+          </div>
+        </div>
+      )}
     </PanContainer>
   );
 }

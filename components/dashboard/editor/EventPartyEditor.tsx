@@ -211,7 +211,7 @@ function MemberEditor({
           <Field label="Photo URL" hint="Square photo works best">
             <ImageUploadField
               value={member.photoUrl}
-              onChange={(url) => onUpdate({ photoUrl: url })}
+              onChange={(url) => onUpdate({ photoUrl: url as string })}
               hint="Upload or pick a photo"
             />
           </Field>

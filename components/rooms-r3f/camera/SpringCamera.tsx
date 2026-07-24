@@ -41,10 +41,17 @@ export function SpringCamera({
   const fovRef = useRef(65);
   const hasArrivedRef = useRef(false);
   const lookAtRef = useRef(new THREE.Vector3(0, 0, CAM_Z_INSIDE - 8));
+  const bobPhaseRef = useRef(0);
+  const bobAmountRef = useRef(0);
 
   const POS_LAMBDA = 3.5;
   const LOOK_LAMBDA = 4;
   const FOV_LAMBDA = 2.5;
+
+  // Footstep-style head bob — a subtle vertical + roll sway while walking
+  // between rooms, damped out the instant the camera settles.
+  const BOB_FREQUENCY = 9; // steps per second, roughly a brisk walking cadence
+  const BOB_AMPLITUDE = 0.028; // world units of vertical travel
 
   useEffect(() => {
     if (targetRoom !== targetIndexRef.current) {
@@ -81,8 +88,21 @@ export function SpringCamera({
       dt,
     );
 
-    camera.position.set(peekTarget * 0.1, CAM_Y, currentZRef.current);
+    // Footstep bob — fades in while walking between rooms, fades out on arrival
+    bobAmountRef.current = damp(bobAmountRef.current, isMoving ? 1 : 0, 6, dt);
+    bobPhaseRef.current += dt * BOB_FREQUENCY * Math.PI * 2;
+    const bobY =
+      Math.sin(bobPhaseRef.current) * BOB_AMPLITUDE * bobAmountRef.current;
+    const bobRoll =
+      Math.sin(bobPhaseRef.current * 0.5) * 0.01 * bobAmountRef.current;
+
+    camera.position.set(
+      peekTarget * 0.1,
+      CAM_Y + bobY,
+      currentZRef.current,
+    );
     camera.lookAt(lookAtRef.current);
+    camera.rotation.z += bobRoll;
 
     const targetFov = isMoving ? 78 : zoomOffset !== 0 ? 52 : 65;
     fovRef.current = damp(fovRef.current, targetFov, FOV_LAMBDA, dt);

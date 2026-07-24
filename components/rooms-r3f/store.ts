@@ -42,6 +42,12 @@ interface RoomsState {
   setOpenMenuScroll: (
     scroll: { courses: Course[]; index: number } | null,
   ) => void;
+
+  // Generic HTML panel overlay — used by rooms (RSVP, guestbook, registry…)
+  // that reuse their existing form/interactive panel component rather than
+  // a bespoke 3D widget.
+  openPanelKey: string | null;
+  setOpenPanelKey: (key: string | null) => void;
 }
 
 export const useRoomsStore = create<RoomsState>((set) => ({
@@ -65,6 +71,9 @@ export const useRoomsStore = create<RoomsState>((set) => ({
 
   openMenuScroll: null,
   setOpenMenuScroll: (scroll) => set({ openMenuScroll: scroll }),
+
+  openPanelKey: null,
+  setOpenPanelKey: (key) => set({ openPanelKey: key }),
 
   openPartyMember: null,
   setOpenPartyMember: (member) => set({ openPartyMember: member }),
@@ -103,5 +112,6 @@ export const useRoomsStore = create<RoomsState>((set) => ({
       openFaqIndex: null,
       openTravelFrame: null,
       openMenuScroll: null,
+      openPanelKey: null,
     }),
 }));

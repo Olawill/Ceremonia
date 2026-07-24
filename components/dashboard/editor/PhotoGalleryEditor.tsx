@@ -57,7 +57,7 @@ export function PhotoGalleryEditor({ config, onChange }: Props) {
                   <ImageUploadField
                     value={url}
                     onChange={(newUrl) => {
-                      if (newUrl) updatePhoto(i, newUrl);
+                      if (newUrl) updatePhoto(i, newUrl as string);
                     }}
                     hint="Upload or paste a photo URL"
                   />
