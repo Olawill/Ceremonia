@@ -1,8 +1,10 @@
 "use client";
 
+import { useAuth } from "@clerk/nextjs";
 import clsx from "clsx";
 import { DownloadIcon } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import type { Plan } from "@/lib/plans";
 
@@ -36,6 +38,8 @@ interface Props {
 
 export function RSVPsClient({ events, rsvpsByEvent, plan, canExport }: Props) {
   const [selectedEventId, setSelectedEventId] = useState(events[0]?.id ?? "");
+  const [exporting, setExporting] = useState(false);
+  const { getToken } = useAuth();
 
   const selectedEvent = events.find((w) => w.id === selectedEventId);
   const rows = rsvpsByEvent[selectedEventId] ?? [];
@@ -43,8 +47,30 @@ export function RSVPsClient({ events, rsvpsByEvent, plan, canExport }: Props) {
   const declining = rows.filter((r) => r.attendance === "no");
   const totalGuests = attending.reduce((sum, r) => sum + (r.guests ?? 1), 0);
 
-  const handleExport = () => {
-    window.open(`/api/rsvp/export?eventId=${selectedEventId}`, "_blank");
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const token = await getToken();
+      const res = await fetch(
+        `/api/rsvp/export?eventId=${selectedEventId}`,
+        { headers: token ? { Authorization: `Bearer ${token}` } : {} },
+      );
+      if (!res.ok) {
+        toast.error("Couldn't export RSVPs", {
+          description: "Please try again.",
+        });
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `rsvps-${selectedEventId}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
@@ -66,10 +92,11 @@ export function RSVPsClient({ events, rsvpsByEvent, plan, canExport }: Props) {
         {canExport && rows.length > 0 && (
           <button
             onClick={handleExport}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[#D4AF3740] text-[#D4AF37] font-label text-[11px] tracking-[0.3em] uppercase hover:border-[#D4AF37] transition-colors"
+            disabled={exporting}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[#D4AF3740] text-[#D4AF37] font-label text-[11px] tracking-[0.3em] uppercase hover:border-[#D4AF37] transition-colors disabled:opacity-50"
           >
             <DownloadIcon className="w-3.5 h-3.5" />
-            Export CSV
+            {exporting ? "Exporting…" : "Export CSV"}
           </button>
         )}
       </div>

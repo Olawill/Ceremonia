@@ -203,16 +203,24 @@ export function RSVP({
             className="flex flex-col gap-4"
           >
             <div>
+              <label htmlFor="rsvp-name-input" className="sr-only">
+                Your full name
+              </label>
               <input
                 {...register("name")}
+                id="rsvp-name-input"
                 placeholder="Your Full Name"
                 data-testid="rsvp-name"
                 onFocus={() => setFocusedField("name")}
                 onBlur={() => setFocusedField(null)}
                 style={inputBase("name")}
+                aria-invalid={!!errors.name}
+                aria-describedby={errors.name ? "rsvp-name-error" : undefined}
               />
               {errors.name && (
                 <p
+                  id="rsvp-name-error"
+                  role="alert"
                   className="font-display italic text-sm mt-1!"
                   style={{ color: `${theme.gold}80` }}
                 >
@@ -222,12 +230,20 @@ export function RSVP({
             </div>
 
             <div>
+              <label htmlFor="rsvp-attendance-select" className="sr-only">
+                Will you attend?
+              </label>
               <select
                 {...register("attendance")}
+                id="rsvp-attendance-select"
                 data-testid="rsvp-attendance"
                 onFocus={() => setFocusedField("att")}
                 onBlur={() => setFocusedField(null)}
                 style={{ ...inputBase("att"), cursor: "pointer" }}
+                aria-invalid={!!errors.attendance}
+                aria-describedby={
+                  errors.attendance ? "rsvp-attendance-error" : undefined
+                }
               >
                 <option value="">Will you attend?</option>
                 <option value="yes" data-testid="rsvp-attending-yes">
@@ -237,6 +253,8 @@ export function RSVP({
               </select>
               {errors.attendance && (
                 <p
+                  id="rsvp-attendance-error"
+                  role="alert"
                   className="font-display italic text-sm mt-1!"
                   style={{ color: `${theme.gold}80` }}
                 >
@@ -247,8 +265,12 @@ export function RSVP({
 
             {attendance === "yes" && (
               <>
+                <label htmlFor="rsvp-guests-select" className="sr-only">
+                  Number of guests
+                </label>
                 <select
                   {...register("guests")}
+                  id="rsvp-guests-select"
                   onFocus={() => setFocusedField("guests")}
                   onBlur={() => setFocusedField(null)}
                   style={{ ...inputBase("guests"), cursor: "pointer" }}
@@ -258,8 +280,12 @@ export function RSVP({
                   <option value="3">3 Guests</option>
                 </select>
 
+                <label htmlFor="rsvp-dietary-input" className="sr-only">
+                  Dietary requirements (optional)
+                </label>
                 <input
                   {...register("dietary")}
+                  id="rsvp-dietary-input"
                   placeholder="Dietary Requirements (optional)"
                   onFocus={() => setFocusedField("diet")}
                   onBlur={() => setFocusedField(null)}

@@ -12,10 +12,15 @@ vi.mock("@/lib/posthog-server", () => ({
     shutdown: vi.fn().mockResolvedValue(undefined),
   }),
 }));
+vi.mock("@/lib/rate-limit", () => ({
+  consumeRateLimit: vi.fn().mockResolvedValue({ allowed: true }),
+  getClientIp: vi.fn().mockReturnValue("127.0.0.1"),
+}));
 
 // ── Imports ──────────────────────────────────────────────────────────────────
 
 import { db } from "@/db";
+import { consumeRateLimit } from "@/lib/rate-limit";
 import { app } from "@/server";
 import { getAuthUserId } from "@/server/auth";
 
@@ -151,6 +156,14 @@ describe("POST /api/guestbook/:eventSlug", () => {
     message: "Wishing you both all the happiness!",
   };
 
+  it("returns 429 when the caller has hit the rate limit", async () => {
+    const mockConsumeRateLimit = consumeRateLimit as ReturnType<typeof vi.fn>;
+    mockConsumeRateLimit.mockResolvedValueOnce({ allowed: false });
+    const r = await req("POST", "/james-sarah", validBody);
+    expect(r.status).toBe(429);
+    mockConsumeRateLimit.mockResolvedValue({ allowed: true }); // restore default
+  });
+
   it("returns 404 when event does not exist", async () => {
     mockDb.select.mockReturnValueOnce(selectReturning([]));
     const r = await req("POST", "/unknown-slug", validBody);
@@ -268,9 +281,21 @@ describe("DELETE /api/guestbook/:eventSlug/:messageId", () => {
     expect(r.status).toBe(404);
   });
 
+  it("returns 403 when requester does not own the event", async () => {
+    authed.mockResolvedValue("user-1");
+    mockDb.select.mockReturnValueOnce(
+      selectReturning([{ id: "event-1", userId: "someone-else" }]),
+    );
+    const r = await req("DELETE", "/james-sarah/msg-1", undefined, true);
+    expect(r.status).toBe(403);
+    expect(mockDb.delete).not.toHaveBeenCalled();
+  });
+
   it("returns 200 and deletes message on success", async () => {
     authed.mockResolvedValue("user-1");
-    mockDb.select.mockReturnValueOnce(selectReturning([{ id: "event-1" }]));
+    mockDb.select.mockReturnValueOnce(
+      selectReturning([{ id: "event-1", userId: "user-1" }]),
+    );
     const r = await req("DELETE", "/james-sarah/msg-1", undefined, true);
     expect(r.status).toBe(200);
     expect((r.body as { success: boolean }).success).toBe(true);

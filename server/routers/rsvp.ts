@@ -1,3 +1,4 @@
+import bearer from "@elysiajs/bearer";
 import { count, eq } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 
@@ -9,15 +10,31 @@ import { RSVPNotificationEmail } from "@/emails/RSVPNotification";
 import { Plan, PLAN_FEATURES } from "@/lib/plans";
 import { ingestUsage } from "@/lib/polar-usage";
 import { getPostHogClient } from "@/lib/posthog-server";
+import { consumeRateLimit, getClientIp } from "@/lib/rate-limit";
 import { resend } from "@/lib/resend";
+import { getAuthUserId } from "@/server/auth";
 import { EventType, getVocabulary } from "@/types/event";
 
 export const rsvpRouter = new Elysia({ prefix: "/rsvp" })
-  // GET /api/rsvp?eventId=... — fetch RSVPs for a event (used by dashboard)
+  .use(bearer())
+
+  // GET /api/rsvp?eventId=... — fetch RSVPs for a event (owner only)
   .get(
     "/",
-    async ({ query, status }) => {
+    async ({ query, bearer, status }) => {
       if (!query.eventId) return status(400, { message: "Missing eventId" });
+
+      const userId = await getAuthUserId(bearer);
+      if (!userId) return status(401, { message: "Unauthorized" });
+
+      const [event] = await db
+        .select({ userId: events.userId })
+        .from(events)
+        .where(eq(events.id, query.eventId))
+        .limit(1);
+      if (!event) return status(404, { message: "Event not found" });
+      if (event.userId !== userId)
+        return status(403, { message: "Forbidden" });
 
       const result = await db
         .select()
@@ -37,7 +54,15 @@ export const rsvpRouter = new Elysia({ prefix: "/rsvp" })
   // POST /api/rsvp — submit an RSVP
   .post(
     "/",
-    async ({ body, status }) => {
+    async ({ body, request, status }) => {
+      const ip = getClientIp(request);
+      const rl = await consumeRateLimit(`rsvp:${ip}`, 5, 600); // 5 per 10 min
+      if (!rl.allowed) {
+        return status(429, {
+          message: "Too many submissions — please try again shortly.",
+        });
+      }
+
       // 1. Fetch event with owner info
       const [event] = await db
         .select({
@@ -140,20 +165,23 @@ export const rsvpRouter = new Elysia({ prefix: "/rsvp" })
     {
       body: t.Object({
         eventId: t.String(),
-        name: t.String({ minLength: 1 }),
+        name: t.String({ minLength: 1, maxLength: 200 }),
         attendance: t.Union([t.Literal("yes"), t.Literal("no")]),
-        guests: t.Optional(t.Number()),
-        dietary: t.Optional(t.String()),
-        message: t.Optional(t.String()),
+        guests: t.Optional(t.Number({ minimum: 1, maximum: 20 })),
+        dietary: t.Optional(t.String({ maxLength: 500 })),
+        message: t.Optional(t.String({ maxLength: 2000 })),
       }),
     },
   )
 
-  // GET /api/rsvp/export?eventId=... — CSV download (Pro)
+  // GET /api/rsvp/export?eventId=... — CSV download (owner, Pro+)
   .get(
     "/export",
-    async ({ query, status }) => {
+    async ({ query, bearer, status }) => {
       if (!query.eventId) return status(400, { message: "eventId required" });
+
+      const userId = await getAuthUserId(bearer);
+      if (!userId) return status(401, { message: "Unauthorized" });
 
       // Verify the requesting user owns this event and is on Pro+
       const [event] = await db
@@ -161,24 +189,25 @@ export const rsvpRouter = new Elysia({ prefix: "/rsvp" })
         .from(events)
         .where(eq(events.id, query.eventId))
         .limit(1);
+      if (!event) return status(404, { message: "Event not found" });
+      if (event.userId !== userId)
+        return status(403, { message: "Forbidden" });
 
-      if (event?.userId) {
-        const [owner] = await db
-          .select({ plan: users.plan })
-          .from(users)
-          .where(eq(users.id, event.userId))
-          .limit(1);
+      const [owner] = await db
+        .select({ plan: users.plan })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
 
-        if (!PLAN_FEATURES[owner?.plan ?? "free"].csvExport) {
-          const posthog = getPostHogClient();
-          posthog.capture({
-            distinctId: event.userId,
-            event: "plan_limit_hit",
-            properties: { feature: "csv_export", plan: owner?.plan },
-          });
-          await posthog.shutdown();
-          return status(403, { message: "CSV export requires the Pro plan." });
-        }
+      if (!PLAN_FEATURES[owner?.plan ?? "free"].csvExport) {
+        const posthog = getPostHogClient();
+        posthog.capture({
+          distinctId: userId,
+          event: "plan_limit_hit",
+          properties: { feature: "csv_export", plan: owner?.plan },
+        });
+        await posthog.shutdown();
+        return status(403, { message: "CSV export requires the Pro plan." });
       }
 
       const rows = await db
@@ -187,17 +216,20 @@ export const rsvpRouter = new Elysia({ prefix: "/rsvp" })
         .where(eq(rsvps.eventId, query.eventId))
         .orderBy(rsvps.createdAt);
 
+      // Escape embedded quotes per CSV spec so a guest's name/message can't
+      // corrupt the file structure.
+      const csvCell = (v: string) => `"${v.replace(/"/g, '""')}"`;
       const header = "Name,Attendance,Guests,Dietary,Message,Submitted At\n";
       const csv =
         header +
         rows
           .map((r) =>
             [
-              `"${r.name}"`,
+              csvCell(r.name),
               r.attendance,
               r.guests ?? 1,
-              `"${r.dietary ?? ""}"`,
-              `"${r.message ?? ""}"`,
+              csvCell(r.dietary ?? ""),
+              csvCell(r.message ?? ""),
               r.createdAt?.toISOString() ?? "",
             ].join(","),
           )

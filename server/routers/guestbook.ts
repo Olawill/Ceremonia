@@ -1,11 +1,12 @@
 import bearer from "@elysiajs/bearer";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 
 import { db } from "@/db";
 import { events, guestbook } from "@/db/schema";
 
 import { getPostHogClient } from "@/lib/posthog-server";
+import { consumeRateLimit, getClientIp } from "@/lib/rate-limit";
 
 import { getAuthUserId } from "@/server/auth";
 
@@ -36,7 +37,15 @@ export const guestbookRouter = new Elysia({ prefix: "/guestbook" })
   // POST /api/guestbook/:eventSlug — public write (guests don't have auth)
   .post(
     "/:eventSlug",
-    async ({ params, body, status }) => {
+    async ({ params, body, request, status }) => {
+      const ip = getClientIp(request);
+      const rl = await consumeRateLimit(`guestbook:${ip}`, 5, 600); // 5 per 10 min
+      if (!rl.allowed) {
+        return status(429, {
+          message: "Too many messages — please try again shortly.",
+        });
+      }
+
       const [event] = await db
         .select({
           id: events.id,
@@ -98,14 +107,19 @@ export const guestbookRouter = new Elysia({ prefix: "/guestbook" })
     if (!userId) return status(401, { message: "Unauthorized" });
 
     const [event] = await db
-      .select({ id: events.id })
+      .select({ id: events.id, userId: events.userId })
       .from(events)
       .where(eq(events.slug, params.eventSlug))
       .limit(1);
 
     if (!event) return status(404, { message: "Not found" });
+    if (event.userId !== userId) return status(403, { message: "Forbidden" });
 
-    await db.delete(guestbook).where(eq(guestbook.id, params.messageId));
+    await db
+      .delete(guestbook)
+      .where(
+        and(eq(guestbook.id, params.messageId), eq(guestbook.eventId, event.id)),
+      );
 
     return { success: true };
   });

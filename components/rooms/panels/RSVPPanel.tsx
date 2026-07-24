@@ -212,15 +212,23 @@ export function RSVPPanel({
           className="w-full max-w-xs flex flex-col gap-2"
         >
           <div>
+            <label htmlFor="rsvp-panel-name" className="sr-only">
+              Your full name
+            </label>
             <input
               {...register("name")}
+              id="rsvp-panel-name"
               placeholder="Your Full Name"
               onFocus={() => setFocusedField("name")}
               onBlur={() => setFocusedField(null)}
               style={fieldStyle("name")}
+              aria-invalid={!!errors.name}
+              aria-describedby={errors.name ? "rsvp-panel-name-error" : undefined}
             />
             {errors.name && (
               <p
+                id="rsvp-panel-name-error"
+                role="alert"
                 className="font-display italic text-xs mt-0.5!"
                 style={{ color: `${theme.gold}70` }}
               >
@@ -230,11 +238,19 @@ export function RSVPPanel({
           </div>
 
           <div>
+            <label htmlFor="rsvp-panel-attendance" className="sr-only">
+              Will you attend?
+            </label>
             <select
               {...register("attendance")}
+              id="rsvp-panel-attendance"
               onFocus={() => setFocusedField("att")}
               onBlur={() => setFocusedField(null)}
               style={{ ...fieldStyle("att"), cursor: "pointer" }}
+              aria-invalid={!!errors.attendance}
+              aria-describedby={
+                errors.attendance ? "rsvp-panel-attendance-error" : undefined
+              }
             >
               <option value="">Will you attend?</option>
               <option value="yes">Joyfully Accept</option>
@@ -242,6 +258,8 @@ export function RSVPPanel({
             </select>
             {errors.attendance && (
               <p
+                id="rsvp-panel-attendance-error"
+                role="alert"
                 className="font-display italic text-xs mt-0.5!"
                 style={{ color: `${theme.gold}70` }}
               >
@@ -252,8 +270,12 @@ export function RSVPPanel({
 
           {attendance === "yes" && (
             <>
+              <label htmlFor="rsvp-panel-guests" className="sr-only">
+                Number of guests
+              </label>
               <select
                 {...register("guests")}
+                id="rsvp-panel-guests"
                 onFocus={() => setFocusedField("guests")}
                 onBlur={() => setFocusedField(null)}
                 style={{ ...fieldStyle("guests"), cursor: "pointer" }}
@@ -262,8 +284,12 @@ export function RSVPPanel({
                 <option value="2">2 Guests</option>
                 <option value="3">3 Guests</option>
               </select>
+              <label htmlFor="rsvp-panel-dietary" className="sr-only">
+                Dietary requirements (optional)
+              </label>
               <input
                 {...register("dietary")}
+                id="rsvp-panel-dietary"
                 placeholder="Dietary requirements (optional)"
                 onFocus={() => setFocusedField("diet")}
                 onBlur={() => setFocusedField(null)}
