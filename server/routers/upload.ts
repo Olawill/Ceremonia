@@ -9,6 +9,7 @@ import { users } from "@/db/schema";
 import { PLAN_FEATURES } from "@/lib/plans";
 import { ingestUsage } from "@/lib/polar-usage";
 import { getPostHogClient } from "@/lib/posthog-server";
+import { assertPublicUrl, safeFetch } from "@/lib/ssrf-guard";
 import { getAuthUserId } from "@/server/auth";
 
 export const uploadRouter = new Elysia({ prefix: "/upload" })
@@ -106,30 +107,16 @@ export const uploadRouter = new Elysia({ prefix: "/upload" })
         });
       }
 
-      // Fetch the remote file - Validate URL shape
-      let parsedUrl: URL;
-      try {
-        parsedUrl = new URL(body.url);
-      } catch {
-        return status(400, { message: "Invalid URL format." });
-      }
-
-      if (!["http:", "https:"].includes(parsedUrl.protocol)) {
-        return status(400, { message: "URL must use http or https." });
-      }
-
-      // Block private/internal addresses
-      const blocked = ["localhost", "127.0.0.1", "0.0.0.0", "::1"];
-      if (
-        blocked.some((h) => parsedUrl.hostname.includes(h)) ||
-        parsedUrl.hostname.endsWith(".local")
-      ) {
-        return status(400, { message: "That URL is not allowed." });
+      // Validate the URL isn't pointing at a private/internal/metadata
+      // address (including via DNS resolution) before fetching it.
+      const check = await assertPublicUrl(body.url);
+      if (!check.ok) {
+        return status(400, { message: check.message });
       }
 
       let res: Response;
       try {
-        res = await fetch(parsedUrl.toString(), {
+        res = await safeFetch(body.url, {
           signal: AbortSignal.timeout(10_000),
         });
         if (!res.ok) throw new Error("Remote fetch failed");

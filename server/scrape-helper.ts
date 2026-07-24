@@ -1,5 +1,7 @@
 import { JSDOM } from "jsdom";
 
+import { assertPublicUrl, safeFetch } from "@/lib/ssrf-guard";
+
 // ── Shared scrape logic ───────────────────────────────────────────────────────
 
 interface ScrapedProduct {
@@ -423,9 +425,23 @@ async function extractWithJina(url: string): Promise<ScrapedProduct> {
 export async function scrapeUrl(
   url: string,
 ): Promise<ScrapedProduct & { url: string; error?: string }> {
+  const check = await assertPublicUrl(url);
+  if (!check.ok) {
+    return {
+      url,
+      title: null,
+      imageUrl: null,
+      description: null,
+      price: null,
+      currency: null,
+      retailer: null,
+      error: check.message ?? "That URL is not allowed",
+    };
+  }
+
   let html = "";
   try {
-    const res = await fetch(url, {
+    const res = await safeFetch(url, {
       headers: {
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",

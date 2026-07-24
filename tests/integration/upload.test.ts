@@ -32,6 +32,15 @@ vi.mock("@/lib/posthog-server", () => ({
 
 vi.mock("@vercel/blob", () => ({ put: vi.fn() }));
 
+// SSRF guard resolves DNS for from-url hostnames — stub it to a public IP so
+// tests don't depend on real network access and stay fast/deterministic.
+vi.mock("dns", () => {
+  const promises = {
+    lookup: vi.fn().mockResolvedValue([{ address: "93.184.216.34", family: 4 }]),
+  };
+  return { promises, default: { promises } };
+});
+
 // ── Imports ──────────────────────────────────────────────────────────────────
 
 import { db } from "@/db";
@@ -424,6 +433,21 @@ describe("POST /api/upload/from-url", () => {
     mockDb.select.mockReturnValueOnce(planSelect("free"));
     const r = await fromUrlReq({
       url: "http://internal.local/image.jpg",
+      type: "photo",
+    });
+    expect(r.status).toBe(400);
+    expect((r.body as { message: string }).message).toMatch(/not allowed/);
+  });
+
+  it("returns 400 for a public-looking hostname that resolves to a private IP (DNS rebinding)", async () => {
+    authed.mockResolvedValue("user-1");
+    mockDb.select.mockReturnValueOnce(planSelect("free"));
+    const dns = await import("dns");
+    (dns.promises.lookup as ReturnType<typeof vi.fn>).mockResolvedValueOnce([
+      { address: "169.254.169.254", family: 4 }, // cloud metadata address
+    ]);
+    const r = await fromUrlReq({
+      url: "https://attacker-controlled.example/image.jpg",
       type: "photo",
     });
     expect(r.status).toBe(400);
