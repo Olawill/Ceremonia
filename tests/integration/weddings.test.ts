@@ -6,6 +6,7 @@ vi.mock("@/db", () => ({
     insert: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
+    transaction: vi.fn(),
   },
 }));
 
@@ -30,6 +31,7 @@ const mockDb = db as unknown as {
   insert: ReturnType<typeof vi.fn>;
   update: ReturnType<typeof vi.fn>;
   delete: ReturnType<typeof vi.fn>;
+  transaction: ReturnType<typeof vi.fn>;
 };
 
 // Default all DB methods to safe no-op chains before each test
@@ -41,6 +43,7 @@ beforeEach(() => {
       where: () => ({
         limit: () => Promise.resolve([]),
         orderBy: () => Promise.resolve([]),
+        for: () => ({ limit: () => Promise.resolve([]) }),
       }),
       limit: () => Promise.resolve([]),
     }),
@@ -63,6 +66,12 @@ beforeEach(() => {
   mockDb.delete.mockReturnValue({
     where: () => Promise.resolve(),
   });
+
+  // db.transaction(fn) just runs fn with the same mocked db as `tx` — the
+  // mock select/insert/update chains behave identically either way.
+  mockDb.transaction.mockImplementation((fn: (tx: typeof mockDb) => unknown) =>
+    fn(mockDb),
+  );
 });
 
 const validBody = {
@@ -216,7 +225,11 @@ describe("POST /api/events", () => {
     mockDb.select
       .mockReturnValueOnce({
         from: () => ({
-          where: () => ({ limit: () => Promise.resolve([{ plan: "pro" }]) }),
+          where: () => ({
+            for: () => ({
+              limit: () => Promise.resolve([{ plan: "pro" }]),
+            }),
+          }),
         }),
       })
       // Event count → 0
@@ -278,7 +291,9 @@ describe("POST /api/events", () => {
       .mockReturnValueOnce({
         from: () => ({
           where: () => ({
-            limit: () => Promise.resolve([{ plan: "starter" }]),
+            for: () => ({
+              limit: () => Promise.resolve([{ plan: "starter" }]),
+            }),
           }),
         }),
       })
@@ -337,7 +352,11 @@ describe("POST /api/events", () => {
     mockDb.select
       .mockReturnValueOnce({
         from: () => ({
-          where: () => ({ limit: () => Promise.resolve([{ plan: "free" }]) }),
+          where: () => ({
+            for: () => ({
+              limit: () => Promise.resolve([{ plan: "free" }]),
+            }),
+          }),
         }),
       })
       // 2. Event count → 0 (under the limit)
@@ -546,7 +565,9 @@ describe("POST /api/events plan limit", () => {
       .mockReturnValueOnce({
         from: () => ({
           where: () => ({
-            limit: () => Promise.resolve([{ plan: "free" }]),
+            for: () => ({
+              limit: () => Promise.resolve([{ plan: "free" }]),
+            }),
           }),
         }),
       })
@@ -576,5 +597,52 @@ describe("POST /api/events plan limit", () => {
       }),
     );
     expect(res.status).toBe(403);
+  });
+
+  it("runs the quota check + insert inside a transaction with a row lock on the user, to prevent two concurrent requests from both exceeding the cap", async () => {
+    authed.mockResolvedValue("user-123");
+
+    const forSpy = vi.fn().mockReturnValue({
+      limit: () => Promise.resolve([{ plan: "pro" }]),
+    });
+    mockDb.select
+      .mockReturnValueOnce({
+        from: () => ({ where: () => ({ for: forSpy }) }),
+      })
+      .mockReturnValueOnce({
+        from: () => ({ where: () => Promise.resolve([{ eventCount: 0 }]) }),
+      })
+      .mockReturnValueOnce({
+        from: () => ({ where: () => ({ limit: () => Promise.resolve([]) }) }),
+      });
+    mockDb.insert.mockReturnValue({
+      values: () => ({
+        returning: () =>
+          Promise.resolve([{ id: "w-lock", slug: "alice-bob" }]),
+      }),
+    });
+
+    await app.handle(
+      new Request("http://localhost/api/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bride: "Alice",
+          groom: "Bob",
+          date: "2026-06-01",
+          venueDetails: [],
+          themeKey: "royal",
+          curtainStyle: "velvet",
+          timeline: [],
+          menuCourses: [],
+          rsvpEnabled: true,
+          published: false,
+          passwordProtected: false,
+        }),
+      }),
+    );
+
+    expect(mockDb.transaction).toHaveBeenCalledTimes(1);
+    expect(forSpy).toHaveBeenCalledWith("update");
   });
 });

@@ -6,13 +6,30 @@ import { db } from "@/db";
 import { events, users } from "@/db/schema";
 
 import { hashPassword } from "@/lib/password";
-import { computeEventExpiry, MONTHLY_EVENTS, PLAN_FEATURES } from "@/lib/plans";
+import {
+  computeEventExpiry,
+  MONTHLY_EVENTS,
+  PLAN_FEATURES,
+  type Plan,
+} from "@/lib/plans";
 import { consumeRoomCredit, getRoomCreditBalance } from "@/lib/rooms-credits";
 
 import { ingestUsage } from "@/lib/polar-usage";
 import { getPostHogClient } from "@/lib/posthog-server";
 import { getAuthUserId } from "@/server/auth";
 import { CURTAIN_STYLES, FEATURE_MODES } from "@/types/event";
+
+// Thrown from inside the create-event transaction when a plan limit is hit —
+// caught outside to report analytics and shape the 403 response.
+class QuotaExceededError extends Error {
+  constructor(
+    public feature: "monthly_events" | "lifetime_events",
+    public plan: Plan,
+    public limit: number,
+  ) {
+    super("QUOTA_EXCEEDED");
+  }
+}
 
 // Zod-compatible Elysia schema for a VenueEvent
 const VenueEventSchema = t.Object({
@@ -125,135 +142,137 @@ export const eventsRouter = new Elysia({ prefix: "/events" })
       const userId = await getAuthUserId(bearer);
       if (!userId) return status(401, { message: "Unauthorized" });
 
-      const [owner] = await db
-        .select({
-          plan: users.plan,
-          starterIsOnce: users.starterIsOnce,
-          monthlyEventsCreated: users.monthlyEventsCreated,
-          eventPeriodStart: users.eventPeriodStart,
-        })
-        .from(users)
-        .where(eq(users.id, userId))
-        .limit(1);
-
-      const plan = owner?.plan ?? "free";
-      const isOnce = owner.starterIsOnce ?? false;
-      const expiresAt = computeEventExpiry(plan, isOnce);
-
-      const features = PLAN_FEATURES[plan];
-      const monthlyLimit = MONTHLY_EVENTS[plan];
-      const now = new Date();
-      const periodStart = owner?.eventPeriodStart
-        ? new Date(owner.eventPeriodStart)
-        : now;
-
-      // Reset monthly quota if we've crossed into a new month
-      const isNewMonth =
-        now.getUTCMonth() !== periodStart.getUTCMonth() ||
-        now.getUTCFullYear() !== periodStart.getUTCFullYear();
-      const currentMonthlyCreated = isNewMonth
-        ? 0
-        : (owner?.monthlyEventsCreated ?? 0);
-
-      // Check monthly quota (skip for one-time plans which use lifetime check)
-      if (
-        !isOnce &&
-        monthlyLimit !== Infinity &&
-        currentMonthlyCreated >= monthlyLimit
-      ) {
-        const posthog = getPostHogClient();
-        posthog.capture({
-          distinctId: userId,
-          event: "plan_limit_hit",
-          properties: {
-            feature: "monthly_events",
-            plan,
-            limit: monthlyLimit,
-          },
-        });
-        await posthog.shutdown();
-        return status(403, {
-          message: `Your ${plan} plan allows ${monthlyLimit} event(s) per month. Please upgrade or wait until next month.`,
-        });
-      }
-
-      // Lifetime cap still applies to free and one-time starter
-      const lifetimeCap = features.maxEvents;
-      const [{ eventCount }] = await db
-        .select({ eventCount: count() })
-        .from(events)
-        .where(eq(events.userId, userId));
-
-      if (eventCount >= lifetimeCap) {
-        const posthog = getPostHogClient();
-        posthog.capture({
-          distinctId: userId,
-          event: "plan_limit_hit",
-          properties: {
-            feature: "lifetime_events",
-            plan,
-            limit: lifetimeCap,
-          },
-        });
-        await posthog.shutdown();
-        return status(403, {
-          message: `Your ${plan} plan allows a maximum of ${lifetimeCap} event(s). Please upgrade.`,
-        });
-      }
-
-      // Enforce slug uniqueness — derive from names
-      const slug = `${body.bride}-${body.groom}`
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)/g, "");
-
-      const [existing] = await db
-        .select({ id: events.id })
-        .from(events)
-        .where(eq(events.slug, slug))
-        .limit(1);
-
-      const finalSlug = existing ? `${slug}-${Date.now()}` : slug;
-
-      let created;
       try {
-        [created] = await db
-          .insert(events)
-          .values({
-            ...body,
-            slug: finalSlug,
-            groom: body.groom ?? "",
-            eventType: body.eventType ?? "event",
-            userId,
-            password: body.password ? hashPassword(body.password) : null,
-            expiresAt,
-          })
-          .returning();
+        // The quota check-then-insert is wrapped in a transaction with a row
+        // lock on the user, so two concurrent create requests from the same
+        // user can't both pass the cap check and both insert, exceeding the
+        // plan's event limit.
+        const { created, plan } = await db.transaction(async (tx) => {
+          const [owner] = await tx
+            .select({
+              plan: users.plan,
+              starterIsOnce: users.starterIsOnce,
+              monthlyEventsCreated: users.monthlyEventsCreated,
+              eventPeriodStart: users.eventPeriodStart,
+            })
+            .from(users)
+            .where(eq(users.id, userId))
+            .for("update")
+            .limit(1);
 
-        // Increment monthly event counter and reset period if new month
-        await db
-          .update(users)
-          .set({
-            monthlyEventsCreated: isNewMonth ? 1 : currentMonthlyCreated + 1,
-            eventPeriodStart: isNewMonth ? now : periodStart,
-          })
-          .where(eq(users.id, userId));
+          const plan: Plan = owner?.plan ?? "free";
+          const isOnce = owner.starterIsOnce ?? false;
+          const expiresAt = computeEventExpiry(plan, isOnce);
+
+          const features = PLAN_FEATURES[plan];
+          const monthlyLimit = MONTHLY_EVENTS[plan];
+          const now = new Date();
+          const periodStart = owner?.eventPeriodStart
+            ? new Date(owner.eventPeriodStart)
+            : now;
+
+          // Reset monthly quota if we've crossed into a new month
+          const isNewMonth =
+            now.getUTCMonth() !== periodStart.getUTCMonth() ||
+            now.getUTCFullYear() !== periodStart.getUTCFullYear();
+          const currentMonthlyCreated = isNewMonth
+            ? 0
+            : (owner?.monthlyEventsCreated ?? 0);
+
+          // Check monthly quota (skip for one-time plans which use lifetime check)
+          if (
+            !isOnce &&
+            monthlyLimit !== Infinity &&
+            currentMonthlyCreated >= monthlyLimit
+          ) {
+            throw new QuotaExceededError("monthly_events", plan, monthlyLimit);
+          }
+
+          // Lifetime cap still applies to free and one-time starter
+          const lifetimeCap = features.maxEvents;
+          const [{ eventCount }] = await tx
+            .select({ eventCount: count() })
+            .from(events)
+            .where(eq(events.userId, userId));
+
+          if (eventCount >= lifetimeCap) {
+            throw new QuotaExceededError("lifetime_events", plan, lifetimeCap);
+          }
+
+          // Enforce slug uniqueness — derive from names
+          const slug = `${body.bride}-${body.groom}`
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/(^-|-$)/g, "");
+
+          const [existing] = await tx
+            .select({ id: events.id })
+            .from(events)
+            .where(eq(events.slug, slug))
+            .limit(1);
+
+          const finalSlug = existing ? `${slug}-${Date.now()}` : slug;
+
+          const [createdRow] = await tx
+            .insert(events)
+            .values({
+              ...body,
+              slug: finalSlug,
+              groom: body.groom ?? "",
+              eventType: body.eventType ?? "event",
+              userId,
+              password: body.password ? hashPassword(body.password) : null,
+              expiresAt,
+            })
+            .returning();
+
+          // Increment monthly event counter and reset period if new month
+          await tx
+            .update(users)
+            .set({
+              monthlyEventsCreated: isNewMonth ? 1 : currentMonthlyCreated + 1,
+              eventPeriodStart: isNewMonth ? now : periodStart,
+            })
+            .where(eq(users.id, userId));
+
+          return { created: createdRow, plan };
+        });
 
         // Non-blocking — don't await at the top level:
         ingestUsage("event_created", {
           userId,
           metadata: {
             eventType: body.eventType ?? "wedding",
-            plan: plan,
-            slug: finalSlug,
+            plan,
+            slug: created.slug,
           },
         }).catch(() => {}); // already swallowed inside ingestUsage, but belt-and-suspenders
+
+        return created;
       } catch (e) {
+        if (e instanceof QuotaExceededError) {
+          const posthog = getPostHogClient();
+          posthog.capture({
+            distinctId: userId,
+            event: "plan_limit_hit",
+            properties: { feature: e.feature, plan: e.plan, limit: e.limit },
+          });
+          await posthog.shutdown();
+          const noun =
+            e.feature === "monthly_events"
+              ? `${e.limit} event(s) per month`
+              : `a maximum of ${e.limit} event(s)`;
+          const suffix =
+            e.feature === "monthly_events"
+              ? "Please upgrade or wait until next month."
+              : "Please upgrade.";
+          return status(403, {
+            message: `Your ${e.plan} plan allows ${noun}. ${suffix}`,
+          });
+        }
         console.error("INSERT ERROR:", e);
         return status(500, { message: String(e) });
       }
-
-      return created;
     },
     { body: EventBodySchema },
   )
@@ -312,18 +331,22 @@ export const eventsRouter = new Elysia({ prefix: "/events" })
         });
       }
 
+      // Verify the event exists and is owned by this user before doing
+      // anything else (e.g. spending a rooms credit) — a PATCH to a
+      // nonexistent/foreign slug should 404, not burn a credit first.
+      const [existingEvent] = await db
+        .select({ navMode: events.navMode })
+        .from(events)
+        .where(and(eq(events.slug, params.slug), eq(events.userId, userId)))
+        .limit(1);
+
+      if (!existingEvent) return status(404, { message: "Not found" });
+
       // ── Rooms credit consumption ─────────────────────────────────
       // Detect navMode transition to "rooms" and consume one credit
       let roomsCreditsResult = null;
       if (body.navMode === "rooms") {
-        // Fetch existing event to check if navMode is new
-        const [existing] = await db
-          .select({ navMode: events.navMode })
-          .from(events)
-          .where(and(eq(events.slug, params.slug), eq(events.userId, userId)))
-          .limit(1);
-
-        const isRoomsTransition = !existing || existing.navMode !== "rooms";
+        const isRoomsTransition = existingEvent.navMode !== "rooms";
 
         if (isRoomsTransition) {
           try {
