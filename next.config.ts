@@ -5,6 +5,9 @@ const NGROK_URL = process.env.NGROK_URL;
 const NGROK_HOSTNAME = NGROK_URL ? new URL(NGROK_URL).hostname : undefined;
 
 const nextConfig: NextConfig = {
+  logging: {
+    browserToTerminal: "warn",
+  },
   reactStrictMode: true,
   ...(NGROK_HOSTNAME && {
     allowedDevOrigins: [NGROK_HOSTNAME],
