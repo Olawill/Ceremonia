@@ -1,7 +1,7 @@
 import { clerkClient } from "@clerk/nextjs/server";
 import { Webhooks } from "@polar-sh/nextjs";
 import { CustomerStateSubscription } from "@polar-sh/sdk/models/components/customerstatesubscription.js";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import { roomsCredits, users } from "@/db/schema";
@@ -14,6 +14,7 @@ import {
   STARTER_ONCE_HOSTING_DAYS,
 } from "@/lib/plans";
 import { getPostHogClient } from "@/lib/posthog-server";
+import { claimWebhookEvent } from "@/lib/webhook-idempotency";
 
 // Map Polar product IDs → plan names
 const PRODUCT_TO_PLAN: Record<string, Plan> = {
@@ -111,35 +112,31 @@ export const POST = Webhooks({
     }
 
     // If the user just upgraded to agency, ensure their credits row exists
-    // with the free monthly allowance. getCreditsRow handles the upsert logic.
+    // with the free monthly allowance. Atomic upsert — customer.state_changed
+    // can legitimately redeliver for the same customer, and a naive
+    // select-then-insert/update here would race and crash on the userId
+    // unique constraint when two deliveries land concurrently.
     if (plan === "agency") {
-      const existing = await db
-        .select()
-        .from(roomsCredits)
-        .where(eq(roomsCredits.userId, externalId))
-        .limit(1);
-
-      if (!existing.length) {
-        await db.insert(roomsCredits).values({
+      await db
+        .insert(roomsCredits)
+        .values({
           userId: externalId,
           freeCreditsTotal: ROOMS_CREDITS_AGENCY_MONTHLY_FREE,
           freeCreditsUsed: 0,
           purchasedCreditsTotal: 0,
           purchasedCreditsUsed: 0,
           periodStart: new Date(),
-        });
-      } else if (
-        existing[0].freeCreditsTotal < ROOMS_CREDITS_AGENCY_MONTHLY_FREE
-      ) {
-        // Existing row from a previous plan — top up the free allowance
-        await db
-          .update(roomsCredits)
-          .set({
+        })
+        .onConflictDoUpdate({
+          target: roomsCredits.userId,
+          set: {
             freeCreditsTotal: ROOMS_CREDITS_AGENCY_MONTHLY_FREE,
             periodStart: new Date(),
-          })
-          .where(eq(roomsCredits.userId, externalId));
-      }
+          },
+          // Only top up an existing row from a previous plan — don't reset
+          // periodStart/usage for a user already at or above the allowance.
+          setWhere: sql`${roomsCredits.freeCreditsTotal} < ${ROOMS_CREDITS_AGENCY_MONTHLY_FREE}`,
+        });
     }
 
     const posthog = getPostHogClient();
@@ -158,6 +155,11 @@ export const POST = Webhooks({
 
     const productId = data.product?.id;
     if (!productId || !ONE_TIME_PRODUCTS.has(productId)) return;
+
+    // A redelivered order.paid would otherwise reset the monthly quota
+    // counters again on every retry, effectively granting unlimited resets.
+    const isNew = await claimWebhookEvent(data.id, "order.paid");
+    if (!isNew) return;
 
     // One-time Starter purchase — set plan and starterIsOnce flag
     const purchasedAt = new Date(data.createdAt);
@@ -202,31 +204,30 @@ export const POST = Webhooks({
       productId === env.NEXT_PUBLIC_POLAR_PRODUCT_ROOMS_CREDITS &&
       externalId
     ) {
-      // Add credits to the user's balance
-      const existing = await db
-        .select()
-        .from(roomsCredits)
-        .where(eq(roomsCredits.userId, externalId))
-        .limit(1);
+      // Polar retries deliveries — without this guard a redelivered
+      // order.created would double-grant credits the customer paid for once.
+      const isNew = await claimWebhookEvent(data.id, "order.created");
+      if (!isNew) return;
 
-      if (existing.length) {
-        await db
-          .update(roomsCredits)
-          .set({
-            purchasedCreditsTotal:
-              existing[0].purchasedCreditsTotal + ROOMS_CREDITS_PER_PACK,
-          })
-          .where(eq(roomsCredits.userId, externalId));
-      } else {
-        await db.insert(roomsCredits).values({
+      // Atomic upsert: the increment happens in the DB, so two concurrent
+      // purchases for the same user (or a retry racing the original) can't
+      // stomp on each other via a stale read-modify-write.
+      await db
+        .insert(roomsCredits)
+        .values({
           userId: externalId,
           freeCreditsTotal: 0,
           freeCreditsUsed: 0,
           purchasedCreditsTotal: ROOMS_CREDITS_PER_PACK,
           purchasedCreditsUsed: 0,
           periodStart: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: roomsCredits.userId,
+          set: {
+            purchasedCreditsTotal: sql`${roomsCredits.purchasedCreditsTotal} + ${ROOMS_CREDITS_PER_PACK}`,
+          },
         });
-      }
     }
   },
 });
