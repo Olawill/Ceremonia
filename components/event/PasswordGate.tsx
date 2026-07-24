@@ -10,7 +10,7 @@ interface Props {
 
 export function PasswordGate({ slug }: Props) {
   const [input, setInput] = useState("");
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<"wrong" | "rateLimited" | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -22,7 +22,7 @@ export function PasswordGate({ slug }: Props) {
       if (result.success) {
         router.refresh(); // Re-render the page — server will now see the cookie
       } else {
-        setError(true);
+        setError(result.rateLimited ? "rateLimited" : "wrong");
         setInput("");
       }
     });
@@ -46,15 +46,20 @@ export function PasswordGate({ slug }: Props) {
             value={input}
             onChange={(e) => {
               setInput(e.target.value);
-              setError(false);
+              setError(null);
             }}
             placeholder="Password"
             autoFocus
             className="w-full px-4! py-3! rounded-lg bg-[#F5F0E808] border border-[#D4AF3730] text-[#F5F0E8] font-display text-base outline-none focus:border-[#D4AF37] transition-colors placeholder:text-[#F5F0E840]"
           />
-          {error && (
+          {error === "wrong" && (
             <p className="text-[#D4AF3780] font-display italic text-sm">
               Incorrect password. Please try again.
+            </p>
+          )}
+          {error === "rateLimited" && (
+            <p className="text-[#D4AF3780] font-display italic text-sm">
+              Too many attempts. Please wait a few minutes and try again.
             </p>
           )}
           <button

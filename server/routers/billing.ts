@@ -27,17 +27,25 @@ export const billingRouter = new Elysia({ prefix: "/billing" })
       // For upgrades, pass all upgradeable products so Polar renders a switcher
       const products = body.allProducts ?? [body.productId];
 
-      const session = await polar.checkouts.create({
-        products,
-        externalCustomerId: userId,
-        customerEmail: user?.email ?? undefined,
-        successUrl: `${env.NEXT_PUBLIC_APP_URL}/app/billing?success=true&productId=${body.productId}`,
-        metadata: { userId },
-        // Required for embedded checkout — must match the origin of BillingClient page
-        embedOrigin: env.NEXT_PUBLIC_APP_URL.replace(/\/$/, ""),
-      });
+      try {
+        const session = await polar.checkouts.create({
+          products,
+          externalCustomerId: userId,
+          customerEmail: user?.email ?? undefined,
+          successUrl: `${env.NEXT_PUBLIC_APP_URL}/app/billing?success=true&productId=${body.productId}`,
+          metadata: { userId },
+          // Required for embedded checkout — must match the origin of BillingClient page
+          embedOrigin: env.NEXT_PUBLIC_APP_URL.replace(/\/$/, ""),
+        });
 
-      return { url: session.url };
+        return { url: session.url };
+      } catch (e) {
+        console.error("[billing] checkout creation failed:", e);
+        return status(500, {
+          message:
+            "Couldn't start checkout right now. Please try again in a moment.",
+        });
+      }
     },
     {
       body: t.Object({
@@ -63,10 +71,18 @@ export const billingRouter = new Elysia({ prefix: "/billing" })
       return status(400, { message: "No billing account found" });
     }
 
-    const session = await polar.customerSessions.create({
-      customerId: user.polarCustomerId,
-      returnUrl: `${env.NEXT_PUBLIC_APP_URL}/app/billing`,
-    });
+    try {
+      const session = await polar.customerSessions.create({
+        customerId: user.polarCustomerId,
+        returnUrl: `${env.NEXT_PUBLIC_APP_URL}/app/billing`,
+      });
 
-    return { url: session.customerPortalUrl };
+      return { url: session.customerPortalUrl };
+    } catch (e) {
+      console.error("[billing] portal session creation failed:", e);
+      return status(500, {
+        message:
+          "Couldn't open the billing portal right now. Please try again in a moment.",
+      });
+    }
   });

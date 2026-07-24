@@ -137,7 +137,7 @@ describe("POST /api/billing/checkout", () => {
     );
   });
 
-  it("returns 500 when Polar API fails", async () => {
+  it("returns 500 with a friendly message when Polar API fails", async () => {
     authed.mockResolvedValue("user-123");
     mockPolar.checkouts.create.mockRejectedValue(new Error("Polar API down"));
 
@@ -150,6 +150,10 @@ describe("POST /api/billing/checkout", () => {
     );
 
     expect(res.status).toBe(500);
+    const body = await res.json();
+    // Must not leak the raw error/stack to the client
+    expect(body.message).not.toContain("Polar API down");
+    expect(body.message).toMatch(/try again/i);
   });
 });
 
@@ -243,7 +247,7 @@ describe("POST /api/billing/portal", () => {
     });
   });
 
-  it("returns 500 when Polar API fails", async () => {
+  it("returns 500 with a friendly message when Polar API fails", async () => {
     authed.mockResolvedValue("user-123");
     mockSelect.mockReturnValue({
       from: () => ({
@@ -262,5 +266,8 @@ describe("POST /api/billing/portal", () => {
     );
 
     expect(res.status).toBe(500);
+    const body = await res.json();
+    expect(body.message).not.toContain("Polar API down");
+    expect(body.message).toMatch(/try again/i);
   });
 });

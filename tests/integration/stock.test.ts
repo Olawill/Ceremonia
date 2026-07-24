@@ -24,15 +24,26 @@ vi.mock("@/env", () => ({
   },
 }));
 
+vi.mock("@/server/auth", () => ({
+  getAuthUserId: vi.fn().mockResolvedValue("user-123"),
+}));
+
 // ── Imports ───────────────────────────────────────────────────────────────────
 
 import { app } from "@/server";
+import { getAuthUserId } from "@/server/auth";
 
 // ── Request helper ────────────────────────────────────────────────────────────
 
-async function req(path: string): Promise<{ status: number; body: unknown }> {
+async function req(
+  path: string,
+  withAuth = true,
+): Promise<{ status: number; body: unknown }> {
   const res = await app.handle(
-    new Request(`http://localhost/api/stock${path}`, { method: "GET" }),
+    new Request(`http://localhost/api/stock${path}`, {
+      method: "GET",
+      headers: withAuth ? { Authorization: "Bearer test-token" } : {},
+    }),
   );
   const text = await res.text();
   let parsed: unknown;
@@ -99,6 +110,12 @@ afterEach(() => {
 // ── GET /api/stock/photos ─────────────────────────────────────────────────────
 
 describe("GET /api/stock/photos", () => {
+  it("returns 401 when not authenticated", async () => {
+    (getAuthUserId as ReturnType<typeof vi.fn>).mockResolvedValueOnce(null);
+    const r = await req("/photos?q=wedding");
+    expect(r.status).toBe(401);
+  });
+
   it("returns 200 with combined photos from Unsplash and Pixabay", async () => {
     vi.stubGlobal(
       "fetch",
@@ -273,6 +290,12 @@ describe("GET /api/stock/photos", () => {
 // ── GET /api/stock/audio ──────────────────────────────────────────────────────
 
 describe("GET /api/stock/audio", () => {
+  it("returns 401 when not authenticated", async () => {
+    (getAuthUserId as ReturnType<typeof vi.fn>).mockResolvedValueOnce(null);
+    const r = await req("/audio?q=piano");
+    expect(r.status).toBe(401);
+  });
+
   it("returns 200 with audio tracks from Pixabay", async () => {
     vi.stubGlobal(
       "fetch",

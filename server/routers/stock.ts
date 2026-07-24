@@ -1,4 +1,6 @@
 import { env } from "@/env";
+import { getAuthUserId } from "@/server/auth";
+import bearer from "@elysiajs/bearer";
 import { Elysia, t } from "elysia";
 
 export interface StockPhoto {
@@ -25,11 +27,15 @@ export interface StockAudio {
 const PER_PAGE = 12;
 
 export const stockRouter = new Elysia({ prefix: "/stock" })
+  .use(bearer())
 
   // GET /api/stock/photos?q=event+arch&page=1
   .get(
     "/photos",
-    async ({ query }) => {
+    async ({ query, bearer, status }) => {
+      const userId = await getAuthUserId(bearer);
+      if (!userId) return status(401, { message: "Unauthorized" });
+
       const q = query.q?.trim() || "event";
       const category = query.category?.trim() ?? "";
       const page = Math.max(1, parseInt(query.page ?? "1"));
@@ -111,7 +117,10 @@ export const stockRouter = new Elysia({ prefix: "/stock" })
   // GET /api/stock/audio?q=romantic+piano&page=1
   .get(
     "/audio",
-    async ({ query }) => {
+    async ({ query, bearer, status }) => {
+      const userId = await getAuthUserId(bearer);
+      if (!userId) return status(401, { message: "Unauthorized" });
+
       const q = query.q?.trim() || "romantic piano";
       const category = query.category?.trim() ?? "";
       const page = Math.max(1, parseInt(query.page ?? "1"));
