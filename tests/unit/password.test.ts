@@ -1,30 +1,29 @@
+import { createHash } from "crypto";
+
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { describe, expect, it } from "vitest";
 
 describe("Password utilities", () => {
-  it("hashes a password and verifies it correctly", async () => {
-    const hash = await hashPassword("mysecret");
+  it("hashes a password and verifies it correctly", () => {
+    const hash = hashPassword("mysecret");
     expect(hash).not.toBe("mysecret");
-    const valid = await verifyPassword("mysecret", hash);
-    expect(valid).toBe(true);
+    expect(verifyPassword("mysecret", hash)).toBe(true);
   });
 
-  it("rejects wrong password", async () => {
-    const hash = await hashPassword("correct");
-    const valid = await verifyPassword("wrong", hash);
-    expect(valid).toBe(false);
+  it("rejects wrong password", () => {
+    const hash = hashPassword("correct");
+    expect(verifyPassword("wrong", hash)).toBe(false);
   });
 });
 
 describe("hashPassword", () => {
-  it("returns a 64-character hex string (SHA-256)", () => {
+  it("returns a salted scrypt hash, not a bare digest", () => {
     const hash = hashPassword("mysecret");
-    expect(hash).toHaveLength(64);
-    expect(hash).toMatch(/^[a-f0-9]+$/);
+    expect(hash).toMatch(/^scrypt:[a-f0-9]{32}:[a-f0-9]{128}$/);
   });
 
-  it("is deterministic — same input always produces same hash", () => {
-    expect(hashPassword("hello")).toBe(hashPassword("hello"));
+  it("is NOT deterministic — same input produces a different hash each time (random salt)", () => {
+    expect(hashPassword("hello")).not.toBe(hashPassword("hello"));
   });
 
   it("produces different hashes for different inputs", () => {
@@ -32,8 +31,7 @@ describe("hashPassword", () => {
   });
 
   it("handles empty string without throwing", () => {
-    const hash = hashPassword("");
-    expect(hash).toHaveLength(64);
+    expect(() => hashPassword("")).not.toThrow();
   });
 
   it("is case-sensitive", () => {
@@ -42,14 +40,12 @@ describe("hashPassword", () => {
 
   it("handles unicode characters", () => {
     const hash = hashPassword("pässwörð");
-    expect(hash).toHaveLength(64);
-    expect(hash).toMatch(/^[a-f0-9]+$/);
+    expect(verifyPassword("pässwörð", hash)).toBe(true);
   });
 
   it("handles long strings without throwing", () => {
     const long = "a".repeat(10_000);
-    const hash = hashPassword(long);
-    expect(hash).toHaveLength(64);
+    expect(() => hashPassword(long)).not.toThrow();
   });
 });
 
@@ -73,8 +69,7 @@ describe("verifyPassword", () => {
     expect(verifyPassword("anything", "")).toBe(false);
   });
 
-  it("returns false when both are empty (empty hash of empty string is valid but won't match '')", () => {
-    // hashPassword("") produces a real SHA-256 — it won't equal ""
+  it("returns false when both plain and stored hash are empty", () => {
     expect(verifyPassword("", "")).toBe(false);
   });
 
@@ -82,5 +77,28 @@ describe("verifyPassword", () => {
     const hash = hashPassword("Secret");
     expect(verifyPassword("secret", hash)).toBe(false);
     expect(verifyPassword("Secret", hash)).toBe(true);
+  });
+
+  it("returns false for a malformed scrypt-prefixed hash", () => {
+    expect(verifyPassword("anything", "scrypt:onlyonepart")).toBe(false);
+  });
+
+  // ── Legacy format backward-compatibility ────────────────────────────────
+  // Passwords set before the scrypt upgrade are stored as a bare unsalted
+  // SHA-256 hex digest (no "scrypt:" prefix) — verifyPassword must still
+  // accept those until the host changes their password.
+  describe("legacy unsalted-SHA-256 hashes", () => {
+    const legacyHash = (plain: string) =>
+      createHash("sha256").update(plain).digest("hex");
+
+    it("verifies a correct password against a legacy hash", () => {
+      const hash = legacyHash("old-style-password");
+      expect(verifyPassword("old-style-password", hash)).toBe(true);
+    });
+
+    it("rejects an incorrect password against a legacy hash", () => {
+      const hash = legacyHash("old-style-password");
+      expect(verifyPassword("wrong", hash)).toBe(false);
+    });
   });
 });
