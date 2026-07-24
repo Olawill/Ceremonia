@@ -8,6 +8,7 @@ vi.mock("@/db", () => ({
     insert: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
+    transaction: vi.fn(),
   },
 }));
 
@@ -29,9 +30,24 @@ vi.mock("@/lib/polar-usage", () => ({
 // nanoid is used to generate claimTokens — fix it so we can assert on it
 vi.mock("nanoid", () => ({ nanoid: () => "test-claim-token-16" }));
 
+// SSRF guard resolves DNS for scrape-page URLs — stub it to a public IP so
+// tests don't depend on real network access and stay fast/deterministic.
+vi.mock("dns", () => {
+  const promises = {
+    lookup: vi.fn().mockResolvedValue([{ address: "93.184.216.34", family: 4 }]),
+  };
+  return { promises, default: { promises } };
+});
+
+vi.mock("@/lib/rate-limit", () => ({
+  consumeRateLimit: vi.fn().mockResolvedValue({ allowed: true }),
+  getClientIp: vi.fn().mockReturnValue("127.0.0.1"),
+}));
+
 // ── Imports ──────────────────────────────────────────────────────────────────
 
 import { db } from "@/db";
+import { consumeRateLimit } from "@/lib/rate-limit";
 import { app } from "@/server";
 import { getAuthUserId } from "@/server/auth";
 
@@ -42,6 +58,7 @@ type MockDb = {
   insert: ReturnType<typeof vi.fn>;
   update: ReturnType<typeof vi.fn>;
   delete: ReturnType<typeof vi.fn>;
+  transaction: ReturnType<typeof vi.fn>;
 };
 
 const mockDb = db as unknown as MockDb;
@@ -84,6 +101,7 @@ function selectReturning(rows: unknown[]) {
     where: () => ({
       limit: () => leaf,
       orderBy: () => leaf,
+      for: () => ({ limit: () => leaf }), // supports .where().for("update").limit()
     }),
     orderBy: () => leaf,
   });
@@ -117,6 +135,11 @@ beforeEach(() => {
   mockDb.insert.mockReturnValue(insertReturning([]));
   mockDb.update.mockReturnValue(updateReturning([]));
   mockDb.delete.mockReturnValue(deleteWhere());
+  // db.transaction(fn) just runs fn with the same mocked db as `tx` — the
+  // mock select/insert/update chains are identical whichever handle is used.
+  mockDb.transaction.mockImplementation((fn: (tx: MockDb) => unknown) =>
+    fn(mockDb),
+  );
 });
 
 // ── GET /:eventId ──────────────────────────────────────────────────────────
@@ -472,6 +495,14 @@ describe("GET /api/registry/public/:slug", () => {
 describe("POST /api/registry/claim", () => {
   const validClaim = { itemId: "item-uuid-1", guestName: "Jane Smith" };
 
+  it("returns 429 when the caller has hit the rate limit", async () => {
+    const mockConsumeRateLimit = consumeRateLimit as ReturnType<typeof vi.fn>;
+    mockConsumeRateLimit.mockResolvedValueOnce({ allowed: false });
+    const r = await req("POST", "/claim", validClaim);
+    expect(r.status).toBe(429);
+    mockConsumeRateLimit.mockResolvedValue({ allowed: true }); // restore default
+  });
+
   it("returns 404 when item not found", async () => {
     mockDb.select.mockReturnValueOnce(selectReturning([]));
     const r = await req("POST", "/claim", validClaim);
@@ -479,12 +510,14 @@ describe("POST /api/registry/claim", () => {
   });
 
   it("returns 409 when item is fully claimed", async () => {
-    // Select 1: item lookup — ends in .limit()
+    // Select 1: item lookup — ends in .where().for("update").limit()
     mockDb.select.mockReturnValueOnce({
       from: () => ({
         where: () => ({
-          limit: () =>
-            Promise.resolve([{ quantity: 1, eventId: "event-uuid-1" }]),
+          for: () => ({
+            limit: () =>
+              Promise.resolve([{ quantity: 1, eventId: "event-uuid-1" }]),
+          }),
         }),
       }),
     });
@@ -503,12 +536,14 @@ describe("POST /api/registry/claim", () => {
   });
 
   it("returns 200 with claimToken and claimId on success", async () => {
-    // Select 1: item lookup — ends in .limit()
+    // Select 1: item lookup — ends in .where().for("update").limit()
     mockDb.select.mockReturnValueOnce({
       from: () => ({
         where: () => ({
-          limit: () =>
-            Promise.resolve([{ quantity: 2, eventId: "event-uuid-1" }]),
+          for: () => ({
+            limit: () =>
+              Promise.resolve([{ quantity: 2, eventId: "event-uuid-1" }]),
+          }),
         }),
       }),
     });
@@ -530,6 +565,27 @@ describe("POST /api/registry/claim", () => {
     expect(body.claimToken).toBe("test-claim-token-16");
     expect(body.claimId).toBe("claim-new");
   });
+
+  it("runs inside a transaction and locks the item row (SELECT ... FOR UPDATE) to prevent overselling", async () => {
+    const forSpy = vi.fn().mockReturnValue({
+      limit: () =>
+        Promise.resolve([{ quantity: 1, eventId: "event-uuid-1" }]),
+    });
+    mockDb.select.mockReturnValueOnce({
+      from: () => ({ where: () => ({ for: forSpy }) }),
+    });
+    mockDb.select.mockReturnValueOnce({
+      from: () => ({ where: () => Promise.resolve([]) }),
+    });
+    mockDb.insert.mockReturnValueOnce(
+      insertReturning([{ id: "claim-new", claimToken: "test-claim-token-16" }]),
+    );
+
+    await req("POST", "/claim", validClaim);
+
+    expect(mockDb.transaction).toHaveBeenCalledTimes(1);
+    expect(forSpy).toHaveBeenCalledWith("update");
+  });
 });
 
 // ── POST /confirm-purchase ───────────────────────────────────────────────────
@@ -546,9 +602,29 @@ describe("POST /api/registry/confirm-purchase", () => {
     expect(r.status).toBe(404);
   });
 
+  it("returns 404 when the claim id exists but the token doesn't match (constant-time check)", async () => {
+    mockDb.select.mockReturnValueOnce(
+      selectReturning([
+        {
+          id: "claim-uuid-1",
+          status: "reserved",
+          claimToken: "a-completely-different-token",
+        },
+      ]),
+    );
+    const r = await req("POST", "/confirm-purchase", validBody);
+    expect(r.status).toBe(404);
+  });
+
   it("returns 200 immediately when already purchased (idempotent)", async () => {
     mockDb.select.mockReturnValueOnce(
-      selectReturning([{ id: "claim-uuid-1", status: "purchased" }]),
+      selectReturning([
+        {
+          id: "claim-uuid-1",
+          status: "purchased",
+          claimToken: "test-claim-token-16",
+        },
+      ]),
     );
     const r = await req("POST", "/confirm-purchase", validBody);
     expect(r.status).toBe(200);
@@ -559,7 +635,13 @@ describe("POST /api/registry/confirm-purchase", () => {
 
   it("returns 200 and updates status to purchased", async () => {
     mockDb.select.mockReturnValueOnce(
-      selectReturning([{ id: "claim-uuid-1", status: "reserved" }]),
+      selectReturning([
+        {
+          id: "claim-uuid-1",
+          status: "reserved",
+          claimToken: "test-claim-token-16",
+        },
+      ]),
     );
     mockDb.update.mockReturnValueOnce(
       updateReturning([{ id: "claim-uuid-1", status: "purchased" }]),
@@ -584,9 +666,29 @@ describe("DELETE /api/registry/claim", () => {
     expect(r.status).toBe(404);
   });
 
+  it("returns 404 when the claim id exists but the token doesn't match (constant-time check)", async () => {
+    mockDb.select.mockReturnValueOnce(
+      selectReturning([
+        {
+          id: "claim-uuid-1",
+          status: "reserved",
+          claimToken: "a-completely-different-token",
+        },
+      ]),
+    );
+    const r = await req("DELETE", "/claim", validBody);
+    expect(r.status).toBe(404);
+  });
+
   it("returns 400 when trying to unclaim a purchased item", async () => {
     mockDb.select.mockReturnValueOnce(
-      selectReturning([{ id: "claim-uuid-1", status: "purchased" }]),
+      selectReturning([
+        {
+          id: "claim-uuid-1",
+          status: "purchased",
+          claimToken: "test-claim-token-16",
+        },
+      ]),
     );
     const r = await req("DELETE", "/claim", validBody);
     expect(r.status).toBe(400);
@@ -595,7 +697,13 @@ describe("DELETE /api/registry/claim", () => {
 
   it("returns 200 on successful unclaim", async () => {
     mockDb.select.mockReturnValueOnce(
-      selectReturning([{ id: "claim-uuid-1", status: "reserved" }]),
+      selectReturning([
+        {
+          id: "claim-uuid-1",
+          status: "reserved",
+          claimToken: "test-claim-token-16",
+        },
+      ]),
     );
     const r = await req("DELETE", "/claim", validBody);
     expect(r.status).toBe(200);

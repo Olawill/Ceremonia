@@ -7,8 +7,11 @@ import { nanoid } from "nanoid";
 import { db } from "@/db";
 import { events, registryClaims, registryItems, users } from "@/db/schema";
 
+import { constantTimeEqual } from "@/lib/constant-time";
 import { type Plan, PLAN_FEATURES, planMeetsRequirement } from "@/lib/plans";
 import { getPostHogClient } from "@/lib/posthog-server";
+import { consumeRateLimit, getClientIp } from "@/lib/rate-limit";
+import { assertPublicUrl, safeFetch } from "@/lib/ssrf-guard";
 
 import { ingestUsage } from "@/lib/polar-usage";
 import { getAuthUserId } from "@/server/auth";
@@ -264,9 +267,14 @@ export const registryRouter = new Elysia({ prefix: "/registry" })
 
       const { url } = body;
 
+      const urlCheck = await assertPublicUrl(url);
+      if (!urlCheck.ok) {
+        return status(400, { message: urlCheck.message });
+      }
+
       let html: string;
       try {
-        const res = await fetch(url, {
+        const res = await safeFetch(url, {
           headers: {
             "User-Agent":
               "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -469,47 +477,73 @@ export const registryRouter = new Elysia({ prefix: "/registry" })
   // POST /api/registry/claim — guest reserves an item
   .post(
     "/claim",
-    async ({ body, status }) => {
-      const [item] = await db
-        .select({
-          quantity: registryItems.quantity,
-          eventId: registryItems.eventId,
-        })
-        .from(registryItems)
-        .where(eq(registryItems.id, body.itemId))
-        .limit(1);
-      if (!item) return status(404, { message: "Item not found" });
-
-      // Check availability
-      const existingClaims = await db
-        .select({ id: registryClaims.id })
-        .from(registryClaims)
-        .where(eq(registryClaims.itemId, body.itemId));
-
-      if (existingClaims.length >= (item.quantity ?? 1)) {
-        return status(409, { message: "This item has already been claimed" });
+    async ({ body, request, status }) => {
+      const ip = getClientIp(request);
+      const rl = await consumeRateLimit(`registry-claim:${ip}`, 10, 600); // 10 per 10 min
+      if (!rl.allowed) {
+        return status(429, {
+          message: "Too many claims — please try again shortly.",
+        });
       }
 
-      const claimToken = nanoid(16);
+      // Runs inside a transaction with a row lock on the item so two guests
+      // racing for the last unit of a limited-quantity gift can't both pass
+      // the availability check and over-claim it.
+      try {
+        const result = await db.transaction(async (tx) => {
+          const [item] = await tx
+            .select({
+              quantity: registryItems.quantity,
+              eventId: registryItems.eventId,
+            })
+            .from(registryItems)
+            .where(eq(registryItems.id, body.itemId))
+            .for("update")
+            .limit(1);
+          if (!item) throw new Error("ITEM_NOT_FOUND");
 
-      const [claim] = await db
-        .insert(registryClaims)
-        .values({
-          itemId: body.itemId,
-          eventId: item.eventId,
-          guestName: body.guestName,
-          claimToken,
-          status: "reserved",
-        })
-        .returning();
+          const existingClaims = await tx
+            .select({ id: registryClaims.id })
+            .from(registryClaims)
+            .where(eq(registryClaims.itemId, body.itemId));
 
-      // Return the token to the client — they store it in localStorage
-      return { success: true, claimToken, claimId: claim.id };
+          if (existingClaims.length >= (item.quantity ?? 1)) {
+            throw new Error("ALREADY_CLAIMED");
+          }
+
+          const claimToken = nanoid(16);
+
+          const [claim] = await tx
+            .insert(registryClaims)
+            .values({
+              itemId: body.itemId,
+              eventId: item.eventId,
+              guestName: body.guestName,
+              claimToken,
+              status: "reserved",
+            })
+            .returning();
+
+          return { claimToken, claimId: claim.id };
+        });
+
+        // Return the token to the client — they store it in localStorage
+        return { success: true, ...result };
+      } catch (err) {
+        const message = (err as Error).message;
+        if (message === "ITEM_NOT_FOUND")
+          return status(404, { message: "Item not found" });
+        if (message === "ALREADY_CLAIMED")
+          return status(409, {
+            message: "This item has already been claimed",
+          });
+        throw err;
+      }
     },
     {
       body: t.Object({
         itemId: t.String(),
-        guestName: t.String({ minLength: 1 }),
+        guestName: t.String({ minLength: 1, maxLength: 200 }),
       }),
     },
   )
@@ -519,18 +553,18 @@ export const registryRouter = new Elysia({ prefix: "/registry" })
   .post(
     "/confirm-purchase",
     async ({ body, status }) => {
+      // Fetch by id only, then compare the token in constant time — matching
+      // it inside the SQL WHERE would leak timing info about the secret
+      // token character-by-character via the DB engine's comparison.
       const [claim] = await db
         .select()
         .from(registryClaims)
-        .where(
-          and(
-            eq(registryClaims.claimToken, body.claimToken),
-            eq(registryClaims.id, body.claimId),
-          ),
-        )
+        .where(eq(registryClaims.id, body.claimId))
         .limit(1);
 
-      if (!claim) return status(404, { message: "Claim not found" });
+      if (!claim || !constantTimeEqual(claim.claimToken, body.claimToken)) {
+        return status(404, { message: "Claim not found" });
+      }
       if (claim.status === "purchased") return { success: true }; // idempotent
 
       await db
@@ -555,15 +589,12 @@ export const registryRouter = new Elysia({ prefix: "/registry" })
       const [claim] = await db
         .select()
         .from(registryClaims)
-        .where(
-          and(
-            eq(registryClaims.claimToken, body.claimToken),
-            eq(registryClaims.id, body.claimId),
-          ),
-        )
+        .where(eq(registryClaims.id, body.claimId))
         .limit(1);
 
-      if (!claim) return status(404, { message: "Claim not found" });
+      if (!claim || !constantTimeEqual(claim.claimToken, body.claimToken)) {
+        return status(404, { message: "Claim not found" });
+      }
       if (claim.status === "purchased") {
         return status(400, { message: "Cannot unclaim a purchased item" });
       }
