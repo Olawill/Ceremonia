@@ -90,6 +90,9 @@ export const events = pgTable("events", {
   viewCount: integer("view_count").default(0),
   notificationEmail: text("notification_email"),
   expiresAt: timestamp("expires_at"),
+  // Set once the "your event expires soon" email has gone out, so the daily
+  // reminder cron doesn't re-send it every day for the whole 7-day window.
+  reminderSentAt: timestamp("reminder_sent_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -183,6 +186,26 @@ export const roomsCredits = pgTable("rooms_credits", {
     .default(0),
   purchasedCreditsUsed: integer("purchased_credits_used").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Idempotency guard for Polar webhooks — Polar retries deliveries on timeout
+// or non-2xx, so a handler that grants credits or mutates state must record
+// that it already processed a given event id before acting on it again.
+export const processedWebhookEvents = pgTable("processed_webhook_events", {
+  // Polar's event/resource id for the delivery, e.g. the order id for
+  // order.created — unique per logical event, so a duplicate delivery
+  // collides on insert and the handler can skip re-processing it.
+  id: text("id").primaryKey(),
+  eventType: text("event_type").notNull(),
+  processedAt: timestamp("processed_at").defaultNow(),
+});
+
+// Fixed-window rate limiting for public, unauthenticated endpoints (RSVP,
+// guestbook, registry claims, password unlock) — keyed by e.g. "rsvp:1.2.3.4".
+export const rateLimits = pgTable("rate_limits", {
+  key: text("key").primaryKey(),
+  count: integer("count").notNull().default(0),
+  windowStart: timestamp("window_start").notNull().defaultNow(),
 });
 
 // ─── Relations ───────────────────────────────────────────────────────────────
