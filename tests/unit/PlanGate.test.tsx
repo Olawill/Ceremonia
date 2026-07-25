@@ -6,16 +6,6 @@ vi.mock("@/hooks/usePlan", () => ({
   usePlan: vi.fn(),
 }));
 
-vi.mock("next/link", () => ({
-  default: ({
-    href,
-    children,
-  }: {
-    href: string;
-    children: React.ReactNode;
-  }) => <a href={href}>{children}</a>,
-}));
-
 vi.mock("lucide-react", async (importOriginal) => {
   const actual = await importOriginal<typeof import("lucide-react")>();
   return { ...actual };
@@ -100,15 +90,17 @@ describe("PlanGate", () => {
         <div>Content</div>
       </PlanGate>,
     );
-    // Dialog not present before click
-    expect(screen.queryByRole("link", { name: /upgrade/i })).toBeNull();
+    // Dialog not present before click — the upgrade button lives inside it
+    expect(screen.queryByRole("button", { name: /upgrade/i })).toBeNull();
 
     // Click the locked wrapper to open the dialog
     const lockedWrapper = screen.getByText("Content").closest(".relative");
     await userEvent.click(lockedWrapper!);
 
     // Dialog is now open
-    expect(screen.getByRole("link", { name: /upgrade/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /upgrade/i }),
+    ).toBeInTheDocument();
   });
 
   it("upgrade dialog contains an upgrade button", async () => {
