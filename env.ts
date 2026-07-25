@@ -15,6 +15,11 @@ export const env = createEnv({
     POLAR_ACCESS_TOKEN: z.string().min(1),
     POLAR_WEBHOOK_SECRET: z.string().min(1),
     POLAR_SERVER: z.enum(["sandbox", "production"]).default("sandbox"),
+
+    // Set in Vercel project settings — Vercel Cron automatically sends this
+    // as a Bearer token on scheduled invocations, so cron routes can verify
+    // the request actually came from Vercel Cron and not a random caller.
+    CRON_SECRET: z.string().min(1).optional(),
   },
   client: {
     // Polar
@@ -43,6 +48,7 @@ export const env = createEnv({
     POLAR_ACCESS_TOKEN: process.env.POLAR_ACCESS_TOKEN,
     POLAR_WEBHOOK_SECRET: process.env.POLAR_WEBHOOK_SECRET,
     POLAR_SERVER: process.env.POLAR_SERVER,
+    CRON_SECRET: process.env.CRON_SECRET,
 
     NEXT_PUBLIC_EVENT_THEME: process.env.NEXT_PUBLIC_EVENT_THEME,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,

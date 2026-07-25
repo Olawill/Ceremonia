@@ -1,0 +1,33 @@
+name: Expiry Reminders Cron
+
+# Platform-independent scheduler for /api/cron/expiry-reminders — runs here
+# via GitHub Actions instead of Vercel Cron, so it works no matter where the
+# app itself is deployed (Vercel, Railway, Render, Fly.io, self-hosted...).
+# If you *are* on Vercel, vercel.json's cron entry covers this already; the
+# job itself is idempotent (sendExpiryReminders only emails each event once,
+# via a reminderSentAt guard) so running both is harmless, just redundant —
+# feel free to disable whichever one you don't need.
+#
+# Required repo secrets:
+#   NEXT_PUBLIC_APP_URL      e.g. https://ceremonia.app
+#   CRON_SECRET  must match the CRON_SECRET env var on the deployed app
+
+on:
+  schedule:
+    - cron: "0 9 * * *" # daily at 09:00 UTC
+  workflow_dispatch: {} # allow manual runs from the Actions tab
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call expiry-reminders endpoint
+        run: |
+          status=$(curl -s -o /tmp/response.txt -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.NEXT_PUBLIC_APP_URL }}/api/cron/expiry-reminders")
+          cat /tmp/response.txt
+          if [ "$status" -ge 300 ]; then
+            echo "Request failed with status $status"
+            exit 1
+          fi

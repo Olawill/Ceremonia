@@ -1,6 +1,6 @@
 import { and, eq, gt, isNull, or, sql } from "drizzle-orm";
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { notFound } from "next/navigation";
 
 import { db } from "@/db";
@@ -10,6 +10,7 @@ import { EventEngine } from "@/components/EventEngine";
 import { PasswordGate } from "@/components/event/PasswordGate";
 
 import { EventExpiredPage } from "@/components/event/EventExpiredPage";
+import { isBotRequest } from "@/lib/bot-detection";
 import type {
   AccommodationConfig,
   Course,
@@ -164,12 +165,17 @@ export default async function EventPage({ params }: Props) {
 
   const showWatermark = (owner?.plan ?? "free") === "free";
 
-  // Increment view count (fire-and-forget, don't await)
-  db.update(events)
-    .set({ viewCount: sql`COALESCE(${events.viewCount}, 0) + 1` })
-    .where(eq(events.id, event.id))
-    .execute()
-    .catch(console.error);
+  // Increment view count (fire-and-forget, don't await) — skip known
+  // crawlers/unfurl bots so the count reflects real guest visits, not
+  // search-engine indexing or social-media link previews.
+  const requestHeaders = await headers();
+  if (!isBotRequest(requestHeaders.get("user-agent"))) {
+    db.update(events)
+      .set({ viewCount: sql`COALESCE(${events.viewCount}, 0) + 1` })
+      .where(eq(events.id, event.id))
+      .execute()
+      .catch(console.error);
+  }
 
   // Map DB row → EventConfig (the bridge between DB and UI)
   const config: EventConfig = {
@@ -231,10 +237,54 @@ export default async function EventPage({ params }: Props) {
   }
 
   return (
-    <EventEngine
-      config={config}
-      showWatermark={showWatermark}
-      brandName={owner?.brandName ?? undefined}
+    <>
+      {/* Only structured-data a public, unprotected page — never a
+      password-gated one, which reaches here only after unlock. */}
+      {!isPasswordProtected && (
+        <EventJsonLd config={config} slug={slug} />
+      )}
+      <EventEngine
+        config={config}
+        showWatermark={showWatermark}
+        brandName={owner?.brandName ?? undefined}
+      />
+    </>
+  );
+}
+
+/** schema.org SocialEvent structured data — helps the page render as a rich
+ * result when shared/indexed (date, location, image). */
+function EventJsonLd({ config, slug }: { config: EventConfig; slug: string }) {
+  const vocab = getVocabulary(config.eventType);
+  const hostsStr = config.groom ? `${config.bride} & ${config.groom}` : config.bride;
+  const location = config.venueDetails.find((d) => d.label === "Location");
+
+  const jsonLd: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "SocialEvent",
+    name: `${hostsStr} — ${vocab.eventLabel}`,
+    startDate: config.date,
+    eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+    eventStatus: "https://schema.org/EventScheduled",
+    url: `https://${slug}.ceremonia.app`,
+    ...(config.tagLine && { description: config.tagLine }),
+    ...(config.heroPhotoUrl && { image: [config.heroPhotoUrl] }),
+    ...(location && {
+      location: {
+        "@type": "Place",
+        name: location.sub || location.value,
+      },
+    }),
+  };
+
+  // Escape "<" so a host-supplied string (e.g. a tagline) containing
+  // "</script>" can't break out of the script tag.
+  const json = JSON.stringify(jsonLd).replace(/</g, "\\u003c");
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: json }}
     />
   );
 }

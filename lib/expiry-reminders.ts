@@ -1,4 +1,4 @@
-import { and, gt, isNotNull, lt } from "drizzle-orm";
+import { and, eq, gt, isNotNull, isNull, lt } from "drizzle-orm";
 
 import { db } from "@/db";
 import { events } from "@/db/schema";
@@ -7,7 +7,9 @@ import { resend } from "@/lib/resend";
 
 /**
  * Sends reminder emails for events expiring in the next 7 days.
- * Safe to call repeatedly — uses a reminderSentAt guard.
+ * Safe to call repeatedly — only sends once per event: reminderSentAt is
+ * set right after a successful send and filtered out of future runs. A
+ * failed send leaves reminderSentAt unset so the next run retries it.
  * Call this from a Vercel cron at /api/cron/expiry-reminders.
  */
 export async function sendExpiryReminders() {
@@ -30,6 +32,7 @@ export async function sendExpiryReminders() {
         isNotNull(events.expiresAt),
         gt(events.expiresAt, now),
         lt(events.expiresAt, sevenDaysFromNow),
+        isNull(events.reminderSentAt),
       ),
     );
 
@@ -57,7 +60,12 @@ export async function sendExpiryReminders() {
         slug: event.slug,
         error,
       });
-      continue;
+      continue; // leave reminderSentAt unset — retried on the next run
     }
+
+    await db
+      .update(events)
+      .set({ reminderSentAt: new Date() })
+      .where(eq(events.slug, event.slug));
   }
 }
