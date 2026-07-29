@@ -161,7 +161,7 @@ export const eventsRouter = new Elysia({ prefix: "/events" })
             .limit(1);
 
           const plan: Plan = owner?.plan ?? "free";
-          const isOnce = owner.starterIsOnce ?? false;
+          const isOnce = owner?.starterIsOnce ?? false;
           const expiresAt = computeEventExpiry(plan, isOnce);
 
           const features = PLAN_FEATURES[plan];
