@@ -193,13 +193,6 @@ describe("PLAN_FEATURES — starter+ features", () => {
     for (const plan of starterAndAbove)
       expect(PLAN_FEATURES[plan].registryScraper).toBe(true);
   });
-
-  it("only starter+ have cashGifts", () => {
-    for (const plan of freeOnly)
-      expect(PLAN_FEATURES[plan].cashGifts).toBe(false);
-    for (const plan of starterAndAbove)
-      expect(PLAN_FEATURES[plan].cashGifts).toBe(true);
-  });
 });
 
 // ── PLAN_FEATURES — pro+ features ────────────────────────────────────────────
@@ -252,6 +245,13 @@ describe("PLAN_FEATURES — pro+ features", () => {
   it("free and starter have finite registry item limits", () => {
     expect(PLAN_FEATURES.free.registryItemLimit).toBe(10);
     expect(PLAN_FEATURES.starter.registryItemLimit).toBe(30);
+  });
+
+  it("only pro+ have cashGifts", () => {
+    for (const plan of belowPro)
+      expect(PLAN_FEATURES[plan].cashGifts).toBe(false);
+    for (const plan of proAndAbove)
+      expect(PLAN_FEATURES[plan].cashGifts).toBe(true);
   });
 });
 

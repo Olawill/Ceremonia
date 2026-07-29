@@ -1210,7 +1210,7 @@ export function RegistryEditor({ config, onChange }: Props) {
 
       <div className="h-px bg-[#D4AF3715]" />
 
-      <PlanGate requires="starter" featureName="Monetary gifts">
+      <PlanGate requires="pro" featureName="Monetary gifts">
         <SectionToggle
           label="Monetary Gifts"
           enabled={config.cashGiftEnabled ?? false}

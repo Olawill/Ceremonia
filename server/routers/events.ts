@@ -342,7 +342,7 @@ export const eventsRouter = new Elysia({ prefix: "/events" })
         });
         await posthog.shutdown();
         return status(403, {
-          message: "Monetary gifts require the Starter plan.",
+          message: "Monetary gifts require the Pro plan.",
         });
       }
 

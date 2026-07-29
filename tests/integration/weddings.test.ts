@@ -530,6 +530,23 @@ describe("PATCH /api/events/:slug plan gating", () => {
     expect(res.status).toBe(403);
   });
 
+  it("returns 403 when starter plan tries to set cashGiftEnabled", async () => {
+    authed.mockResolvedValue("user-123");
+    mockDb.select.mockReturnValue({
+      from: () => ({
+        where: () => ({ limit: () => Promise.resolve([{ plan: "starter" }]) }),
+      }),
+    });
+    const res = await app.handle(
+      new Request("http://localhost/api/events/alice-bob", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cashGiftEnabled: true }),
+      }),
+    );
+    expect(res.status).toBe(403);
+  });
+
   it("returns 404 when event not found during PATCH", async () => {
     authed.mockResolvedValue("user-123");
     // Plan fetch → pro (no gating)
