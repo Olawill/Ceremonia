@@ -2,6 +2,7 @@
 
 import {
   CheckIcon,
+  ChevronDownIcon,
   ExternalLinkIcon,
   GiftIcon,
   LandmarkIcon,
@@ -14,7 +15,7 @@ import {
 } from "lucide-react";
 import { nanoid } from "nanoid";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Field, Input, Textarea } from "@/components/ui/FormPrimitives";
 import { PlanGate } from "@/components/ui/PlanGate";
@@ -116,6 +117,110 @@ const DEFAULT_CASH_METHOD = (): CashGiftMethod => ({
   note: "",
 });
 
+// Native <option> backgrounds are OS-rendered chrome that CSS can't reliably
+// theme across browsers, so the method picker is a fully custom dropdown
+// instead of a <select> — every pixel of it is real app CSS.
+function ThemedSelect<T extends string>({
+  value,
+  options,
+  onChange,
+  fieldStyle,
+}: {
+  value: T;
+  options: { value: T; label: string }[];
+  onChange: (v: T) => void;
+  fieldStyle: React.CSSProperties;
+}) {
+  const { theme } = useTheme();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const selected = options.find((o) => o.value === value);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        style={{
+          ...fieldStyle,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          cursor: "pointer",
+          ...(open && {
+            borderColor: `${theme.gold}70`,
+            boxShadow: `0 0 12px ${theme.gold}20`,
+          }),
+        }}
+      >
+        <span>{selected?.label ?? "Select…"}</span>
+        <ChevronDownIcon
+          className="size-3.5 shrink-0"
+          style={{
+            color: `${theme.gold}80`,
+            transform: open ? "rotate(180deg)" : "none",
+            transition: "transform 0.2s",
+          }}
+        />
+      </button>
+
+      {open && (
+        <div
+          className="absolute top-full left-0 right-0 mt-1.5 z-50 rounded-lg overflow-hidden"
+          style={{
+            background: "#0e0e0e",
+            border: `1px solid ${theme.gold}30`,
+            boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+          }}
+        >
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => {
+                onChange(opt.value);
+                setOpen(false);
+              }}
+              className="w-full text-left px-3.5! py-2.5! text-[13px] cursor-pointer transition-colors"
+              style={{
+                fontFamily: '"Cormorant Garamond", serif',
+                background:
+                  opt.value === value ? `${theme.gold}18` : "transparent",
+                color: opt.value === value ? theme.gold : theme.text,
+              }}
+              onMouseEnter={(e) => {
+                if (opt.value !== value) {
+                  (e.currentTarget as HTMLButtonElement).style.background =
+                    `${theme.gold}0c`;
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (opt.value !== value) {
+                  (e.currentTarget as HTMLButtonElement).style.background =
+                    "transparent";
+                }
+              }}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function CashGiftMethodEditor({
   method,
   onUpdate,
@@ -126,26 +231,22 @@ function CashGiftMethodEditor({
   onDelete: () => void;
 }) {
   const { theme } = useTheme();
-  const [focusedField, setFocusedField] = useState<string | null>(null);
   const meta = CASH_METHOD_OPTIONS.find((m) => m.type === method.type);
   const isCashAtEvent = method.type === "cash_at_event";
 
-  const fieldStyle = (field: string): React.CSSProperties => ({
+  const fieldStyle: React.CSSProperties = {
     width: "100%",
     padding: "10px 14px",
     borderRadius: 8,
-    // background: "rgba(0,0,0,0.45)",
     background: "transparent",
     backdropFilter: "blur(4px)",
-    border: `1px solid ${focusedField === field ? theme.gold + "70" : theme.gold + "20"}`,
+    border: `1px solid ${theme.gold}20`,
     color: theme.text,
     fontSize: 13,
     outline: "none",
     fontFamily: '"Cormorant Garamond", serif',
-    boxShadow: focusedField === field ? `0 0 12px ${theme.gold}20` : "none",
     transition: "border-color 0.3s, box-shadow 0.3s",
-    appearance: "none" as const,
-  });
+  };
 
   return (
     <div
@@ -154,26 +255,15 @@ function CashGiftMethodEditor({
     >
       <div className="relative flex items-start justify-between gap-2">
         <Field label="Method" className="flex-1">
-          <select
+          <ThemedSelect
             value={method.type}
-            onChange={(e) =>
-              onUpdate({ type: e.target.value as CashGiftMethodType })
-            }
-            onFocus={() => setFocusedField("method")}
-            onBlur={() => setFocusedField(null)}
-            style={{ ...fieldStyle("method"), cursor: "pointer" }}
-            // className="dash-input"
-          >
-            {CASH_METHOD_OPTIONS.map((opt) => (
-              <option
-                key={opt.type}
-                value={opt.type}
-                style={{ background: "#0e0e0e", color: theme.text }}
-              >
-                {opt.label}
-              </option>
-            ))}
-          </select>
+            options={CASH_METHOD_OPTIONS.map((opt) => ({
+              value: opt.type,
+              label: opt.label,
+            }))}
+            onChange={(type) => onUpdate({ type })}
+            fieldStyle={fieldStyle}
+          />
         </Field>
         <button
           onClick={onDelete}

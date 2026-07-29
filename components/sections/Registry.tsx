@@ -49,6 +49,12 @@ function CashGiftMethods({
 
   return (
     <div className="mb-16!">
+      <p
+        className="font-label text-[10px] tracking-[0.5em] uppercase mb-5! text-center"
+        style={{ color: `${theme.gold}90` }}
+      >
+        Send a Gift
+      </p>
       {cashGift.intro && (
         <p
           className="font-display italic text-sm text-center mb-8! mx-auto max-w-xl"
@@ -67,8 +73,8 @@ function CashGiftMethods({
               key={method.id}
               className="rounded-2xl p-4! flex flex-col gap-2"
               style={{
-                background: theme.bg,
-                border: `1px solid ${theme.gold}15`,
+                background: `${theme.gold}0a`,
+                border: `1px solid ${theme.gold}35`,
               }}
             >
               <div className="flex items-center gap-2">
@@ -87,9 +93,9 @@ function CashGiftMethods({
                   aria-label={`Copy ${meta.label} details`}
                   className="flex items-center justify-between gap-2 px-3! py-2! rounded-lg text-sm font-display transition-colors cursor-pointer text-left"
                   style={{
-                    background: `${theme.gold}08`,
-                    border: `1px solid ${theme.gold}20`,
-                    color: `${theme.text}90`,
+                    background: `${theme.gold}15`,
+                    border: `1px solid ${theme.gold}40`,
+                    color: theme.text,
                   }}
                 >
                   <span className="truncate">{method.value}</span>
@@ -100,7 +106,7 @@ function CashGiftMethods({
                     />
                   ) : (
                     <CopyIcon
-                      className="size-3.5 shrink-0 opacity-60"
+                      className="size-3.5 shrink-0"
                       style={{ color: theme.gold }}
                     />
                   )}

@@ -48,6 +48,12 @@ function CashGiftMethodsCompact({
 
   return (
     <div className="w-full max-w-xs flex flex-col gap-2">
+      <p
+        className="font-label text-[8px] tracking-[0.5em] uppercase text-center"
+        style={{ color: `${theme.gold}90` }}
+      >
+        Send a Gift
+      </p>
       {cashGift.intro && (
         <p
           className="font-display italic text-xs text-center"
@@ -86,9 +92,9 @@ function CashGiftMethodsCompact({
                   aria-label={`Copy ${meta.label} details`}
                   className="flex items-center justify-between gap-2 px-2! py-1! rounded-lg text-[11px] font-display cursor-pointer text-left"
                   style={{
-                    background: `${theme.gold}10`,
-                    border: `1px solid ${theme.gold}20`,
-                    color: `${theme.text}80`,
+                    background: `${theme.gold}18`,
+                    border: `1px solid ${theme.gold}35`,
+                    color: theme.text,
                   }}
                 >
                   <span className="truncate">{method.value}</span>
