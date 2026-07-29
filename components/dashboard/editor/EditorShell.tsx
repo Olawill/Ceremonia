@@ -495,10 +495,10 @@ export function EditorShell({ initialConfig, isNew }: Props) {
         {/* Left — controls */}
         <div className="flex-1 shrink-0 flex flex-col border-r overflow-hidden border-[#D4AF3718]">
           {/* Editor header */}
-          <div className="px-6! py-4! border-b flex items-center justify-between shrink-0 border-[#D4AF3718]">
-            <div>
+          <div className="px-6! py-4! border-b flex items-center justify-between gap-2 shrink-0 border-[#D4AF3718]">
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <p className="font-display italic text-[#F5F0E8] text-xl!">
+                <p className="font-display italic text-[#F5F0E8] text-xl! truncate">
                   {config.groom
                     ? `${config.bride || "Host"} & ${config.groom}`
                     : config.bride || "Your Event"}
@@ -517,7 +517,7 @@ export function EditorShell({ initialConfig, isNew }: Props) {
               </div>
               <p
                 className={clsx(
-                  "font-label text-[10px] text-[#D4AF3780] tracking-widest",
+                  "font-label text-[10px] text-[#D4AF3780] tracking-widest truncate",
                   isNew && "hidden",
                 )}
               >
@@ -525,7 +525,7 @@ export function EditorShell({ initialConfig, isNew }: Props) {
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={handleSave}
                 disabled={saveState === "saving"}
