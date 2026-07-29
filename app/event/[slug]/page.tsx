@@ -13,6 +13,7 @@ import { EventExpiredPage } from "@/components/event/EventExpiredPage";
 import { isBotRequest } from "@/lib/bot-detection";
 import type {
   AccommodationConfig,
+  CashGiftConfig,
   Course,
   CurtainStyle,
   DressCodeConfig,
@@ -222,6 +223,8 @@ export default async function EventPage({ params }: Props) {
     galleryPhotos: (event.galleryPhotos as string[]) ?? [],
     travelGuideEnabled: event.travelGuideEnabled ?? false,
     travelItems: (event.travelItems as TravelItem[]) ?? [],
+    cashGiftEnabled: event.cashGiftEnabled ?? false,
+    cashGift: event.cashGift as CashGiftConfig | undefined,
     navMode: (event.navMode as NavMode) ?? "scroll",
     featureMode: (event.featureMode as FeatureMode) ?? "castle",
   };

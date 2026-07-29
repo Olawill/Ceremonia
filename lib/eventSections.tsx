@@ -342,8 +342,9 @@ export function buildSections(
         />
       ),
     },
-    ...(config.registryEnabled &&
-    (registryItemCount === undefined || registryItemCount > 0)
+    ...(config.cashGiftEnabled ||
+    (config.registryEnabled &&
+      (registryItemCount === undefined || registryItemCount > 0))
       ? [
           {
             key: "registry",
@@ -353,12 +354,16 @@ export function buildSections(
                 key="registry"
                 eventSlug={config.slug}
                 label={vocab.registryLabel}
+                cashGiftEnabled={config.cashGiftEnabled}
+                cashGift={config.cashGift}
               />
             ) : (
               <Registry
                 key="registry"
                 eventSlug={config.slug}
                 label={vocab.registryLabel}
+                cashGiftEnabled={config.cashGiftEnabled}
+                cashGift={config.cashGift}
               />
             ),
           },

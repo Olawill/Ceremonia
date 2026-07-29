@@ -92,6 +92,8 @@ const EventBodySchema = t.Object({
   galleryPhotos: t.Optional(t.Any()),
   travelGuideEnabled: t.Optional(t.Boolean()),
   travelItems: t.Optional(t.Any()),
+  cashGiftEnabled: t.Optional(t.Boolean()),
+  cashGift: t.Optional(t.Any()),
   navMode: t.Optional(t.UnionEnum(["scroll", "rooms"])),
   featureMode: t.Optional(t.UnionEnum(FEATURE_MODES)),
 });
@@ -328,6 +330,19 @@ export const eventsRouter = new Elysia({ prefix: "/events" })
         await posthog.shutdown();
         return status(403, {
           message: "Custom audio requires the Starter plan.",
+        });
+      }
+
+      if (body.cashGiftEnabled && !features.cashGifts) {
+        const posthog = getPostHogClient();
+        posthog.capture({
+          distinctId: userId,
+          event: "plan_limit_hit",
+          properties: { feature: "cash_gifts", plan: owner?.plan },
+        });
+        await posthog.shutdown();
+        return status(403, {
+          message: "Monetary gifts require the Starter plan.",
         });
       }
 

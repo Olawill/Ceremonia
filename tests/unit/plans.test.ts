@@ -193,6 +193,13 @@ describe("PLAN_FEATURES — starter+ features", () => {
     for (const plan of starterAndAbove)
       expect(PLAN_FEATURES[plan].registryScraper).toBe(true);
   });
+
+  it("only starter+ have cashGifts", () => {
+    for (const plan of freeOnly)
+      expect(PLAN_FEATURES[plan].cashGifts).toBe(false);
+    for (const plan of starterAndAbove)
+      expect(PLAN_FEATURES[plan].cashGifts).toBe(true);
+  });
 });
 
 // ── PLAN_FEATURES — pro+ features ────────────────────────────────────────────

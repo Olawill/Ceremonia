@@ -1,15 +1,126 @@
 "use client";
 
 import {
+  BanknoteIcon,
   CheckIcon,
+  CopyIcon,
   ExternalLinkIcon,
   GiftIcon,
+  LandmarkIcon,
   ShoppingBagIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { useTheme } from "@/lib/ThemeContext";
+import type { CashGiftConfig, CashGiftMethodType } from "@/types/event";
 import { toast } from "sonner";
+
+const CASH_METHOD_META: Record<CashGiftMethodType, { label: string }> = {
+  venmo: { label: "Venmo" },
+  paypal: { label: "PayPal" },
+  zelle: { label: "Zelle" },
+  cashapp: { label: "Cash App" },
+  bank_transfer: { label: "Direct Deposit" },
+  cash_at_event: { label: "Cash / Check at the Event" },
+  other: { label: "Other" },
+};
+
+function CashGiftMethods({
+  cashGift,
+  theme,
+}: {
+  cashGift: CashGiftConfig;
+  theme: ReturnType<typeof useTheme>["theme"];
+}) {
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopy = async (id: string, value: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopiedId(id);
+      toast.success("Copied to clipboard");
+      setTimeout(() => setCopiedId((cur) => (cur === id ? null : cur)), 2000);
+    } catch {
+      toast.error("Couldn't copy — please copy it manually");
+    }
+  };
+
+  if (!cashGift.methods.length) return null;
+
+  return (
+    <div className="mb-16!">
+      {cashGift.intro && (
+        <p
+          className="font-display italic text-sm text-center mb-8! mx-auto max-w-xl"
+          style={{ color: `${theme.text}80` }}
+        >
+          {cashGift.intro}
+        </p>
+      )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
+        {cashGift.methods.map((method) => {
+          const meta = CASH_METHOD_META[method.type];
+          const isCashAtEvent = method.type === "cash_at_event";
+          const Icon = isCashAtEvent ? BanknoteIcon : LandmarkIcon;
+          return (
+            <div
+              key={method.id}
+              className="rounded-2xl p-4! flex flex-col gap-2"
+              style={{
+                background: theme.bg,
+                border: `1px solid ${theme.gold}15`,
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <Icon className="size-4" style={{ color: theme.gold }} />
+                <p
+                  className="font-display font-semibold text-sm"
+                  style={{ color: theme.text }}
+                >
+                  {method.label || meta.label}
+                </p>
+              </div>
+              {!isCashAtEvent && method.value && (
+                <button
+                  type="button"
+                  onClick={() => handleCopy(method.id, method.value!)}
+                  aria-label={`Copy ${meta.label} details`}
+                  className="flex items-center justify-between gap-2 px-3! py-2! rounded-lg text-sm font-display transition-colors cursor-pointer text-left"
+                  style={{
+                    background: `${theme.gold}08`,
+                    border: `1px solid ${theme.gold}20`,
+                    color: `${theme.text}90`,
+                  }}
+                >
+                  <span className="truncate">{method.value}</span>
+                  {copiedId === method.id ? (
+                    <CheckIcon
+                      className="size-3.5 shrink-0"
+                      style={{ color: theme.gold }}
+                    />
+                  ) : (
+                    <CopyIcon
+                      className="size-3.5 shrink-0 opacity-60"
+                      style={{ color: theme.gold }}
+                    />
+                  )}
+                </button>
+              )}
+              {method.note && (
+                <p
+                  className="font-display italic text-xs"
+                  style={{ color: `${theme.text}60` }}
+                >
+                  {method.note}
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 interface RegistryItem {
   id: string;
@@ -35,6 +146,8 @@ interface ClaimRecord {
 interface Props {
   eventSlug: string;
   label?: string;
+  cashGiftEnabled?: boolean;
+  cashGift?: CashGiftConfig;
 }
 
 export function formatPrice(
@@ -51,7 +164,12 @@ export function formatPrice(
   }).format(minorUnits / 100);
 }
 
-export function Registry({ eventSlug, label }: Props) {
+export function Registry({
+  eventSlug,
+  label,
+  cashGiftEnabled,
+  cashGift,
+}: Props) {
   const { theme } = useTheme();
   const [items, setItems] = useState<RegistryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -157,7 +275,8 @@ export function Registry({ eventSlug, label }: Props) {
     setItems(updated);
   };
 
-  if (loading || items.length === 0) return null;
+  const hasCashGift = !!cashGiftEnabled && !!cashGift?.methods.length;
+  if (loading || (items.length === 0 && !hasCashGift)) return null;
 
   const categories = [...new Set(items.map((i) => i.category ?? "General"))];
 
@@ -194,8 +313,12 @@ export function Registry({ eventSlug, label }: Props) {
           </p>
         </div>
 
+        {hasCashGift && cashGift && (
+          <CashGiftMethods cashGift={cashGift} theme={theme} />
+        )}
+
         {/* Name prompt (shown once, persists for session) */}
-        {!nameConfirmed && (
+        {items.length > 0 && !nameConfirmed && (
           <div
             className="mb-10! p-5! rounded-2xl border text-center"
             style={{

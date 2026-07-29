@@ -1,13 +1,125 @@
 "use client";
 import { formatPrice } from "@/components/sections/Registry";
 import { useTheme } from "@/lib/ThemeContext";
+import type { CashGiftConfig, CashGiftMethodType } from "@/types/event";
 import {
+  BanknoteIcon,
   CheckIcon,
+  CopyIcon,
   ExternalLinkIcon,
   GiftIcon,
+  LandmarkIcon,
   ShoppingBagIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
+
+const CASH_METHOD_META: Record<CashGiftMethodType, { label: string }> = {
+  venmo: { label: "Venmo" },
+  paypal: { label: "PayPal" },
+  zelle: { label: "Zelle" },
+  cashapp: { label: "Cash App" },
+  bank_transfer: { label: "Direct Deposit" },
+  cash_at_event: { label: "Cash / Check at the Event" },
+  other: { label: "Other" },
+};
+
+function CashGiftMethodsCompact({
+  cashGift,
+  theme,
+}: {
+  cashGift: CashGiftConfig;
+  theme: ReturnType<typeof useTheme>["theme"];
+}) {
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopy = async (id: string, value: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopiedId(id);
+      toast.success("Copied to clipboard");
+      setTimeout(() => setCopiedId((cur) => (cur === id ? null : cur)), 2000);
+    } catch {
+      toast.error("Couldn't copy — please copy it manually");
+    }
+  };
+
+  if (!cashGift.methods.length) return null;
+
+  return (
+    <div className="w-full max-w-xs flex flex-col gap-2">
+      {cashGift.intro && (
+        <p
+          className="font-display italic text-xs text-center"
+          style={{ color: `${theme.text}65` }}
+        >
+          {cashGift.intro}
+        </p>
+      )}
+      <div className="flex flex-col gap-1.5">
+        {cashGift.methods.map((method) => {
+          const meta = CASH_METHOD_META[method.type];
+          const isCashAtEvent = method.type === "cash_at_event";
+          const Icon = isCashAtEvent ? BanknoteIcon : LandmarkIcon;
+          return (
+            <div
+              key={method.id}
+              className="rounded-xl px-3! py-2! flex flex-col gap-1"
+              style={{
+                background: `linear-gradient(135deg, ${theme.curtain}35, rgba(0,0,0,0.7))`,
+                border: `1px solid ${theme.gold}25`,
+              }}
+            >
+              <div className="flex items-center gap-1.5">
+                <Icon className="size-3" style={{ color: theme.gold }} />
+                <p
+                  className="font-display text-xs"
+                  style={{ color: theme.text }}
+                >
+                  {method.label || meta.label}
+                </p>
+              </div>
+              {!isCashAtEvent && method.value && (
+                <button
+                  type="button"
+                  onClick={() => handleCopy(method.id, method.value!)}
+                  aria-label={`Copy ${meta.label} details`}
+                  className="flex items-center justify-between gap-2 px-2! py-1! rounded-lg text-[11px] font-display cursor-pointer text-left"
+                  style={{
+                    background: `${theme.gold}10`,
+                    border: `1px solid ${theme.gold}20`,
+                    color: `${theme.text}80`,
+                  }}
+                >
+                  <span className="truncate">{method.value}</span>
+                  {copiedId === method.id ? (
+                    <CheckIcon
+                      className="size-3 shrink-0"
+                      style={{ color: theme.gold }}
+                    />
+                  ) : (
+                    <CopyIcon
+                      className="size-3 shrink-0 opacity-60"
+                      style={{ color: theme.gold }}
+                    />
+                  )}
+                </button>
+              )}
+              {method.note && (
+                <p
+                  className="font-display italic text-[10px]"
+                  style={{ color: `${theme.text}50` }}
+                >
+                  {method.note}
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 interface RegistryItem {
   id: string;
@@ -32,9 +144,13 @@ interface ClaimRecord {
 export function RegistryPanel({
   eventSlug,
   label,
+  cashGiftEnabled,
+  cashGift,
 }: {
   eventSlug: string;
   label?: string;
+  cashGiftEnabled?: boolean;
+  cashGift?: CashGiftConfig;
 }) {
   const { theme } = useTheme();
   const [items, setItems] = useState<RegistryItem[]>([]);
@@ -74,7 +190,49 @@ export function RegistryPanel({
     return () => clearInterval(t);
   }, [items.length]);
 
-  if (loading || !items.length) return null;
+  const hasCashGift = !!cashGiftEnabled && !!cashGift?.methods.length;
+  if (loading || (!items.length && !hasCashGift)) return null;
+
+  if (!items.length && hasCashGift && cashGift) {
+    return (
+      <div className="absolute inset-0 flex flex-col items-center justify-center px-5! gap-4 py-8! overflow-y-auto">
+        <div
+          className="text-center flex flex-col items-center gap-1.5"
+          style={{ opacity: visible ? 1 : 0, transition: "opacity 0.8s ease" }}
+        >
+          <GiftIcon
+            className="size-6"
+            style={{
+              color: theme.gold,
+              filter: `drop-shadow(0 0 8px ${theme.gold}60)`,
+            }}
+          />
+          <p
+            className="font-label text-[8px] tracking-[0.6em] uppercase"
+            style={{
+              color: `${theme.gold}65`,
+              textShadow: "0 1px 6px rgba(0,0,0,0.9)",
+            }}
+          >
+            {label ?? "Wedding Registry"}
+          </p>
+          <h2
+            className="font-display font-light"
+            style={{
+              fontSize: "clamp(18px,3.5vw,26px)",
+              color: theme.text,
+              letterSpacing: "0.06em",
+              textShadow: "0 2px 12px rgba(0,0,0,0.9)",
+            }}
+          >
+            Gift Ideas
+          </h2>
+        </div>
+        <CashGiftMethodsCompact cashGift={cashGift} theme={theme} />
+      </div>
+    );
+  }
+
   const item = items[activeIndex];
   if (!item) return null;
 
@@ -112,7 +270,7 @@ export function RegistryPanel({
   };
 
   return (
-    <div className="absolute inset-0 flex flex-col items-center justify-center px-5! gap-4">
+    <div className="absolute inset-0 flex flex-col items-center justify-center px-5! gap-4 py-8! overflow-y-auto">
       <div
         className="text-center flex flex-col items-center gap-1.5"
         style={{ opacity: visible ? 1 : 0, transition: "opacity 0.8s ease" }}
@@ -326,6 +484,11 @@ export function RegistryPanel({
           </span>
         )}
       </div>
+
+      {hasCashGift && cashGift && (
+        <CashGiftMethodsCompact cashGift={cashGift} theme={theme} />
+      )}
+
       <style>{`@keyframes gift-in { from { opacity:0; transform:scale(0.96) translateY(8px); } to { opacity:1; transform:scale(1) translateY(0); } }`}</style>
     </div>
   );

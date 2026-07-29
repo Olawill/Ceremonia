@@ -22,6 +22,7 @@ export interface PlanFeatures {
   roomsNavMode: boolean; // Agency only (3D rooms navigation - base 3 credits/mo included)
   registryItemLimit: number; // Infinity = unlimited
   registryScraper: boolean; // URL scraping feature
+  cashGifts: boolean; // Starter+ (monetary/cash gift registry)
 }
 
 /** Monthly event creation limits (null = unlimited, 0 = none) */
@@ -61,6 +62,7 @@ export const PLAN_FEATURES: Record<Plan, PlanFeatures> = {
     roomsNavMode: false,
     registryItemLimit: 10,
     registryScraper: false,
+    cashGifts: false,
   },
   starter: {
     maxEvents: 1,
@@ -82,6 +84,7 @@ export const PLAN_FEATURES: Record<Plan, PlanFeatures> = {
     roomsNavMode: false,
     registryItemLimit: 30,
     registryScraper: true,
+    cashGifts: true,
   },
   pro: {
     maxEvents: 5,
@@ -103,6 +106,7 @@ export const PLAN_FEATURES: Record<Plan, PlanFeatures> = {
     roomsNavMode: false,
     registryItemLimit: Infinity,
     registryScraper: true,
+    cashGifts: true,
   },
   agency: {
     maxEvents: Infinity,
@@ -124,6 +128,7 @@ export const PLAN_FEATURES: Record<Plan, PlanFeatures> = {
     roomsNavMode: true,
     registryItemLimit: Infinity,
     registryScraper: true,
+    cashGifts: true,
   },
 };
 

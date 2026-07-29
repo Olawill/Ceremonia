@@ -87,6 +87,10 @@ export const events = pgTable("events", {
   travelGuideEnabled: boolean("travel_guide_enabled").default(false),
   travelItems: jsonb("travel_items"), // TravelItem[]
 
+  // Monetary/cash gifts — payment-app handles only, never raw bank details
+  cashGiftEnabled: boolean("cash_gift_enabled").default(false),
+  cashGift: jsonb("cash_gift"), // CashGiftConfig
+
   viewCount: integer("view_count").default(0),
   notificationEmail: text("notification_email"),
   expiresAt: timestamp("expires_at"),

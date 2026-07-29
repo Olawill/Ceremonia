@@ -119,6 +119,8 @@ export interface EventConfig {
   livestreamTitle?: string;
   livestreamNote?: string;
   livestreamTime?: string; // "HH:MM" 24h format — when stream starts
+  cashGiftEnabled?: boolean;
+  cashGift?: CashGiftConfig;
 }
 
 export function getFeatureMode(eventType: EventType): FeatureMode {
@@ -223,6 +225,31 @@ export interface FaqItem {
   id: string;
   question: string;
   answer: string;
+}
+
+// Payment-app handles only — never raw bank account/routing numbers.
+// "cash_at_event" has no `value`; it's just a note that cash/check gifts
+// are welcome in person.
+export type CashGiftMethodType =
+  | "venmo"
+  | "paypal"
+  | "zelle"
+  | "cashapp"
+  | "bank_transfer" // direct deposit via a payment app's own transfer link/handle, not raw account numbers
+  | "cash_at_event"
+  | "other";
+
+export interface CashGiftMethod {
+  id: string;
+  type: CashGiftMethodType;
+  label?: string; // override e.g. "Venmo (preferred)"
+  value?: string; // handle/username/email/link — not used for cash_at_event
+  note?: string; // e.g. "Please include your name in the memo"
+}
+
+export interface CashGiftConfig {
+  intro?: string; // e.g. "Your presence is the greatest gift, but if you'd like to contribute..."
+  methods: CashGiftMethod[];
 }
 
 export const FALLBACK_LOCATION: VenueEvent = {

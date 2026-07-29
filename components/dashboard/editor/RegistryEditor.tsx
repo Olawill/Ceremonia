@@ -4,6 +4,7 @@ import {
   CheckIcon,
   ExternalLinkIcon,
   GiftIcon,
+  LandmarkIcon,
   LinkIcon,
   Loader2Icon,
   PlusIcon,
@@ -11,6 +12,8 @@ import {
   Trash2Icon,
   XIcon,
 } from "lucide-react";
+import { nanoid } from "nanoid";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 import { Field, Input, Textarea } from "@/components/ui/FormPrimitives";
@@ -22,7 +25,13 @@ import { formatPrice } from "@/components/sections/Registry";
 import { useApi } from "@/hooks/useApi";
 import { useToast } from "@/hooks/useToast";
 
-import type { EventConfig } from "@/types/event";
+import { useTheme } from "@/lib/ThemeContext";
+import type {
+  CashGiftConfig,
+  CashGiftMethod,
+  CashGiftMethodType,
+  EventConfig,
+} from "@/types/event";
 import { getVocabulary } from "@/types/event";
 
 interface RegistryItem {
@@ -75,6 +84,141 @@ const RETAILER_SUGGESTIONS = [
 
 type AddMode = "idle" | "manual" | "link" | "bulk" | "browse";
 
+const CASH_METHOD_OPTIONS: {
+  type: CashGiftMethodType;
+  label: string;
+  placeholder: string;
+}[] = [
+  { type: "venmo", label: "Venmo", placeholder: "@your-venmo-handle" },
+  { type: "paypal", label: "PayPal", placeholder: "paypal.me/yourname" },
+  { type: "zelle", label: "Zelle", placeholder: "your@email.com or phone" },
+  { type: "cashapp", label: "Cash App", placeholder: "$YourCashtag" },
+  {
+    type: "bank_transfer",
+    label: "Direct Deposit",
+    placeholder: "Transfer link or handle from your bank's app",
+  },
+  { type: "other", label: "Other", placeholder: "Handle, link, or QR note" },
+  {
+    type: "cash_at_event",
+    label: "Cash / Check at the Event",
+    placeholder: "",
+  },
+];
+
+const DEFAULT_CASH_GIFT: CashGiftConfig = { intro: "", methods: [] };
+
+const DEFAULT_CASH_METHOD = (): CashGiftMethod => ({
+  id: nanoid(8),
+  type: "venmo",
+  label: "",
+  value: "",
+  note: "",
+});
+
+function CashGiftMethodEditor({
+  method,
+  onUpdate,
+  onDelete,
+}: {
+  method: CashGiftMethod;
+  onUpdate: (patch: Partial<CashGiftMethod>) => void;
+  onDelete: () => void;
+}) {
+  const { theme } = useTheme();
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+  const meta = CASH_METHOD_OPTIONS.find((m) => m.type === method.type);
+  const isCashAtEvent = method.type === "cash_at_event";
+
+  const fieldStyle = (field: string): React.CSSProperties => ({
+    width: "100%",
+    padding: "10px 14px",
+    borderRadius: 8,
+    // background: "rgba(0,0,0,0.45)",
+    background: "transparent",
+    backdropFilter: "blur(4px)",
+    border: `1px solid ${focusedField === field ? theme.gold + "70" : theme.gold + "20"}`,
+    color: theme.text,
+    fontSize: 13,
+    outline: "none",
+    fontFamily: '"Cormorant Garamond", serif',
+    boxShadow: focusedField === field ? `0 0 12px ${theme.gold}20` : "none",
+    transition: "border-color 0.3s, box-shadow 0.3s",
+    appearance: "none" as const,
+  });
+
+  return (
+    <div
+      className="p-4! rounded-xl space-y-3!"
+      style={{ background: "#D4AF3708", border: "1px solid #D4AF3730" }}
+    >
+      <div className="relative flex items-start justify-between gap-2">
+        <Field label="Method" className="flex-1">
+          <select
+            value={method.type}
+            onChange={(e) =>
+              onUpdate({ type: e.target.value as CashGiftMethodType })
+            }
+            onFocus={() => setFocusedField("method")}
+            onBlur={() => setFocusedField(null)}
+            style={{ ...fieldStyle("method"), cursor: "pointer" }}
+            // className="dash-input"
+          >
+            {CASH_METHOD_OPTIONS.map((opt) => (
+              <option
+                key={opt.type}
+                value={opt.type}
+                style={{ background: "#0e0e0e", color: theme.text }}
+              >
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <button
+          onClick={onDelete}
+          className="absolute top-0 right-2 shrink-0 cursor-pointer p-1.5 rounded-lg hover:bg-red-500/10 text-dash-text/60 hover:text-red-400 transition-colors"
+        >
+          <Trash2Icon className="size-3.5" />
+        </button>
+      </div>
+
+      <Field
+        label="Label"
+        hint="Optional — overrides the default name shown to guests"
+      >
+        <Input
+          value={method.label ?? ""}
+          onChange={(e) => onUpdate({ label: e.target.value })}
+          placeholder={meta?.label}
+        />
+      </Field>
+
+      {!isCashAtEvent && (
+        <Field label="Handle / Link">
+          <Input
+            value={method.value ?? ""}
+            onChange={(e) => onUpdate({ value: e.target.value })}
+            placeholder={meta?.placeholder}
+          />
+        </Field>
+      )}
+
+      <Field label="Note" hint="Optional — e.g. a memo request">
+        <Input
+          value={method.note ?? ""}
+          onChange={(e) => onUpdate({ note: e.target.value })}
+          placeholder={
+            isCashAtEvent
+              ? "We'll have an envelope box at the venue"
+              : "Please include your name in the memo"
+          }
+        />
+      </Field>
+    </div>
+  );
+}
+
 export function RegistryEditor({ config, onChange }: Props) {
   const { api } = useApi();
   const vocab = getVocabulary(config.eventType);
@@ -116,14 +260,21 @@ export function RegistryEditor({ config, onChange }: Props) {
   const [savingNew, setSavingNew] = useState(false);
 
   const fetchItems = async () => {
-    if (!config.id) return;
-    const { data } = await api.registry({ eventId: config.id }).get();
-    if (data) setItems(data as RegistryItem[]);
-    setLoading(false);
+    if (!config.id) {
+      setLoading(false);
+      return;
+    }
+    try {
+      const { data } = await api.registry({ eventId: config.id }).get();
+      if (data) setItems(data as RegistryItem[]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     fetchItems();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config.id]);
 
   // ── Scraping ──────────────────────────────────────────────────────
@@ -297,6 +448,26 @@ export function RegistryEditor({ config, onChange }: Props) {
     setSavingId(null);
   };
 
+  // ── Monetary gifts ───────────────────────────────────────────────
+
+  const cashGift = config.cashGift ?? DEFAULT_CASH_GIFT;
+
+  const updateCashGift = (patch: Partial<CashGiftConfig>) =>
+    onChange({ cashGift: { ...cashGift, ...patch } });
+
+  const addCashMethod = () =>
+    updateCashGift({ methods: [...cashGift.methods, DEFAULT_CASH_METHOD()] });
+
+  const updateCashMethod = (id: string, patch: Partial<CashGiftMethod>) =>
+    updateCashGift({
+      methods: cashGift.methods.map((m) =>
+        m.id === id ? { ...m, ...patch } : m,
+      ),
+    });
+
+  const deleteCashMethod = (id: string) =>
+    updateCashGift({ methods: cashGift.methods.filter((m) => m.id !== id) });
+
   // ── Render ────────────────────────────────────────────────────────
 
   return (
@@ -339,10 +510,12 @@ export function RegistryEditor({ config, onChange }: Props) {
                     }}
                   >
                     {item.imageUrl && (
-                      <img
+                      <Image
                         src={item.imageUrl}
                         alt={item.title}
                         className="w-12 h-12 rounded-lg object-cover shrink-0"
+                        width={48}
+                        height={48}
                       />
                     )}
                     <div className="flex-1 min-w-0">
@@ -469,10 +642,12 @@ export function RegistryEditor({ config, onChange }: Props) {
 
                         {/* Image */}
                         {item.imageUrl && !item.error && (
-                          <img
+                          <Image
                             src={item.imageUrl}
                             alt={item.editTitle ?? ""}
                             className="w-10 h-10 rounded-lg object-cover shrink-0"
+                            width={40}
+                            height={40}
                           />
                         )}
 
@@ -702,7 +877,7 @@ export function RegistryEditor({ config, onChange }: Props) {
                   </div>
                   <p className="font-display italic text-sm text-dash-text/50">
                     Paste a search results, category, or wishlist page URL.
-                    We'll find all products on it automatically.
+                    We&apos;ll find all products on it automatically.
                   </p>
                   <Field
                     label="Page URL"
@@ -1032,6 +1207,61 @@ export function RegistryEditor({ config, onChange }: Props) {
           )}
         </>
       )}
+
+      <div className="h-px bg-[#D4AF3715]" />
+
+      <PlanGate requires="starter" featureName="Monetary gifts">
+        <SectionToggle
+          label="Monetary Gifts"
+          enabled={config.cashGiftEnabled ?? false}
+          onToggle={() =>
+            onChange({ cashGiftEnabled: !config.cashGiftEnabled })
+          }
+          disabledMessage="Enable to let guests send you money instead of, or alongside, physical gifts."
+        />
+
+        {config.cashGiftEnabled && (
+          <div className="space-y-4! mt-4!">
+            <Field
+              label="Intro Message"
+              hint="Optional — shown above your payment methods"
+            >
+              <Textarea
+                value={cashGift.intro ?? ""}
+                onChange={(e) => updateCashGift({ intro: e.target.value })}
+                placeholder="Your presence is the greatest gift, but if you'd like to contribute…"
+                rows={2}
+              />
+            </Field>
+
+            <div className="space-y-3!">
+              {cashGift.methods.map((method) => (
+                <CashGiftMethodEditor
+                  key={method.id}
+                  method={method}
+                  onUpdate={(patch) => updateCashMethod(method.id, patch)}
+                  onDelete={() => deleteCashMethod(method.id)}
+                />
+              ))}
+            </div>
+
+            <button
+              onClick={addCashMethod}
+              className="w-full flex items-center justify-center gap-2 py-3! rounded-xl border border-dashed font-label text-[11px] tracking-[0.3em] uppercase transition-all hover:border-[#D4AF37] cursor-pointer"
+              style={{ borderColor: "#D4AF3760", color: "#D4AF3780" }}
+            >
+              <PlusIcon className="size-3.5" />
+              Add Payment Method
+            </button>
+
+            <p className="font-display italic text-xs text-dash-text/40 flex items-start gap-1.5">
+              <LandmarkIcon className="size-3 shrink-0 mt-0.5" />
+              We only store payment-app handles you choose to share — never bank
+              account or routing numbers.
+            </p>
+          </div>
+        )}
+      </PlanGate>
     </div>
   );
 }
