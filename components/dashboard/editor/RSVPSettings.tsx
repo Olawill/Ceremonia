@@ -61,6 +61,7 @@ export function RSVPSettings({ config, onChange }: Props) {
   const passwordProtected = useWatch({ control, name: "passwordProtected" });
   const rsvpEnabled = useWatch({ control, name: "rsvpEnabled" });
   const guestBookEnabled = useWatch({ control, name: "guestBookEnabled" });
+  const rsvpDeadline = useWatch({ control, name: "rsvpDeadline" });
 
   useEffect(() => {
     let mounted = false;
@@ -96,7 +97,7 @@ export function RSVPSettings({ config, onChange }: Props) {
 
       <Field label="RSVP Deadline">
         <DatePicker
-          value={watch("rsvpDeadline") ?? ""}
+          value={rsvpDeadline ?? ""}
           onChange={(val) =>
             setValue("rsvpDeadline", val, { shouldValidate: true })
           }

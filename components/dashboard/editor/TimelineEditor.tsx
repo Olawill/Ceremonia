@@ -3,7 +3,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusIcon, XIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+import type {
+  Control,
+  FieldErrors,
+  UseFormRegister,
+  UseFormSetValue,
+} from "react-hook-form";
+import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 
 import {
@@ -113,6 +119,78 @@ function IconPicker({
   );
 }
 
+function TimelineRow({
+  index,
+  control,
+  register,
+  setValue,
+  errors,
+  onRemove,
+}: {
+  index: number;
+  control: Control<FormValues>;
+  register: UseFormRegister<FormValues>;
+  setValue: UseFormSetValue<FormValues>;
+  errors: FieldErrors<FormValues>;
+  onRemove: () => void;
+}) {
+  const icon = useWatch({ control, name: `timeline.${index}.icon` });
+
+  return (
+    <div
+      className="p-4! rounded-xl space-y-3! relative font-semibold"
+      style={{ background: "#D4AF3708", border: "1px solid #D4AF3720" }}
+    >
+      <button
+        type="button"
+        onClick={onRemove}
+        className="absolute top-3 right-3 font-label text-[10px] tracking-widest hover:cursor-pointer hover:font-bold! hover:scale-1.15!"
+        style={{ color: "#D4AF3750" }}
+      >
+        <XIcon className="size-3" />
+      </button>
+
+      <div className="grid grid-cols-3 gap-3">
+        <Field label="Year" error={errors.timeline?.[index]?.year?.message}>
+          <Input
+            {...register(`timeline.${index}.year`)}
+            placeholder="2024"
+            hasError={!!errors.timeline?.[index]?.year}
+          />
+        </Field>
+        <Field label="Icon" error={errors.timeline?.[index]?.icon?.message}>
+          <IconPicker
+            value={icon}
+            onChange={(v) =>
+              setValue(`timeline.${index}.icon`, v, {
+                shouldValidate: true,
+              })
+            }
+          />
+        </Field>
+        <div /> {/* spacer */}
+      </div>
+
+      <Field label="Title" error={errors.timeline?.[index]?.title?.message}>
+        <Input
+          {...register(`timeline.${index}.title`)}
+          placeholder="First Meeting"
+          hasError={!!errors.timeline?.[index]?.title}
+        />
+      </Field>
+
+      <Field label="Story" error={errors.timeline?.[index]?.desc?.message}>
+        <Textarea
+          {...register(`timeline.${index}.desc`)}
+          placeholder="Two souls crossed paths…"
+          rows={2}
+          hasError={!!errors.timeline?.[index]?.desc}
+        />
+      </Field>
+    </div>
+  );
+}
+
 const schema = z.object({
   timeline: z.array(
     z.object({
@@ -177,58 +255,15 @@ export function TimelineEditor({ config, onChange }: Props) {
       {config.timelineEnabled && (
         <>
           {fields.map((field, i) => (
-            <div
+            <TimelineRow
               key={field.id}
-              className="p-4! rounded-xl space-y-3! relative font-semibold"
-              style={{ background: "#D4AF3708", border: "1px solid #D4AF3720" }}
-            >
-              <button
-                type="button"
-                onClick={() => remove(i)}
-                className="absolute top-3 right-3 font-label text-[10px] tracking-widest hover:cursor-pointer hover:font-bold! hover:scale-1.15!"
-                style={{ color: "#D4AF3750" }}
-              >
-                <XIcon className="size-3" />
-              </button>
-
-              <div className="grid grid-cols-3 gap-3">
-                <Field label="Year" error={errors.timeline?.[i]?.year?.message}>
-                  <Input
-                    {...register(`timeline.${i}.year`)}
-                    placeholder="2024"
-                    hasError={!!errors.timeline?.[i]?.year}
-                  />
-                </Field>
-                <Field label="Icon" error={errors.timeline?.[i]?.icon?.message}>
-                  <IconPicker
-                    value={watch(`timeline.${i}.icon`)}
-                    onChange={(v) =>
-                      setValue(`timeline.${i}.icon`, v, {
-                        shouldValidate: true,
-                      })
-                    }
-                  />
-                </Field>
-                <div /> {/* spacer */}
-              </div>
-
-              <Field label="Title" error={errors.timeline?.[i]?.title?.message}>
-                <Input
-                  {...register(`timeline.${i}.title`)}
-                  placeholder="First Meeting"
-                  hasError={!!errors.timeline?.[i]?.title}
-                />
-              </Field>
-
-              <Field label="Story" error={errors.timeline?.[i]?.desc?.message}>
-                <Textarea
-                  {...register(`timeline.${i}.desc`)}
-                  placeholder="Two souls crossed paths…"
-                  rows={2}
-                  hasError={!!errors.timeline?.[i]?.desc}
-                />
-              </Field>
-            </div>
+              index={i}
+              control={control}
+              register={register}
+              setValue={setValue}
+              errors={errors}
+              onRemove={() => remove(i)}
+            />
           ))}
 
           <button
@@ -242,7 +277,7 @@ export function TimelineEditor({ config, onChange }: Props) {
               })
             }
             disabled={fields.length >= 8}
-            className="w-full py-3! rounded-xl font-label text-[12px] forn-semibold tracking-[0.4em] uppercase transition-all border"
+            className="w-full py-3! rounded-xl font-label text-[12px] font-semibold tracking-[0.4em] uppercase transition-all border"
             style={{
               borderColor: "#D4AF3760",
               color: "#D4AF37",

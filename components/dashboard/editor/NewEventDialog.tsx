@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import clsx from "clsx";
 import { ArrowLeftIcon, ArrowRightIcon, SparklesIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 
 import { DatePicker } from "@/components/ui/DatePicker";
@@ -16,7 +16,7 @@ import {
   EventType,
   getVocabulary,
 } from "@/types/event";
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 const schema = z.object({
@@ -40,9 +40,9 @@ interface Props {
 export function NewEventDialog({ open, onConfirm }: Props) {
   const router = useRouter();
   const {
+    control,
     register,
     handleSubmit,
-    watch,
     setValue,
     formState: { errors, isValid },
   } = useForm<FormValues>({
@@ -53,26 +53,30 @@ export function NewEventDialog({ open, onConfirm }: Props) {
     mode: "onChange",
   });
 
-  const selectedType = watch("eventType") ?? "wedding";
+  const selectedType = useWatch({
+    control,
+    name: "eventType",
+    defaultValue: "wedding",
+  });
+
   const vocab = getVocabulary(selectedType);
 
-  const portalRef = useRef<HTMLDivElement | null>(null);
+  const [portalNode] = useState<HTMLDivElement | null>(() =>
+    typeof document === "undefined" ? null : document.createElement("div"),
+  );
 
   useEffect(() => {
-    if (!portalRef.current) {
-      const div = document.createElement("div");
-      document.body.appendChild(div);
-      portalRef.current = div;
-    }
-    return () => {
-      if (portalRef.current) {
-        document.body.removeChild(portalRef.current);
-        portalRef.current = null;
-      }
-    };
-  }, []);
+    if (!portalNode) return;
+    document.body.appendChild(portalNode);
 
-  if (!portalRef.current) return null;
+    return () => {
+      document.body.removeChild(portalNode);
+    };
+  }, [portalNode]);
+
+  const dateValue = useWatch({ control, name: "date" });
+
+  if (!portalNode) return null;
 
   return createPortal(
     // Full-screen overlay
@@ -100,10 +104,10 @@ export function NewEventDialog({ open, onConfirm }: Props) {
             </span>
           </p>
           <h2 className="font-display font-light text-3xl text-dash-text tracking-wide">
-            Let's get started
+            Let&apos;s get started
           </h2>
           <p className="font-display italic font-bold text-sm text-dash-text/65">
-            You can customise everything in the editor — this is just the
+            You can customize everything in the editor — this is just the
             essentials.
           </p>
         </div>
@@ -162,19 +166,21 @@ export function NewEventDialog({ open, onConfirm }: Props) {
                 autoFocus
               />
             </Field>
-            <Field
-              label={vocab.host2Label + "'s Name"}
-              error={errors.host2Name?.message}
-              className={clsx(
-                !vocab.dualHost && "invisible pointer-events-none",
-              )}
-            >
-              <Input
-                {...register("host2Name")}
-                placeholder="Alexander"
-                hasError={!!errors.host2Name}
-              />
-            </Field>
+            {vocab.dualHost ? (
+              <Field
+                label={vocab.host2Label + "'s Name"}
+                error={errors.host2Name?.message}
+                className={clsx(
+                  !vocab.dualHost && "invisible pointer-events-none",
+                )}
+              >
+                <Input
+                  {...register("host2Name")}
+                  placeholder="Alexander"
+                  hasError={!!errors.host2Name}
+                />
+              </Field>
+            ) : null}
           </div>
 
           <Field
@@ -182,7 +188,7 @@ export function NewEventDialog({ open, onConfirm }: Props) {
             error={errors.date?.message}
           >
             <DatePicker
-              value={watch("date") ?? ""}
+              value={dateValue}
               onChange={(val) =>
                 setValue("date", val, { shouldValidate: true })
               }
@@ -221,6 +227,6 @@ export function NewEventDialog({ open, onConfirm }: Props) {
         </form>
       </div>
     </div>,
-    portalRef.current,
+    portalNode,
   );
 }

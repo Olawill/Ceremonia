@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 
 import type { EventConfig } from "@/types/event";
@@ -40,6 +40,7 @@ export function ContentEditor({ config, onChange }: Props) {
     watch,
     setValue,
     reset,
+    control,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -81,6 +82,9 @@ export function ContentEditor({ config, onChange }: Props) {
     });
   }, [config.bride, config.groom, config.date]);
 
+  const dateValue = useWatch({ control, name: "date" });
+  const published = useWatch({ control, name: "published" });
+
   return (
     <div className="space-y-5! font-semibold">
       <SectionHeading>
@@ -117,7 +121,7 @@ export function ContentEditor({ config, onChange }: Props) {
 
       <Field label={`${vocab.eventLabel} Date`} error={errors.date?.message}>
         <DatePicker
-          value={watch("date") ?? ""}
+          value={dateValue ?? ""}
           onChange={(val) => setValue("date", val, { shouldValidate: true })}
           hasError={!!errors.date}
         />
@@ -148,15 +152,13 @@ export function ContentEditor({ config, onChange }: Props) {
 
       <Field label="Published">
         <Toggle
-          value={watch("published")}
+          value={published}
           onChange={(v) => {
             setValue("published", v);
             onChange({ published: v });
           }}
           label={
-            watch("published")
-              ? "Live — guests can view"
-              : "Draft — hidden from guests"
+            published ? "Live — guests can view" : "Draft — hidden from guests"
           }
         />
       </Field>

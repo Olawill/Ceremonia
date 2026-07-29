@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import gsap from "gsap";
 import posthog from "posthog-js";
 import { useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 
 import { useApi } from "@/hooks/useApi";
@@ -50,14 +50,14 @@ export function RSVPPanel({
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { guests: "1" },
   });
 
-  const attendance = watch("attendance");
+  const attendance = useWatch({ control, name: "attendance" });
   const deadlineLabel = rsvpDeadline
     ? `Kindly reply by ${formattedDeadlineDate(rsvpDeadline)}`
     : "Kindly reply at your earliest convenience";
@@ -223,7 +223,9 @@ export function RSVPPanel({
               onBlur={() => setFocusedField(null)}
               style={fieldStyle("name")}
               aria-invalid={!!errors.name}
-              aria-describedby={errors.name ? "rsvp-panel-name-error" : undefined}
+              aria-describedby={
+                errors.name ? "rsvp-panel-name-error" : undefined
+              }
             />
             {errors.name && (
               <p

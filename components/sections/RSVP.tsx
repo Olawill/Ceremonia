@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import gsap from "gsap";
 import posthog from "posthog-js";
 import { useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 
 import { useApi } from "@/hooks/useApi";
@@ -50,7 +50,7 @@ export function RSVP({
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -61,7 +61,7 @@ export function RSVP({
     ? `Kindly Reply By ${formattedDeadlineDate(rsvpDeadline)}`
     : "Kindly Reply At Your Earliest Convenience";
 
-  const attendance = watch("attendance");
+  const attendance = useWatch({ control, name: "attendance" });
 
   const onSubmit = async (data: FormValues) => {
     if (eventId && eventId !== "demo") {
