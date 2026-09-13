@@ -26,7 +26,7 @@ function isAllowedOrigin(origin: string): boolean {
       /^https?:\/\/.*\.ngrok\.io$/.test(origin)
     );
   }
-  const rootDomain = env.NEXT_PUBLIC_ROOT_DOMAIN || "ceremonia.app";
+  const rootDomain = env.NEXT_PUBLIC_ROOT_DOMAIN || "ceremonia.cc";
   return origin === `https://${rootDomain}`;
 }
 
@@ -56,8 +56,8 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 
   // Determine subdomain
   // In dev: localhost:3000 → no subdomain
-  // In prod: isabella-alexander.ceremonia.app → "isabella-alexander"
-  const rootDomain = env.NEXT_PUBLIC_ROOT_DOMAIN || "ceremonia.app";
+  // In prod: isabella-alexander.ceremonia.cc → "isabella-alexander"
+  const rootDomain = env.NEXT_PUBLIC_ROOT_DOMAIN || "ceremonia.cc";
   const isLocalhost = host.includes("localhost");
   const isNgrok =
     host.endsWith(".ngrok-free.app") || host.endsWith(".ngrok.io");
@@ -78,7 +78,7 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
       }
     }
   } else {
-    // prod: "isabella-alexander.ceremonia.app"
+    // prod: "isabella-alexander.ceremonia.cc"
     const parts = host.replace(`.${rootDomain}`, "").split(".");
     if (parts.length === 1 && !["app", "www", "ceremonia"].includes(parts[0])) {
       subdomain = parts[0];

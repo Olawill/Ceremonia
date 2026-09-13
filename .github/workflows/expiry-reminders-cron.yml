@@ -9,7 +9,7 @@ name: Expiry Reminders Cron
 # feel free to disable whichever one you don't need.
 #
 # Required repo secrets:
-#   NEXT_PUBLIC_APP_URL      e.g. https://ceremonia.app
+#   NEXT_PUBLIC_APP_URL      e.g. https://ceremonia.cc
 #   CRON_SECRET  must match the CRON_SECRET env var on the deployed app
 
 on:
